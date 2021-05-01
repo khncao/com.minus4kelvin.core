@@ -1,0 +1,15 @@
+{
+  "name": "com.minus4kelvin.core",
+  "version": "1.0.0",
+  "displayName": "m4k.Core",
+  "description": "Core systems",
+  "unity": "2019.1",
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.4",
+    "com.unity.cinemachine": "2.7.2",
+    "com.unity.timeline": "1.5.2"
+  },
+  "keywords": [
+    "core"
+  ]
+}
