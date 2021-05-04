@@ -148,7 +148,7 @@ public class InventoryUI : MonoBehaviour
     public void UpdateHoverWindow(ItemSlot slot) {
         hoverSlot = slot;
         itemContext.transform.position = hoverSlot.transform.position;
-        hoverNameTxt.text = hoverSlot.item.itemName;
+        hoverNameTxt.text = hoverSlot.item.ItemName;
         hoverInfoTxt.text = hoverSlot.item.item.description;
     }
     public void ToggleHoverWindow(bool enabled) {

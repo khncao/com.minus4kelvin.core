@@ -21,6 +21,7 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
     public InventoryManager inventoryManager;
     
     bool initialized;
+    [System.NonSerialized]
     System.Predicate<ItemInstance> filter;
     
 
@@ -88,7 +89,7 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
     public void UpdateAllSlots() {
         InitSlots();
         if(inventory == null) {
-            Debug.Log(gameObject.name + " no inventory");
+            Debug.LogError(gameObject.name + " no inventory");
             return;
         }
 

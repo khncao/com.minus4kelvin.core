@@ -10,8 +10,8 @@ public class Dialogue : MonoBehaviour
     [System.Serializable]
     public class Convo {
         public string id;
-        public List<Line> lines;
         public string nextConvoId;
+        public List<Line> lines;
     }
     [System.Serializable]
     public class Line {

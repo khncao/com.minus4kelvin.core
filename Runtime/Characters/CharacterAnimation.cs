@@ -151,6 +151,7 @@ public class CharacterAnimation : MonoBehaviour
 	}
 
 	private void OnAnimatorMove() {
+		if(!cc) return;
 		if(cc.rbChar) {
 			if (cc.rbChar.isGrounded && Time.deltaTime > 0)
 			{
@@ -212,6 +213,7 @@ public class CharacterAnimation : MonoBehaviour
 			seatAudioSource.PlayOneShot(seatAudioSource.clip);
 		}
 		onUnsit?.Invoke();
+		if(!currSeat) return;
 		currSeat.occupied = false;
 		currSeat.UnassignSeat();
 		currSeat = null;

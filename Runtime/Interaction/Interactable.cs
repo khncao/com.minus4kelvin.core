@@ -89,6 +89,14 @@ public class Interactable : MonoBehaviour
     // }
 
     private void OnTriggerEnter(Collider other) {
+        // CharacterControl cc;
+        // other.TryGetComponent<CharacterControl>(out cc);
+        // if(cc) {
+        //     if(cc.navChar.target && cc.navChar.target == transform) {
+        //         Interact();
+        //         cc.navChar.StopAgent();
+        //     }
+        // }
         otherCol = other;
         InteractionManager.I.RegisterInteractable(this);
         OnInteractable();

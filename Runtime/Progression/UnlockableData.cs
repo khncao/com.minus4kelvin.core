@@ -32,7 +32,7 @@ public class Unlockable {
     }
 }
 
-[CreateAssetMenu(menuName="ScriptableObjects/UnlockableData")]
+[CreateAssetMenu(menuName="ScriptableObjects/Progress/UnlockableData")]
 public class UnlockableData : ScriptableObject {
     public string description;
     // public string id;

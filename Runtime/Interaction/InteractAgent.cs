@@ -9,36 +9,43 @@ public class InteractAgent : MonoBehaviour
     public CharacterControl cc;
     public LayerMask interactLayers;
 
-    Collider[] hits = new Collider[20];
+    Collider[] hits = new Collider[10];
 
     private void Start() {
         if(!cc) cc = GetComponent<CharacterControl>();
-        // cc.navChar.onArrive += OnArrive;
+        cc.navChar.onArrive += OnArrive;
+        cc.navChar.onNewTarget += OnNewTarget;
     }
 
-    // void OnArrive(Transform target) {
-    //     Physics.OverlapSphereNonAlloc(transform.position, 1f, hits, interactLayers, QueryTriggerInteraction.Collide);
+    void OnNewTarget(Transform target) {
+        OnArrive(target);
+    }
 
-    //     for(int i = 0; i < hits.Length; ++i) {
-    //         if(!target || hits[i] == null || hits[i].transform != target) 
-    //             continue;
+    void OnArrive(Transform target) {
+        hits.Clear<Collider>();
+        Physics.OverlapSphereNonAlloc(transform.position, 0.5f, hits, interactLayers, QueryTriggerInteraction.Collide);
 
-    //         // Interactable interactable;
-    //         // hits[i].TryGetComponent<Interactable>(out interactable);
-    //         DestroyZone destroyZone;
-    //         hits[i].TryGetComponent<DestroyZone>(out destroyZone);
+        for(int i = 0; i < hits.Length; ++i) {
+            if(!target || hits[i] == null || hits[i].transform != target) 
+                continue;
 
-    //         // if(interactable) {
-    //         //     interactable.Interact();
-    //         // }
-    //         // else 
-    //         if(destroyZone) {
-    //             GetComponent<IDestroyable>().Destroy();
-    //         }
-    //     }
-    // }
+            Interactable interactable;
+            hits[i].TryGetComponent<Interactable>(out interactable);
+            DestroyZone destroyZone;
+            hits[i].TryGetComponent<DestroyZone>(out destroyZone);
 
-    private void OnTriggerStay(Collider other) {
+            if(interactable) {
+                interactable.Interact();
+            }
+            else 
+            if(destroyZone) {
+                GetComponent<IDestroyable>().Destroy();
+            }
+            cc.navChar.target = null;
+        }
+    }
+
+    private void OnTriggerEnter(Collider other) {
         if(!cc.navChar.target || other.transform != cc.navChar.target)
             return;
 
@@ -46,8 +53,8 @@ public class InteractAgent : MonoBehaviour
         other.TryGetComponent<Interactable>(out interactable);
         DestroyZone destroyZone;
         other.TryGetComponent<DestroyZone>(out destroyZone);
-    //     SeatController seat;
-    //     target.TryGetComponent<SeatController>(out seat);
+        SeatController seat;
+        other.TryGetComponent<SeatController>(out seat);
         if(interactable) {
             interactable.Interact();
             cc.navChar.StopAgent();
@@ -55,12 +62,12 @@ public class InteractAgent : MonoBehaviour
         else if(destroyZone) {
             GetComponent<IDestroyable>().Destroy();
         }
-    //     else if(seat && !seat.occupied) {
-    //         cc.charAnim.Sit(seat);
-    //         agent.nextPosition = transform.position;
-    //         agent.updatePosition = false;
-    //         StopAgent();
-    //     }
+        else if(seat && !seat.occupied) {
+            cc.charAnim.Sit(seat);
+            cc.navChar.agent.nextPosition = transform.position;
+            cc.navChar.agent.updatePosition = false;
+            cc.navChar.StopAgent();
+        }
         cc.navChar.target = null;
     }
 }

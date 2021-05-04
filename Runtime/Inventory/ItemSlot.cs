@@ -61,7 +61,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 itemImgUI.color = Color.white;
             }
             if(itemNameUI)
-                itemNameUI.text = item.itemName;
+                itemNameUI.text = item.ItemName;
             
             itemTxtUI.text = item.item.maxAmount > 1 && item.amount > 0 ? item.amount.ToString() : "";
 

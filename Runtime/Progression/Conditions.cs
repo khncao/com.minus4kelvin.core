@@ -15,10 +15,12 @@ public class RecordGoal {
 [System.Serializable]
 public class Conditions  
 {
+    public bool removeRequiredItems;
+    [NonReorderable]
     public List<string> requiredStates;
+    [NonReorderable]
     public List<RecordGoal> requiredCounts;
     public List<ItemInstance> requiredItems;
-    public bool removeRequiredItems;
     public System.Action<Conditions> onCheck, onComplete;
     
     public bool hasCompleted { get { return completed; }}

@@ -94,7 +94,6 @@ public class ProgressionManager : Singleton<ProgressionManager>
             // interactables.Add(interactable);
         }
         else {
-            Debug.LogWarning("Registered interactables with same id");
             InteractableState state;
             interactableStatesDict.TryGetValue(interactable.id, out state);
             state.interactable = interactable;

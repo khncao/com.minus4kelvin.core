@@ -32,7 +32,7 @@ public struct CharExpression {
     public Sprite portrait;
 }
 [System.Serializable]
-[CreateAssetMenu(menuName="ScriptableObjects/Character")]
+[CreateAssetMenu(menuName="ScriptableObjects/Items/Character")]
 public class Character : Item
 {
     [Header("Character")]

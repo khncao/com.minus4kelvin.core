@@ -15,15 +15,18 @@ public class CharacterControl : MonoBehaviour
 
     private void Start() {
         if(!character) {
-            Debug.Log("Character has no character item");
+            // Debug.Log("Character has no character item");
             return;
         }
-        if(character && !CharacterManager.I.RegisterCharacter(character, this))
+        if(character && !RegisterCharacter())
             return;
     }
     private void OnDisable() {
         if(character && CharacterManager.I)
             CharacterManager.I.RemoveCharacter(character);
+    }
+    public bool RegisterCharacter() {
+        return CharacterManager.I.RegisterCharacter(character, this);
     }
 
     private void Update() {

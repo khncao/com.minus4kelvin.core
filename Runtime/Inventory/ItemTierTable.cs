@@ -49,7 +49,7 @@ public class ItemTierTable : ScriptableObject
                 // }
             }
         }
-        // Debug.Log(items.items.Length);
+        // Debug.Log($"{items.items.Length} items length generated");
 
         return items;
     }

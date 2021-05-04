@@ -31,7 +31,15 @@ public class ItemData {
 [System.Serializable]
 public class ItemInstance {
     public int amount = 1;
-    public string itemName { get { return item?.itemName; }}
+    public string ItemName { get { 
+        if(item) {
+            if(string.IsNullOrEmpty(item.itemName))
+                return item.name;
+            else 
+                return item.itemName;
+        }
+        return "";
+    }}
     public Item item;// { get { return _item; } }
     [System.NonSerialized]
     public System.Action onChange;
@@ -53,7 +61,7 @@ public class ItemInstance {
     // }
 }
 
-[CreateAssetMenu(menuName="ScriptableObjects/Item")]
+[CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
 [System.Serializable]
 public class Item : ScriptableObject
 {

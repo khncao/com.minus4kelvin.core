@@ -21,7 +21,7 @@ public class StorySegment {
     // public StoryEntity[] storyObjects;
 }
 
-[CreateAssetMenu(menuName="ScriptableObjects/StoryData")]
+[CreateAssetMenu(menuName="ScriptableObjects/Progress/StoryData")]
 [System.Serializable]
 public class StoryData : ScriptableObject {
     public string storyName;

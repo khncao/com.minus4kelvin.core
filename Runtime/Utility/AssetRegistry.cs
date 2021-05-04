@@ -7,7 +7,6 @@ using m4k.InventorySystem;
 using m4k.Characters;
 
 namespace m4k {
-// [ExecuteInEditMode]
 public class AssetRegistry : Singleton<AssetRegistry> {
     public static DatabaseSO database;
 
@@ -116,8 +115,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     [InitializeOnLoadMethod]
     static void UpdateDatabase() {
         Initialize();
-        // UpdateCharsRegistry();
-        // UpdateItemsRegistry();
         UpdateTypeRegistry<Item>("t:Item", searchFolders, ref database.items);
         UpdateTypeRegistry<Character>("t:Character", searchFolders, ref database.characters);
         UpdateTypeRegistry<GameScene>("t:GameScene", searchFolders, ref database.scenes);
@@ -138,55 +135,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         }
         Debug.Log($"Updated query {query} asset registry, total: " + result.Length);
     }
-
-    // static void UpdateItemsRegistry()
-    // {
-    //     database.items = new List<Item>();
-
-    //     string[] result = AssetDatabase.FindAssets("t:Item", searchFolders);
-
-    //     for(int i = 0; i < result.Length; i++)
-    //     {
-    //         var itemAsset = (Item)AssetDatabase.
-    //                     LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(result[i]), 
-    //                     typeof(Item));
-    //         itemAsset.guid = result[i];
-
-    //         database.items.Add(itemAsset);
-
-    //         // convert item-> itembuildable and itemequip
-    //         // string p = "Assets/Data/output/";
-    //         // if(itemAsset.itemType == ItemType.Buildable) {
-    //         //     var ib = ScriptableObject.CreateInstance<ItemBuildable>();
-    //         //     ib.Copy(itemAsset);
-    //         //     AssetDatabase.CreateAsset(ib, p + $"buildables/{itemAsset.name}.asset");
-    //         // }
-    //         // if(itemAsset.itemType == ItemType.Equip) {
-    //         //     var ie = ScriptableObject.CreateInstance<ItemEquip>();
-    //         //     ie.Copy(itemAsset);
-    //         //     AssetDatabase.CreateAsset(ie, p + $"equips/{itemAsset.name}.asset");
-    //         // }
-    //         // AssetDatabase.SaveAssets();
-
-    //     }
-    //     Debug.Log("Updated items asset registry, total: " + result.Length);
-    // }
-
-    // static void UpdateCharsRegistry()
-    // {
-    //     database.characters = new List<Character>();
-
-    //     string[] result = AssetDatabase.FindAssets("t:Character", searchFolders);
-
-    //     for(int i = 0; i < result.Length; i++)
-    //     {
-    //         var charAsset = (Character)AssetDatabase.
-    //                     LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(result[i]), 
-    //                     typeof(Character));
-    //         database.characters.Add(charAsset);
-    //     }
-    //     Debug.Log("Updated character asset registry, total: " + result.Length);
-    // }
 
 #endif
 }

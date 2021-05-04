@@ -15,14 +15,21 @@ public class CharacterManager : Singleton<CharacterManager>
 {
     public CharacterUI UI;
     public CharacterControl Player;
+    // { get { 
+    //     if(!_Player) {
+    //         GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterControl>().RegisterCharacter();
+    //     }
+    //     return _Player;
+    // }}
     // public PlayerController Player;
     public List<Character> activeCharacters;
     // public List<PlayerController> players;
     // public System.Action<PlayerController> onPlayerRegistered;
-    public System.Action<CharacterControl> onCharacterRegistered;
+    public System.Action<CharacterControl> onCharacterRegistered, onPlayerRegistered;
     public Character focused;
 
     Dictionary<Character, CharacterControl> charInstanceDict = new Dictionary<Character, CharacterControl>();
+    // CharacterControl _Player;
 
     public void SetFocused(Character character) {
         focused = character;
@@ -50,7 +57,7 @@ public class CharacterManager : Singleton<CharacterManager>
     public CharacterControl GetCharInstance(Character character) {
         CharacterControl chara = null;
         charInstanceDict.TryGetValue(character, out chara);
-        if(!chara) Debug.LogError("character not found");
+        if(!chara) Debug.LogWarning("character not found");
         return chara;
     }
     public bool RegisterCharacter(Character character, CharacterControl instance) {
@@ -64,6 +71,11 @@ public class CharacterManager : Singleton<CharacterManager>
             // PlayerController player = instance.GetComponent<PlayerController>();
             // if(player && !players.Contains(player)) 
             //     players.Add(player);
+            if(instance.CompareTag("Player")) {
+                Player = instance;
+                onPlayerRegistered?.Invoke(Player);
+            }
+                
             return true;
         }
         else {

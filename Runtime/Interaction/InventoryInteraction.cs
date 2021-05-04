@@ -16,11 +16,13 @@ public class InventoryInteraction : MonoBehaviour
     public int shopItemsTier = 0;
     Dialogue.Choice choice;
     KeyAction choiceAction;
-    Inventory inventory = null;
+    [System.NonSerialized]
+    Inventory inventory;
     InventoryManager inventoryManager;
 
     private void Start() {
         inventoryManager = InventoryManager.I;
+        // inventory = null;
         
         if(inventoryType == InventoryType.Craft) {
             inventory = inventoryManager.GetOrRegisterInventory(gameObject.scene.name + transform.parent.position.ToString(), 4, 1, false, gameObject);
@@ -54,6 +56,11 @@ public class InventoryInteraction : MonoBehaviour
     public void OpenShop() {
         if(itemSpawnTable && inventory == null)
             inventory = itemSpawnTable.GetItemsUpToTier(shopItemsTier);
+        if(inventory == null || inventory.items == null) {
+            Debug.LogError("Inventory get error");
+            return;
+        }
+
         if(inventoryType == InventoryType.ItemShop)
             inventoryManager.ToggleShop(inventory);
         else

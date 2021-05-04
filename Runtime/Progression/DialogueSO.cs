@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace m4k.Progression {
 [System.Serializable]
-[CreateAssetMenu(menuName="ScriptableObjects/DialogueSO")]
+[CreateAssetMenu(menuName="ScriptableObjects/Progress/DialogueSO")]
 public class DialogueSO : ScriptableObject
 {
     // public string dialogueName;

@@ -148,7 +148,7 @@ public class CraftManager : MonoBehaviour
         if(!recipeSlots.selected) {
             return false;
         }
-        Debug.Log($"recipe: {recipeSlots.selected.item.itemName}");
+        Debug.Log($"recipe: {recipeSlots.selected.item.ItemName}");
         var recipe = recipeSlots.selected.item.item as ItemRecipe;
         int craftable = CheckRecipeCraftable(recipe);
 

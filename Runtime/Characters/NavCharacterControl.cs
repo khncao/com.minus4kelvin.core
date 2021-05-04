@@ -12,7 +12,7 @@ public class NavCharacterControl : MonoBehaviour
     public GameObject pathTarget;
     public bool isPathing;
     public Transform target;
-    public System.Action<Transform> onArrive;
+    public System.Action<Transform> onArrive, onNewTarget;
     // public TMPro.TMP_Text debugText;
     public NavMeshAgent agent;
     // public NavMeshObstacle obstacle { get; private set; }
@@ -125,6 +125,7 @@ public class NavCharacterControl : MonoBehaviour
         target = t;
 
         SetFaceTarget(null);
+        onNewTarget?.Invoke(target);
 
         // Debug.Log($"Set target: {target.gameObject.name}");
     }

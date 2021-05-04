@@ -6,26 +6,34 @@ using m4k.Characters;
 
 namespace m4k {
 public enum CamTypes {
-    PlayerCam, ManagementCam, CinematicCam, FirstPersonCam
+    PlayerCam, ManagementCam, FirstPersonCam
 }
 [System.Serializable]
 public class CamInstance {
     public string key;
     public Transform pivot;
     public CinemachineVirtualCamera vcam;
-    public Transform followTarget, lookTarget;
-    public float followDamp;
+    public float followDamp = 0.1f;
+    public float offsetMult = 0.2f;
+    public Transform followTarget;
+    public Transform lookTarget;
+
+    public Vector3 OffsetStep { get { return initOffset * offsetMult; }}
+
+    [HideInInspector]
+    public Vector3 initOffset;
 }
 
 public class Cams : Singleton<Cams>
 {
     public static Camera MainCam;
     public static CinemachineBrain MainBrain;
-    public CinemachineVirtualCamera playerCam, firstPersonCam;
-    public CinemachineVirtualCamera managementCam;
-    public Transform playerCamRig, manageCamTarget, targetCamRig;
+    public CinemachineVirtualCamera playerCam, firstPersonCam, managementCam;
+    public Transform playerCamRig, targetCamRig, manageCamTarget;
     public CinemachineVirtualCamera currentVCam;
     public float playerRigFollowDamp = 0.1f;
+    public CamInstance currCamInst;
+    public List<CamInstance> camInstances;
 
     CinemachineTransposer currBody, playerCamBody, manageCamBody;
     float currentCamInitFOV, playerCamInitFOV, manageCamInitFOV;
@@ -45,15 +53,21 @@ public class Cams : Singleton<Cams>
         MainBrain = MainCam.GetComponent<CinemachineBrain>();
     }
 
-    private void Start() {
+    void Start() {
         Init();
         ClearCamTarget();
+        CharacterManager.I.onPlayerRegistered += SnapToPlayer;
+    }
+    void SnapToPlayer(CharacterControl cc) {
+        playerCamRig.position = cc.charAnim.headHold.position;
     }
     
     public void Init() {
         playerCamInitFOV = playerCam.m_Lens.FieldOfView;
         manageCamInitFOV = managementCam.m_Lens.FieldOfView;
         playerCam.Follow = playerCamRig;
+        if(CharacterManager.I.Player)
+            playerCamRig.position = CharacterManager.I.Player.charAnim.headHold.position;
         targetCam = targetCamRig.GetChild(0);
         managementCam.Follow = manageCamTarget;
         manageTargetRb = manageCamTarget.GetComponent<Rigidbody>();
@@ -77,7 +91,6 @@ public class Cams : Singleton<Cams>
         managementCam.Follow = t;
     }
     public void SetLookTarget(Transform t, bool isCharacter = false) {
-        // playerCam.LookAt = t;
         rigFaceTarget = t;
         rigFaceIsChar = isCharacter;
     }
@@ -126,58 +139,36 @@ public class Cams : Singleton<Cams>
             playerCam.transform.localPosition = new Vector3(0, yOffset, zOffset);
         }
     }
-    // float rotateY;
     Vector3 rigPos, velo;
     public void RotateCam(float x) {
-        // rotateY = y;
         playerCamRig.transform.Rotate(0, x * 4f, 0);
     }
 
     public void FirstPersonLook(float x, float y) {
-        // playerCamRig.transform.Rotate(y * -4f, x * 4f, 0);
         playerCamRig.transform.rotation *= Quaternion.Euler(-y * 2f, x * 2f, 0);
         var rot = playerCamRig.transform.eulerAngles;
         rot.z = 0f;
         playerCamRig.transform.eulerAngles = rot;
     }
-    public void UpdateRigPos(Vector3 pos) {
-        if(targetCamActive) return;
-        rigPos = pos;
-        // playerCamRig.transform.position = pos;
-    }
     public void UpdateManageTargetPos(Vector3 input) {
-        // Vector3 desiredPos = manageCamTarget.position + input;
-        // Vector3 dir = desiredPos - manageCamTarget.position;
-        // if(!Physics.Raycast(manageCamTarget.position, dir, 1f, boundaryLayer)) 
-            // manageTargetRb.MovePosition(desiredPos);
-            // manageCamTarget.position = desiredPos;
-            manageTargetRb.velocity = input * 25f;
+        manageTargetRb.velocity = input * 25f;
     }
     private void FixedUpdate() {
-        // playerCamRig.transform.Rotate(0, rotateY * 4f, 0);
-        if(!CharacterManager.I.Player) 
+        if(!CharacterManager.I.Player || targetCamActive) 
             return;
-        UpdateRigPos(CharacterManager.I.Player.charAnim.headHold.position);
-        
+
+        rigPos = CharacterManager.I.Player.charAnim.headHold.position;
         // if(CharacterManager.I.Player.isFirstPerson)
         //     playerCamRig.position = rigPos;
         // else
             playerCamRig.position = Vector3.SmoothDamp(playerCamRig.position, rigPos, ref velo, playerRigFollowDamp);
         
-        // playerCamRig.transform.position = rigPos;
-        if(rigFaceTarget) { // !CharacterManager.I.Player.isFirstPerson && 
+        // if global cam focus target is set, and is aimable cam
+        if(rigFaceTarget) { 
             var dir = rigFaceTarget.position - rigPos;
             dir.y = 0;
             var rot = Quaternion.Euler(dir);
             playerCamRig.rotation = Quaternion.Lerp(playerCamRig.rotation, rot, Time.deltaTime);
-            // playerCamRig.eulerAngles = Vector3.Lerp(playerCamRig.eulerAngles, dir, Time.deltaTime);
-            // ZoomCam(0.05f);
-
-            // if(rigFaceIsChar) {
-                // characterCamRig.position = rigPos;
-                // rot = Quaternion.Euler(characterCamRig.InverseTransformDirection(dir));
-            //     characterCamRig.rotation = rot;
-            // }
         }
     }
 
@@ -210,13 +201,7 @@ public class Cams : Singleton<Cams>
                 manageCamTarget.gameObject.SetActive(true);
                 break;
             }
-            case CamTypes.CinematicCam: {
-                break;
-            }
         }
-
-        // currentCam = camType;
-        
     }
 
     void ResetCamPriorities() {

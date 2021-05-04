@@ -128,7 +128,12 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         SetCharacter(CharacterManager.I.Player);
     }
     public void SetCharacter(Character character) {
-        SetCharacter(CharacterManager.I.GetCharInstance(character));
+        var chara = CharacterManager.I.GetCharInstance(character);
+        if(!chara) {
+            Debug.LogWarning("Char instance not found");
+            return;
+        }
+        SetCharacter(chara);
     }
     public void SetCharacter(CharacterControl character) {
         if(isCustomizing) return;
@@ -194,7 +199,7 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
     }
     public void CancelCustomize() {
         CleanItemLibraries();
-        Cams.I.ClearCamTarget();
+        Cams.I?.ClearCamTarget();
         isCustomizing = false;
         // mannequinAnim.gameObject.SetActive(false);
         Destroy(mannequin.gameObject);
@@ -267,5 +272,11 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         UI.UpdateOptions(currCharCustomize);
     }
 
+    public void Serialize(ref CharacterCustomizationData data) {
+        data.customizeOptions = characterCustomizations;
+    }
+    public void Deserialize(ref CharacterCustomizationData data) {
+        characterCustomizations = data.customizeOptions;
+    }
 }
 }

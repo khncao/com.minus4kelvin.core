@@ -32,7 +32,7 @@ public class SeatController : MonoBehaviour//, IBuildable
         origPointerMat = pointRenderer.material;
     }
     private void OnDisable() {
-        Feedback.I.worldToScreenUIFollow.UnregisterFollowUI(UITargetTrans);
+        Feedback.I?.worldToScreenUIFollow.UnregisterFollowUI(UITargetTrans);
     }
     public void RegisterLabels() {
         seatLabel = Feedback.I.worldToScreenUIFollow.RegisterDefaultTxtUI(visualRend, UITargetTrans).GetComponentInChildren<TMPro.TMP_Text>();
@@ -67,8 +67,11 @@ public class SeatController : MonoBehaviour//, IBuildable
         pointRenderer.enabled = b;
     }
     public void OnToggleBuildableEdit(bool b) {
+        ToggleUsable(b);
+    }
+    public void ToggleUsable(bool b) {
         available = !b;
-        if(!b) {
+        if(available) {
             UpdateSeat();
         }
         else {

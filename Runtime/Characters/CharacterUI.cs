@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using m4k.Characters.Customization;
 
 namespace m4k.Characters {
 public class CharacterUI : MonoBehaviour {
@@ -12,6 +13,10 @@ public class CharacterUI : MonoBehaviour {
 
     private void OnEnable() {
         Reset();
+    }
+    private void Start() {
+        customizeSelfBtn.onClick.AddListener(CharacterCustomize.I.CustomizePlayer);
+        customizeCharacterBtn.onClick.AddListener(CharacterCustomize.I.CustomizeFocused);
     }
     private void OnDisable() {
         Reset();

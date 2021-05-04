@@ -3,21 +3,21 @@
 namespace m4k {
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-   protected bool m_ShuttingDown = false;
+   protected static bool m_ShuttingDown = false;
    private static object m_Lock = new object();
    protected static T _instance;
    public static T I
    {
       get
       {
-         // if (m_ShuttingDown)
-         // {
-         //       Debug.LogWarning("[Singleton] Instance '" + typeof(T) +
-         //          "' already destroyed. Returning null.");
-         //       return null;
-         // }
-         // lock (m_Lock)
-         // {
+         if (m_ShuttingDown)
+         {
+               // Debug.LogWarning("[Singleton] Instance '" + typeof(T) +
+               //    "' already destroyed. Returning null.");
+               return null;
+         }
+         lock (m_Lock)
+         {
                if (_instance == null)
                {
                   _instance = (T)FindObjectOfType(typeof(T));
@@ -32,7 +32,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
                }
 
                return _instance;
-         // }
+         }
       }
    }
 	protected virtual void Awake ()
