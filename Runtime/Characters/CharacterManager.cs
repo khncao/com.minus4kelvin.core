@@ -78,10 +78,7 @@ public class CharacterManager : Singleton<CharacterManager>
                 
             return true;
         }
-        else {
-            Debug.LogWarning("Active character duplicate");
-            return false;
-        }
+        return false;
     }
     public void RemoveCharacter(Character character) {
         var instance = GetCharInstance(character);

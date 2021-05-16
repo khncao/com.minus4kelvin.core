@@ -1,3 +1,7 @@
+/// <summary>
+/// Adopted from the Unity tutorial on multi-scene editing
+/// </summary>
+
 using UnityEngine;
 // using UnityEngine.Rendering.PostProcessing;
 using System.Collections.Generic;

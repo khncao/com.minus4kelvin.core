@@ -1,4 +1,7 @@
-// using System;
+/// <summary>
+/// Adopted from implementation in Unity's Standard Assets
+/// </summary>
+
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -15,10 +18,9 @@ public class NavCharacterControl : MonoBehaviour
     public System.Action<Transform> onArrive, onNewTarget;
     // public TMPro.TMP_Text debugText;
     public NavMeshAgent agent;
-    // public NavMeshObstacle obstacle { get; private set; }
 
-    Camera mainCam;
-    Transform faceTarget;
+    Transform faceTarget, prevTarget;
+    bool pause;
 
     private void Start()
     {
@@ -27,27 +29,30 @@ public class NavCharacterControl : MonoBehaviour
         // obstacle = GetComponent<NavMeshObstacle>();
         if(pathTarget)
             pathTarget.transform.SetParent(null);
+        if(target)
+            SetTarget(target);
         agent.updateRotation = false;
         if(isPlayer)
             agent.updatePosition = false;
-        mainCam = Camera.main;
     }
 
     Vector3 lastTargetPos;
     float nextRepathThresh;
     private void Update()
     {
-        if (target != null && (Time.time > nextRepathThresh || isPlayer)) {
+        if (target != null && (isPlayer || Time.time > nextRepathThresh)) {
             if((!agent.hasPath || agent.isPathStale) || target.position != lastTargetPos) {
                 agent.SetDestination(target.position);
+                if(pathTarget)
+                    pathTarget.transform.position = target.position;
                 lastTargetPos = target.position;
             }
             nextRepathThresh = repathInterval + Time.time;
         }
         
-        agent.isStopped = !cc.charAnim.IsMobile;
-        if(agent.hasPath && cc.charAnim.IsMobile) {
-            if(agent.remainingDistance > agent.stoppingDistance * Time.timeScale) {
+        agent.isStopped = !cc.charAnim.IsMobile || pause;
+        if(agent.hasPath && cc.charAnim.IsMobile && isPathing) {
+            if(agent.remainingDistance > agent.stoppingDistance) {
                 if(cc.rbChar)
                     cc.rbChar.Move(agent.velocity, false, false);
             }
@@ -89,12 +94,14 @@ public class NavCharacterControl : MonoBehaviour
     void OnArrive() {
         onArrive?.Invoke(target);
         StopAgent();
-        cc.iK?.EnableIk();
     }
 
     public void StopAgent() {
         isPathing = false;
+        if(target)
+            prevTarget = target;
         target = null;
+        cc.iK?.EnableIk();
         if(agent.isOnNavMesh && agent.hasPath)
             agent.ResetPath();
         // if(cc.rbChar)
@@ -112,11 +119,14 @@ public class NavCharacterControl : MonoBehaviour
     }
     public void SetGroundTarget(Vector3 pos) {
         SetPathIndicator(pos);
-        SetTarget(pathTarget.transform);
+        SetTarget(pathTarget.transform, true);
     }
-    public void SetTarget(Transform t) {
+    public void SetTarget(Transform t, bool overrideReset = false) {
         if(cc.charAnim && cc.charAnim.IsSitting) {
             cc.charAnim.Unsit();
+        }
+        if(isPathing && !overrideReset) {
+            StopAgent();
         }
         isPathing = true;
         cc.iK?.DisableIk();
@@ -133,8 +143,12 @@ public class NavCharacterControl : MonoBehaviour
     public void SetFaceTarget(Transform target) {
         faceTarget = target;
     }
-    public void AgentIsStopped(bool b) {
-        agent.isStopped = b;
+    public void ToggleAgentPause(bool b) {
+        pause = b;
+    }
+    public void ResumeLastTarget() {
+        if(!prevTarget) return;
+        SetTarget(prevTarget);
     }
 }
 }

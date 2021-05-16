@@ -15,6 +15,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
     public bool canDrag = true;
     [HideInInspector]
     public int slotIndex;
+    public System.Action onAssign;
     RectTransform canvasRt, dragRt;
 
     public void AssignItem(ItemInstance newItem) {
@@ -23,6 +24,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 
         item = newItem;
         newItem.onChange += RefreshUI;
+        onAssign?.Invoke();
         RefreshUI();
     }
 

@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿/// <summary>
+/// Adopted from Unity Wiki's implementation
+/// </summary>
+
+using UnityEngine;
 using System.Collections.Generic;
  
 public class SkinnedMeshCombiner : MonoBehaviour {

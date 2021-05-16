@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using m4k.Characters;
+using m4k.Interaction;
 
 namespace m4k.Progression {
 public class DialogueManager : Singleton<DialogueManager>
@@ -46,6 +47,7 @@ public class DialogueManager : Singleton<DialogueManager>
         currChoices = null;
         inDialogue = false;
         onEndDialogue?.Invoke();
+        InteractionManager.I.ToggleHideBlockInteractables(false);
     }
     public void ReplaceDialogue(string convoId) {
         Dialogue.Convo convo = currDialogue.GetConvo(convoId);
@@ -59,6 +61,7 @@ public class DialogueManager : Singleton<DialogueManager>
     public void AssignDialogue(Dialogue dialogue, Dialogue.Convo convo, int startLineIndex) {
         if(inDialogue && !replaceCurr)
             return;
+        InteractionManager.I.ToggleHideBlockInteractables(true);
         replaceCurr = false;
         paused = false;
         currDialogue = dialogue;

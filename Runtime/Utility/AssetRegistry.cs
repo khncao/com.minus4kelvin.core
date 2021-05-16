@@ -8,21 +8,31 @@ using m4k.Characters;
 
 namespace m4k {
 public class AssetRegistry : Singleton<AssetRegistry> {
-    public static DatabaseSO database;
-
-    Dictionary<string, Item> itemNameDict = new Dictionary<string, Item>();
-    // Dictionary<string, Item> itemGuidDict = new Dictionary<string, Item>();
-    Dictionary<string, Character> charDict = new Dictionary<string, Character>();
-    Dictionary<ItemTag, List<Item>> itemTagLists = new Dictionary<ItemTag, List<Item>>();
-    Dictionary<ItemType, List<Item>> itemTypeLists = new Dictionary<ItemType, List<Item>>();
-
+    static DatabaseSO database;
+    static string pathToDb = "Assets/Data/DatabaseSO.asset";
     static string[] searchFolders = new string[] { "Assets/Data" };
     // static string dataPath = "Assets/Data/";
+    public string dataPathOverride;
+
+    [System.NonSerialized]
+    Dictionary<string, Item> itemNameDict;
+    // Dictionary<string, Item> itemGuidDict = new Dictionary<string, Item>();
+    [System.NonSerialized]
+    Dictionary<string, Character> charDict;
+    [System.NonSerialized]
+    Dictionary<ItemTag, List<Item>> itemTagLists;
+    [System.NonSerialized]
+    Dictionary<ItemType, List<Item>> itemTypeLists;
     // Dictionary<string, Item> nameItemDict;
+
     protected override void Awake() {
         base.Awake();
         if(m_ShuttingDown) return;
         // nameItemDict = new Dictionary<string, Item>();
+        itemNameDict = new Dictionary<string, Item>();
+        charDict = new Dictionary<string, Character>();
+        itemTagLists = new Dictionary<ItemTag, List<Item>>();
+        itemTypeLists = new Dictionary<ItemType, List<Item>>();
 
         for(int i = 0; i < database.items.Count; ++i) {
             Item item = database.items[i];
@@ -108,7 +118,20 @@ public class AssetRegistry : Singleton<AssetRegistry> {
 #if UNITY_EDITOR
     static void Initialize() {
         if(database) return;
-        database = (DatabaseSO)AssetDatabase.LoadAssetAtPath("Assets/Data/DatabaseSO.asset", typeof(DatabaseSO));
+        database = (DatabaseSO)AssetDatabase.LoadAssetAtPath(pathToDb, typeof(DatabaseSO));
+        if(!database) {
+            string[] result = AssetDatabase.FindAssets("t:DatabaseSO");
+            if(result.Length > 0)
+                database = (DatabaseSO)AssetDatabase.LoadAssetAtPath<DatabaseSO>(AssetDatabase.GUIDToAssetPath(result[0]));
+        }
+        if(!database) {
+            Debug.LogWarning("DatabaseSO not found. Expected location: 'Assets/Data/DatabaseSO.asset'");
+        }
+    }
+
+    private void OnValidate() {
+        if(!string.IsNullOrEmpty(dataPathOverride))
+            searchFolders[0] = dataPathOverride;
     }
 
     [MenuItem("Tools/Update Database")]

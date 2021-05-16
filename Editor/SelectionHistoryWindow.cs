@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿/// <summary>
+/// Adopted from Unity's ECS/DOTS Sample
+/// </summary>
+
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System;

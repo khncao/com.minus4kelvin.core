@@ -14,6 +14,7 @@ public class InteractionManager : Singleton<InteractionManager>
 {
     public TMPro.TMP_Text interactTxt;
     public TMPro.TMP_Text cycleTxt;
+    public bool interactBlocked = false;
 
     List<Interactable> interactables = new List<Interactable>();
     Interactable currInteractable;
@@ -38,6 +39,18 @@ public class InteractionManager : Singleton<InteractionManager>
         currIndex = 0;
         UpdateCurrInteractable();
     }
+
+    public void ClearInteractables() {
+        interactables.Clear();
+        UpdateCurrInteractable();
+    }
+
+    public void ToggleHideBlockInteractables(bool b) {
+        interactBlocked = b;
+        interactTxt.enabled = !b;
+        cycleTxt.enabled = !b;
+    }
+
     void UpdateCurrInteractable() {
         int count = interactables.Count;
 
@@ -54,11 +67,11 @@ public class InteractionManager : Singleton<InteractionManager>
         interactables[currIndex].OnNonInteractable();
         currIndex = (currIndex + 1) % interactables.Count;
         interactables[currIndex].OnInteractable();
-        Debug.Log(currIndex);
+        // Debug.Log(currIndex);
         UpdateCurrInteractable();
     }
     public bool Interact() {
-        if(!currInteractable)
+        if(!currInteractable || interactBlocked)
             return false;
         currInteractable.Interact();
         return true;

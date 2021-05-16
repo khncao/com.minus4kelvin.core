@@ -11,6 +11,7 @@ public class Story {
 [System.Serializable]
 public class StorySegment {
     public Conditions startReqs, completeReqs;
+    public SerializableDictionary<string, int> counts;
     // public Objective objective;
     // public GuidReference objectiveObj;
     // public Objective objective { 

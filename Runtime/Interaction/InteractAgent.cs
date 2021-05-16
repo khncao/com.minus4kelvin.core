@@ -9,6 +9,7 @@ public class InteractAgent : MonoBehaviour
     public CharacterControl cc;
     public LayerMask interactLayers;
 
+    [System.NonSerialized]
     Collider[] hits = new Collider[10];
 
     private void Start() {
@@ -42,6 +43,7 @@ public class InteractAgent : MonoBehaviour
                 GetComponent<IDestroyable>().Destroy();
             }
             cc.navChar.target = null;
+            break;
         }
     }
 

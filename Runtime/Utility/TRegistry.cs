@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class TRegistry<T> 
 {
     public List<T> instances = new List<T>();
@@ -9,7 +10,6 @@ public class TRegistry<T>
 
     public void RegisterInstance(T t) {
         if(instances.Contains(t)) {
-            Debug.LogWarning("Registry already contains item");
             return;
         }
         instances.Add(t);

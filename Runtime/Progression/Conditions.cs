@@ -5,20 +5,29 @@ using m4k.InventorySystem;
 using m4k.Progression;
 
 namespace m4k {
+// need serialized counter, record start point or running count
+// serializing conditions to retain 
+// can also do progressive required items with destruction
 [System.Serializable]
-public class RecordGoal {
+public class RecordGoal { // for record stats(daily avg, total, etc)
     public string id;
     public long goal;
     public Record record;
 }
 
 [System.Serializable]
+public class CountGoal { // for 0 at start to goal
+    public long goal;
+    public long curr;
+}
+
+[System.Serializable]
 public class Conditions  
 {
     public bool removeRequiredItems;
-    [NonReorderable]
+    // [NonReorderable]
     public List<string> requiredStates;
-    [NonReorderable]
+    // [NonReorderable]
     public List<RecordGoal> requiredCounts;
     public List<ItemInstance> requiredItems;
     public System.Action<Conditions> onCheck, onComplete;

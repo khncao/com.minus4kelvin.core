@@ -8,32 +8,32 @@ namespace m4k.Interaction {
 [RequireComponent(typeof(Interactable))]
 public class NpcInteraction : MonoBehaviour
 {
-    // public Character character;
-    public Transform ikParent;
+    public CharacterControl cc;
+    // public Transform ikParent;
     public Dialogue dialogue;
-    public Character character;
-    CharacterIK characterIK;
+
     Interactable interactable;
     private void Start() {
-        characterIK = ikParent ? ikParent.GetComponentInChildren<CharacterIK>() : transform.parent.GetComponentInChildren<CharacterIK>();
         interactable = GetComponentInChildren<Interactable>();
+        if(!cc)
+            cc = GetComponentInParent<CharacterControl>();
     }
 
     void SetLookAt() {
-        if(!characterIK || !interactable.otherCol)
+        if(!cc || !cc.iK || !interactable.otherCol)
             return;
-        // characterIK.EnableIk();
-        // characterIK.SetLook(interactable.otherCol.GetComponentInChildren<PlayerController>().headTarget);
-        characterIK.SetLook(CharacterManager.I.Player.charAnim.headHold);
+        // cc.iK.EnableIk();
+        // cc.iK.SetLook(interactable.otherCol.GetComponentInChildren<PlayerController>().headTarget);
+        cc.iK.SetLook(CharacterManager.I.Player.charAnim.headHold);
     }
     void RemoveLookAt() {
-        if(!characterIK)
+        if(!cc || !cc.iK)
             return;
-        characterIK.SetLook(null);
+        cc.iK.SetLook(null);
     }
     public void OnInteractable() {
         SetLookAt();
-        // Game.I.SetFocusTarget(characterIK.headTarget, true);
+        // Game.I.SetFocusTarget(cc.iK.headTarget, true);
     }
     public void OnNonInteractable() {
         RemoveLookAt();
@@ -43,15 +43,21 @@ public class NpcInteraction : MonoBehaviour
     }
 
     public void StartDialogue() {
-        // DialogueManager.I.AssignDialogue("1 Test coded line\n2 line 2");
         if(dialogue) {
+            cc?.navChar.StopAgent();
             dialogue.AssignDialogue();
+            DialogueManager.I.onEndDialogue += OnEndDialogue;
         }
     }
     void EndDialogue() {
         if(DialogueManager.I && dialogue) {
             dialogue.EndDialogue();
         }
+    }
+
+    void OnEndDialogue() {
+        DialogueManager.I.onEndDialogue -= OnEndDialogue;
+        cc?.navChar.ResumeLastTarget();
     }
 }
 }

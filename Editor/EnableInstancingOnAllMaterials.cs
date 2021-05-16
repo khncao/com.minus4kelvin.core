@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿/// <summary>
+/// Adopted from Unity's ECS/DOTS Sample
+/// </summary>
+
+using UnityEngine;
 using UnityEditor;
 #if UNITY_EDITOR
 public static class EnableInstancingOnAllMaterials

@@ -202,7 +202,8 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         Cams.I?.ClearCamTarget();
         isCustomizing = false;
         // mannequinAnim.gameObject.SetActive(false);
-        Destroy(mannequin.gameObject);
+        if(mannequin)
+            Destroy(mannequin.gameObject);
         UI.ToggleActive(false);
         UI.Reset(itemLibraries);
     }

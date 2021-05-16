@@ -60,9 +60,9 @@ public class CharacterEquipment : MonoBehaviour
                 charEquips.Add(e);
 				if(!loadoutParent) continue;
 
-                var items = AssetRegistry.database.items;
+                var items = AssetRegistry.I.GetItemListByType(ItemType.Equip);
                 for(int i = 0; i < items.Count; ++i) {
-                    if(items[i].itemType != ItemType.Equip || !items[i].HasTag(t) ||!items[i].prefab) 
+                    if(!items[i].HasTag(t) || !items[i].prefab) 
                         continue;
                     GameObject inst = prequippedInst.Find(x=>x.name == items[i].prefab.name);
                     if(inst) {

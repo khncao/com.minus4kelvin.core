@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿/// <summary>
+/// Adopted from Unity's 3D Game Kit
+/// </summary>
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 

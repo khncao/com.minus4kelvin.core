@@ -226,7 +226,7 @@ public class Inventory
         onCurrencyChange?.Invoke(val, currency);
     }
 
-    public void AddItems(List<Item> its, List<int> amounts = null) {
+    public void AddItemAmounts(List<Item> its, List<int> amounts = null) {
         for(int i = 0; i < its.Count; ++i) {
             int a = amounts == null ? 0 : amounts[i];
             AddItemAmount(its[i], a);
@@ -299,6 +299,10 @@ public class Inventory
     ItemInstance[] FindAllExisting(Item item) {
         return Array.FindAll(items, x=>x != null && x.item == item);
         // return items.FindAll(x=>x != null && x.item == item);
+    }
+
+    public bool HasItem(Item item) {
+        return totalItemsList.Exists(x=>x.item == item);
     }
 
     public void OnBeforeSerialize() {

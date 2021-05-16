@@ -1,3 +1,7 @@
+/// <summary>
+/// Adopted from implementation in Unity's Standard Assets
+/// </summary>
+
 using UnityEngine;
 using System;
 

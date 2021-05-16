@@ -1,3 +1,7 @@
+/// <summary>
+/// Adopted from Unity Wiki's implementation
+/// </summary>
+
 using UnityEngine;
 using UnityEditor;
 public class FindMissingScriptsRecursively : EditorWindow 

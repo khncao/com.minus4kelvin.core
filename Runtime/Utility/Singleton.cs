@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿/// <summary>
+/// Adopted from Unity Wiki's implementation
+/// </summary>
+
+using UnityEngine;
 
 namespace m4k {
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
@@ -18,18 +22,20 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
          }
          lock (m_Lock)
          {
-               if (_instance == null)
-               {
-                  _instance = (T)FindObjectOfType(typeof(T));
-
-                  // if (_instance == null)
-                  // {
-                  //    // GameObject obj = new GameObject ();
-                  //    // obj.name = typeof ( T ).Name;
-                  //    // _instance = obj.AddComponent<T> ();  
-                  //    Debug.LogError("No instance for: " + typeof(T));
-                  // }
+               if(_instance != null) {
+                  return _instance;
                }
+
+               _instance = (T)FindObjectOfType(typeof(T));
+               // if (_instance == null)
+               // {
+               //    if (_instance == null) {
+               //       // GameObject obj = new GameObject ();
+               //       // obj.name = typeof ( T ).Name;
+               //       // _instance = obj.AddComponent<T> ();  
+               //       Debug.LogError("No instance for: " + typeof(T));
+               //    }
+               // }
 
                return _instance;
          }
