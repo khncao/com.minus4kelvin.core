@@ -8,7 +8,7 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - Tested working on Unity 2020.3.6f1+
 
 ### Installation
-- Add Git URL package through Package Manager
+- Add Git URL(https://github.com/khncao/com.minus4kelvin.core.git) through Unity Package Manager
 
 ### Running Goals
 - Refine framework features and optimize performance
