@@ -37,8 +37,10 @@ public class ProgressionManager : Singleton<ProgressionManager>
     public System.Action onRegisterCompletionState;
     public System.Action<Interactable> onRegisterInteractable;
 
-    List<Unlockable> unlockables = new List<Unlockable>();
+    // List<Unlockable> unlockables = new List<Unlockable>();
     List<Objective> objectives = new List<Objective>();
+
+    // structures for faster lookups. keys serialized as simple string arrays
     HashSet<string> completedStates = new HashSet<string>();
     HashSet<string> objectivesInProgress = new HashSet<string>();
     Dictionary<string, InteractableState> interactableStatesDict = new Dictionary<string, InteractableState>();
@@ -134,12 +136,12 @@ public class ProgressionManager : Singleton<ProgressionManager>
     }
 
     public void StartObjective(Objective objective) {
-        if(CheckCompletionState(objective.objectiveId)) 
+        if(CheckCompletionState(objective.ObjectiveId)) 
             return;
-        objectivesInProgress.Add(objective.objectiveId);
+        objectivesInProgress.Add(objective.ObjectiveId);
     }
     public void FinishObjective(Objective objective) {
-        objectivesInProgress.Remove(objective.objectiveId);
+        objectivesInProgress.Remove(objective.ObjectiveId);
     }
     public bool CheckIfObjectiveInProgress(string objectiveId) {
         return objectivesInProgress.Contains(objectiveId);
@@ -152,53 +154,53 @@ public class ProgressionManager : Singleton<ProgressionManager>
         }
         Debug.Log("Completed state: " + stateName);
         completedStates.Add(stateName);
-        CheckUnlockConditions();
+        // CheckUnlockConditions();
         onRegisterCompletionState?.Invoke();
     }
     public bool CheckCompletionState(string stateName) {
         return completedStates.Contains(stateName);
     }
-    public bool CheckCompletionStates(string[] stateNames) {
-        for(int i = 0; i < stateNames.Length; ++i) {
-            if(string.IsNullOrEmpty(stateNames[i]))
-                continue;
-            if(!completedStates.Contains(stateNames[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // public bool CheckCompletionStates(string[] stateNames) {
+    //     for(int i = 0; i < stateNames.Length; ++i) {
+    //         if(string.IsNullOrEmpty(stateNames[i]))
+    //             continue;
+    //         if(!completedStates.Contains(stateNames[i])) {
+    //             return false;
+    //         }
+    //     }
+    //     return true;
+    // }
 
-    void CheckUnlockConditions(bool loading = false) {
-        for(int i = 0; i < unlockables.Count; ++i) {
-            if(string.IsNullOrEmpty(unlockables[i].data.name)) {
-                Debug.LogError("Invalid id");
-                continue;
-            }
-            if(unlockables[i].unlocked) 
-                continue;
+    // void CheckUnlockConditions(bool loading = false) {
+    //     for(int i = 0; i < unlockables.Count; ++i) {
+    //         if(string.IsNullOrEmpty(unlockables[i].name)) {
+    //             Debug.LogError("Invalid id");
+    //             continue;
+    //         }
+    //         if(unlockables[i].unlocked) 
+    //             continue;
 
-            // if(!completedStates.Contains(unlockables[i].data.name)) {
-                if(!unlockables[i].CheckConditions()) 
-                    continue;
-            // }
-            if(!loading) {
-                completedStates.Add(unlockables[i].data.name);
-                Feedback.I.SendLineQueue(string.Format("Unlocked {0}", unlockables[i].data.description), true);
-            }
-        }
-    }
-    public bool CheckUnlocked(UnlockableData unlockableData) {
-        var existing = unlockables.FindAll(x=>x.data == unlockableData);
-        foreach(var x in existing) {
-            if(!x.unlocked)
-                return false;
-        }
-        return true;
-    }
-    public Unlockable GetUnlockable(UnlockableData data) {
-        return unlockables.Find(x=>x.data == data);
-    }
+    //         // if(!completedStates.Contains(unlockables[i].name)) {
+    //             if(!unlockables[i].CheckConditions()) 
+    //                 continue;
+    //         // }
+    //         if(!loading) {
+    //             completedStates.Add(unlockables[i].name);
+    //             Feedback.I.SendLineQueue(string.Format("Unlocked {0}", unlockables[i].description), true);
+    //         }
+    //     }
+    // }
+    // public bool CheckUnlocked(UnlockableData unlockableData) {
+    //     var existing = unlockables.FindAll(x=>x.data == unlockableData);
+    //     foreach(var x in existing) {
+    //         if(!x.unlocked)
+    //             return false;
+    //     }
+    //     return true;
+    // }
+    // public Unlockable GetUnlockable(UnlockableData data) {
+    //     return unlockables.Find(x=>x.data == data);
+    // }
 
     public void Serialize(ref ProgressionData data) {
         hasState = true;
@@ -250,7 +252,7 @@ public class ProgressionManager : Singleton<ProgressionManager>
         foreach(var i in _dialogueStates)
             dialogueStatesDict.Add(i.dialogueId, i);
 
-        CheckUnlockConditions(true);
+        // CheckUnlockConditions(true);
     }
 }
 }
