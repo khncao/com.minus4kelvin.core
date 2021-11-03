@@ -58,16 +58,14 @@ public class NavCharacterControl : MonoBehaviour
             if(agent.remainingDistance > agent.stoppingDistance) {
                 if(cc.rbChar)
                     cc.rbChar.Move(agent.velocity, false, false);
+                else
+                    cc.charAnim.SetMoveParams(0.5f, 0f, false);
             }
             else {
                 if(target && (target.position - transform.position).sqrMagnitude < Mathf.Pow(agent.stoppingDistance, 2)) {
                     OnArrive();
                 }
-                if(cc.rbChar)
-                    cc.rbChar.Move(Vector3.zero, false, false);
             }
-            if(!cc.rbChar)
-                cc.charAnim.SetMoveParams(0.5f, 0f, false);
         }
 
         if(!isPathing) {
