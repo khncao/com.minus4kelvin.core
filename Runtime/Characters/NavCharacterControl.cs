@@ -62,7 +62,6 @@ public class NavCharacterControl : MonoBehaviour
             else {
                 if(target && (target.position - transform.position).sqrMagnitude < Mathf.Pow(agent.stoppingDistance, 2)) {
                     OnArrive();
-                    cc.charAnim.SetMoveParams(0, 0, false);
                 }
                 if(cc.rbChar)
                     cc.rbChar.Move(Vector3.zero, false, false);
@@ -101,6 +100,7 @@ public class NavCharacterControl : MonoBehaviour
         if(target)
             prevTarget = target;
         target = null;
+        cc.charAnim.SetMoveParams(0, 0, false);
         cc.iK?.EnableIk();
         if(agent.isOnNavMesh && agent.hasPath)
             agent.ResetPath();
