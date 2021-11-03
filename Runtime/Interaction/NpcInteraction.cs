@@ -20,7 +20,7 @@ public class NpcInteraction : MonoBehaviour
     }
 
     void SetLookAt() {
-        if(!cc || !cc.iK || !interactable.otherCol)
+        if(!cc || !cc.iK)
             return;
         // cc.iK.EnableIk();
         // cc.iK.SetLook(interactable.otherCol.GetComponentInChildren<PlayerController>().headTarget);

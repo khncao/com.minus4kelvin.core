@@ -10,6 +10,7 @@ public class RandomAudioPlayer : MonoBehaviour
 {
     public Dictionary<Material, List<AudioClip>> matAudioDict = new Dictionary<Material, List<AudioClip>>();
     public List<MaterialAudioPool> matAudioPoolList;
+
     [System.Serializable]
     public class MaterialAudioPool {
         public Material material;
@@ -31,7 +32,11 @@ public class RandomAudioPlayer : MonoBehaviour
         origPitch = audioSource.pitch;
     }
 
-    public void PlayRandom(Material material) {
+    public void PlayRandomClip() {
+        PlayRandomClip(matAudioPoolList[0].material);
+    }
+
+    public void PlayRandomClip(Material material) {
         List<AudioClip> clips;
         
         if(material == null) {
@@ -46,6 +51,7 @@ public class RandomAudioPlayer : MonoBehaviour
             RandomizeVolumeAndPitch();
         }
     }
+
     public void PlayRandomClip(AudioClip clip) {
         audioSource.PlayOneShot(clip);
         RandomizeVolumeAndPitch();

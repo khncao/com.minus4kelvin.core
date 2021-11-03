@@ -211,7 +211,8 @@ public class ProgressionManager : Singleton<ProgressionManager>
         _interactableStates = interactableStatesDict.Values.ToArray();
         for(int i = 0; i < _interactableStates.Length; ++i) {
             var state = _interactableStates[i];
-            state.interactCount = _interactableStates[i].interactable.interactCount;
+            if(_interactableStates[i].interactable)
+                state.interactCount = _interactableStates[i].interactable.interactCount;
             _interactableStates[i] = state;
         }
 
@@ -219,7 +220,8 @@ public class ProgressionManager : Singleton<ProgressionManager>
         for(int i = 0; i < _dialogueStates.Length; ++i) {
             if(string.IsNullOrEmpty(_dialogueStates[i].dialogueId)) continue;
             var state = _dialogueStates[i];
-            state.persistConvoId = _dialogueStates[i].dialogue.persistConvoId;
+            if(_dialogueStates[i].dialogue)
+                state.persistConvoId = _dialogueStates[i].dialogue.persistConvoId;
             _dialogueStates[i] = state;
         }
 

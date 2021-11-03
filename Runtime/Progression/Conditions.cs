@@ -5,80 +5,86 @@ using m4k.InventorySystem;
 using m4k.Progression;
 
 namespace m4k {
-// need serialized counter, record start point or running count
-// serializing conditions to retain 
-// can also do progressive required items with destruction
-[System.Serializable]
-public class RecordGoal { // for record stats(daily avg, total, etc)
-    public string id;
-    public long goal;
-    public Record record;
-}
-
-[System.Serializable]
-public class CountGoal { // for 0 at start to goal
-    public long goal;
-    public long curr;
-}
 
 [System.Serializable]
 public class Conditions  
 {
     public bool removeRequiredItems;
-    // [NonReorderable]
+    public SerializableDictionary<Item, int> requiredItems;
+    public SerializableDictionary<string, long> requiredRecordTemp; // record goal for record period interval(hour/day/)
+    public SerializableDictionary<string, long> requiredRecordTotal;
     public List<string> requiredStates;
-    // [NonReorderable]
-    public List<RecordGoal> requiredCounts;
-    public List<ItemInstance> requiredItems;
-    public System.Action<Conditions> onCheck, onComplete;
+
+    public System.Action<Conditions> onChange;
+    public System.Action onComplete;
     
-    public bool hasCompleted { get { return completed; }}
+    public bool HasCompleted { get { return completed; }}
     [System.NonSerialized]
     bool completed = false;
 
-    public void RegisterCheckConditions() {
+    public void RegisterChangeListener() {
+        UnregisterChangeListener();
+        if(requiredRecordTemp.Count > 0 || requiredRecordTotal.Count > 0)
+            RecordManager.I.onChange += OnChange;
         if(requiredItems.Count > 0)
-            InventoryManager.I.mainInventory.onChange += CheckCompletion;
+            InventoryManager.I.mainInventory.onChange += OnChange;
         if(requiredStates.Count > 0) 
-            ProgressionManager.I.onRegisterCompletionState += CheckCompletion;
+            ProgressionManager.I.onRegisterCompletionState += OnChange;
     }
-    void CheckCompletion() {
+    public void UnregisterChangeListener() {
+        RecordManager.I.onChange -= OnChange;
+        ProgressionManager.I.onRegisterCompletionState -= OnChange;
+        InventoryManager.I.mainInventory.onChange -= OnChange;
+    }
+    void OnChange() {
+        onChange?.Invoke(this);
         CheckCompleteReqs();
     }
+
+    
     public bool CheckCompleteReqs() {
         if(completed) {
             return true;
         }
-        onCheck?.Invoke(this);
         
-        // foreach(var i in requiredCounts) {
-        //     if(i.record. < i.goal)
-        //         return false;
-        // }
+        foreach(var i in requiredRecordTotal) {
+            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
 
-        if(!ProgressionManager.I.CheckCompletionStates(requiredStates.ToArray())) {
-            return false;
+            if(rec.Sum < i.Value)
+                return false;
+        }
+        foreach(var i in requiredRecordTemp) {
+            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
+
+            if(rec.sessionVal < i.Value)
+                return false;
+        }
+
+        for(int i = 0; i < requiredStates.Count; ++i) {
+            if(string.IsNullOrEmpty(requiredStates[i]))
+                continue;
+            if(!ProgressionManager.I.CheckCompletionState(requiredStates[i])) {
+                return false;
+            }
         }
 
         foreach(var i in requiredItems) {
-            if(InventoryManager.I.mainInventory.GetItemTotalAmount(i.item) < i.amount) {
+            if(InventoryManager.I.mainInventory.GetItemTotalAmount(i.Key) < i.Value) {
                 return false;
             }
         }
         if(removeRequiredItems)
             RemoveRequiredItems();
 
-        ProgressionManager.I.onRegisterCompletionState -= CheckCompletion;
-        InventoryManager.I.mainInventory.onChange -= CheckCompletion;
-
         completed = true;
-        onComplete?.Invoke(this);
+        UnregisterChangeListener();
+        onComplete?.Invoke();
         return true;
     }
 
     void RemoveRequiredItems() {
-        for(int i = 0; i < requiredItems.Count; ++i) {
-            InventoryManager.I.mainInventory.RemoveItemAmount(requiredItems[i].item, requiredItems[i].amount, true);
+        foreach(var i in requiredItems) {
+            InventoryManager.I.mainInventory.RemoveItemAmount(i.Key, i.Value, true);
         }
     }
 }}
