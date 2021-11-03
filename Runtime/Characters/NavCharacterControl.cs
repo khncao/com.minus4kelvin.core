@@ -40,6 +40,8 @@ public class NavCharacterControl : MonoBehaviour
     float nextRepathThresh;
     private void Update()
     {
+        if(!agent.isOnNavMesh) return;
+
         if (target != null && (isPlayer || Time.time > nextRepathThresh)) {
             if((!agent.hasPath || agent.isPathStale) || target.position != lastTargetPos) {
                 agent.SetDestination(target.position);
@@ -51,14 +53,16 @@ public class NavCharacterControl : MonoBehaviour
         }
         
         agent.isStopped = !cc.charAnim.IsMobile || pause;
+
         if(agent.hasPath && cc.charAnim.IsMobile && isPathing) {
             if(agent.remainingDistance > agent.stoppingDistance) {
                 if(cc.rbChar)
                     cc.rbChar.Move(agent.velocity, false, false);
             }
             else {
-                if(target && isPathing) {
+                if(target && (target.position - transform.position).sqrMagnitude < Mathf.Pow(agent.stoppingDistance, 2)) {
                     OnArrive();
+                    cc.charAnim.SetMoveParams(0, 0, false);
                 }
                 if(cc.rbChar)
                     cc.rbChar.Move(Vector3.zero, false, false);
@@ -66,10 +70,6 @@ public class NavCharacterControl : MonoBehaviour
             if(!cc.rbChar)
                 cc.charAnim.SetMoveParams(0.5f, 0f, false);
         }
-        else {
-            cc.charAnim.SetMoveParams(0, 0, false);
-        }
-            
 
         if(!isPathing) {
             if(agent.hasPath) {

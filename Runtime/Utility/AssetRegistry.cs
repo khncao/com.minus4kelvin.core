@@ -101,9 +101,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         return chara;
     }
 
-    public GameScene GetSceneByName(string sceneName) {
-        return database.scenes.Find(x=>x.sceneName == sceneName);
-    }
     public List<Item> GetItemListByTag(ItemTag tag) {
         List<Item> get;
         itemTagLists.TryGetValue(tag, out get);
@@ -140,7 +137,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         Initialize();
         UpdateTypeRegistry<Item>("t:Item", searchFolders, ref database.items);
         UpdateTypeRegistry<Character>("t:Character", searchFolders, ref database.characters);
-        UpdateTypeRegistry<GameScene>("t:GameScene", searchFolders, ref database.scenes);
     }
 
     static void UpdateTypeRegistry<T>(string query, string[] searchFolders, ref List<T> l) where T : UnityEngine.Object
