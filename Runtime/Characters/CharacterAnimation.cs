@@ -21,7 +21,6 @@ public class CharacterAnimation : MonoBehaviour
 	public readonly int footfallHash = Animator.StringToHash("Footfall");
 	public readonly int onGroundHash = Animator.StringToHash("OnGround");
 	public readonly int crouchHash = Animator.StringToHash("Crouch");
-	public readonly int cleanFloorHash = Animator.StringToHash("CleanFloor");
 	public readonly int upperbodyGestureHash = Animator.StringToHash("UpperbodyGesture");
 	public readonly int fullbodyGestureHash = Animator.StringToHash("FullbodyGesture");
 	public readonly int rHandHoldHash = Animator.StringToHash("RHHold");
@@ -110,8 +109,9 @@ public class CharacterAnimation : MonoBehaviour
 	public void SetOrigAnims() {
 		anim.runtimeAnimatorController = origAnimController;
 	}
-	public void CleanFloor() {
-		anim.SetTrigger(cleanFloorHash);
+	// TODO: action key:anim in editor or playables for oneoff blending
+	public void DoAction(string key) {
+		anim.SetTrigger(key);
 	}
 	public void UpperbodyGesture() {
 		anim.SetTrigger(upperbodyGestureHash);
@@ -226,7 +226,7 @@ public class CharacterAnimation : MonoBehaviour
 			float footfall = anim.GetFloat(footfallHash);
 			if(Time.time - lastFootstepTime > footstepCD && footfall > 0.1f) {
 				// footstepAudioSource.PlayOneShot(footstepAudioSource.clip);
-				footstepAudioPlayer.PlayRandom(null);
+				footstepAudioPlayer.PlayRandomClip();
 				lastFootstepTime = Time.time;
 			}
 		}

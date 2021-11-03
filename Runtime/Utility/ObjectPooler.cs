@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.Utility {
+namespace m4k {
     public class ObjectPooler<T> where T : UnityEngine.MonoBehaviour, IPooled<T> {
         public T[] instances;
         public int activeCount;

@@ -30,7 +30,6 @@ public class ItemData {
 
 [System.Serializable]
 public class ItemInstance {
-    public int amount = 1;
     public string ItemName { get { 
         if(item) {
             if(string.IsNullOrEmpty(item.itemName))
@@ -40,25 +39,16 @@ public class ItemInstance {
         }
         return "";
     }}
-    public Item item;// { get { return _item; } }
+    public Item item;
+    public int amount = 1;
+
     [System.NonSerialized]
     public System.Action onChange;
-    // Item _item;
 
     public ItemInstance(Item i, int a) {
         item = i;
-        // _item = i;
         amount = a;
     }
-
-    // public void OnBeforeSerialize() {
-    //     if(_item)
-    //         itemName = _item.name;
-    // }
-    // public void OnAfterDeserialize() {
-    //     if(!string.IsNullOrEmpty(itemName))
-    //         _item = AssetRegistry.I.GetItemFromName(itemName);
-    // }
 }
 
 [CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
