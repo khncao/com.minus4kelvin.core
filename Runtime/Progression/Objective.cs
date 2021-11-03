@@ -9,21 +9,23 @@ namespace m4k.Progression {
 public class Objective : MonoBehaviour
 {
     public enum ObjectiveState { NotStarted, Started, Completed };
-    public StoryData story;
-    public string targetInteractId;
+
+    public string targetInteractId; // for serialize
     public string objectiveName, objectiveDescrip;
     public Dialogue.Choice objectiveChoice;
-    [HideInInspector]
-    public KeyAction choiceAction;
     public Dialogue.Convo begLines, midLines, endLines;
     public ItemInstance[] rewardItems;
     public Conditions startConds, completeConds;
     public bool autoStartOnCondsMet;
-    public string objectiveId { get { return name; }}
+
+    [HideInInspector]
+    public KeyAction choiceAction;
 
     public UnityEvent onStart, onCompleted;
     public System.Action<Dialogue.Choice> onComplete;
     public ObjectiveState state = ObjectiveState.NotStarted;
+
+    public string ObjectiveId { get { return name; }}
     
     TMPro.TMP_Text uiTxt;
     ProgressionManager progression;
@@ -33,34 +35,39 @@ public class Objective : MonoBehaviour
     }
     private void Start() {
         progression = ProgressionManager.I;
-        // choiceAction = new Dialogue.ChoiceAction();
+
         choiceAction.key = objectiveChoice.key;
-        // choiceAction.action = new UnityEvent();
         choiceAction.action.AddListener(()=>ProgressObjective());
-        if(string.IsNullOrEmpty(objectiveId)) {
+        if(string.IsNullOrEmpty(ObjectiveId)) {
             Debug.LogError("Objective missing id");
             return;
         }
         progression.RegisterObjective(this);
-        CheckLoadState();
-        
-        // foreach(CountGoal i in completeConds.requiredCounts) {
-        //     i.current.onChange += OnCountValueChange;
-        // }
+
+        if(progression.CheckIfObjectiveInProgress(ObjectiveId)) {
+            StartObjective(true);
+        }
+        else if(progression.CheckCompletionState(ObjectiveId)) {
+            EndObjective(true);
+        }
+
         if(state == ObjectiveState.NotStarted && startConds.CheckCompleteReqs() && autoStartOnCondsMet) {
             StartObjective();
         }
-        var interactS = progression.GetInteractableState(targetInteractId);
-        if(interactS != null)
-            OnInteractableRegistered(interactS.interactable);
         if(state != ObjectiveState.Completed) {
             progression.onRegisterInteractable += OnInteractableRegistered;
         }
+        else {
+            onCompleted?.Invoke();
+        }
+
+        var interactS = progression.GetInteractableState(targetInteractId);
+        if(interactS != null)
+            OnInteractableRegistered(interactS.interactable);
     }
 
     void OnInteractableRegistered(Interactable interactable) {
         if(interactable && interactable.id == targetInteractId) {
-            // transform.SetParent(interactable.transform);
             Dialogue dialogue = interactable.GetComponent<Dialogue>();
             if(dialogue)
                 dialogue.RegisterObjective(this);
@@ -71,61 +78,58 @@ public class Objective : MonoBehaviour
         progression.UnregisterObjective(this);
     }
 
-    void CheckLoadState() {
-        if(progression.CheckIfObjectiveInProgress(objectiveId)) {
-            StartObjective(true);
-        }
-        else if(progression.CheckCompletionState(objectiveId)) {
-            EndObjective(true);
-        }
-        if(state == ObjectiveState.Completed) onCompleted?.Invoke();
-    }
-
+    // GUI hud objective tracker entry
     void RegisterObjectiveTracker() {
         var uiInstance = progression.UI.InstantiateGetObjectiveTracker();
         uiTxt = uiInstance.GetComponent<TMPro.TMP_Text>();
 
-        // completeConds.RegisterCheckConditions();
-        // completeConds.onCheck += UpdateObjectiveProgress;
-
-        if(completeConds.requiredItems.Count > 0) {
-            InventoryManager.I.mainInventory.onChange += UpdateObjectiveProgress;
-        }
-        if(completeConds.requiredStates.Count > 0) {
-            progression.onRegisterCompletionState += UpdateObjectiveProgress;
-        }
-
-        // if(completeConds.requiredCounts.Length > 0)
-        //     Game.Instance.testCounter = completeConds.requiredCounts[0].current;
+        completeConds.RegisterChangeListener();
+        completeConds.onChange += UpdateObjectiveProgress;
 
         UpdateObjectiveProgress();
     }
+
     void RemoveObjectiveTracker() {
         if(uiTxt)
             Destroy(uiTxt.gameObject);
+        completeConds.UnregisterChangeListener();
     }
-    void UpdateObjectiveProgress() {
+
+    void UpdateObjectiveProgress(Conditions conds = null) {
         if(!uiTxt)
             return;
         string body = $" - {objectiveName}: {objectiveDescrip}.\n";
 
-        // move to tostring in condition class for general use
-        foreach(var i in completeConds.requiredStates) {
-            string col = progression.CheckCompletionState(i) ? "green" : "white";
-            body += string.Format("    <color={0}>- {1}</color>\n", col, i);
+        foreach(var i in completeConds.requiredRecordTotal) {
+            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
+            
+            string col = rec.Sum < i.Value ? "white" : "green";
+            body += $"    <color={col}>- {rec.id}: {rec.Sum}/{i.Value}</color>\n";
         }
-        // foreach(CountGoal i in completeConds.requiredCounts) {
-        //     string col = i.current.GetCount() < i.goal ? "white" : "green";
-        //     body += string.Format("    <color={0}>- {1}: {2}/{3}</color>\n", col, i.current.id, i.current.GetCount(), i.goal);
-        // }
+
+        foreach(var i in completeConds.requiredRecordTemp) {
+            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
+            
+            string col = rec.sessionVal < i.Value ? "white" : "green";
+            body += $"    <color={col}>- {rec.id}: {rec.sessionVal}/{i.Value}</color>\n";
+        }
+
+        foreach(var i in completeConds.requiredStates) {
+            if(string.IsNullOrEmpty(i)) 
+                continue;
+            string col = progression.CheckCompletionState(i) ? "green" : "white";
+            body += $"    <color={col}>- {i}</color>\n";
+        }
+
         foreach(var i in completeConds.requiredItems) {
-            if(!i.item) continue;
-            var currVal = InventoryManager.I.mainInventory.GetItemTotalAmount(i.item);
-            string col = currVal < i.amount ? "white" : "green";
-            body += string.Format("    <color={0}>- {1}: {2}/{3}</color>\n", col, i.item.itemName, currVal, i.amount);
+            if(!i.Key) continue;
+            var currVal = InventoryManager.I.mainInventory.GetItemTotalAmount(i.Key);
+            string col = currVal < i.Value ? "white" : "green";
+            body += $"    <color={col}>- {i.Key.itemName}: {currVal}/{i.Value}</color>\n";
         }
         uiTxt.text = body;
     }
+
 
     public void StartObjective(bool loading = false) {
         if(state != ObjectiveState.NotStarted) {
@@ -178,7 +182,7 @@ public class Objective : MonoBehaviour
         true);
             progression.FinishObjective(this);
             RemoveObjectiveTracker();
-            progression.RegisterCompletedState(objectiveId);
+            progression.RegisterCompletedState(ObjectiveId);
         }
         progression.onRegisterInteractable -= OnInteractableRegistered;
     }

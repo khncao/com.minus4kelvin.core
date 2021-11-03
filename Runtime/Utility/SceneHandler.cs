@@ -5,23 +5,27 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace m4k {
+[System.Serializable]
+public class SceneDependency {
+    public SceneReference scene;
+    public List<SceneReference> required;
+}
 public class SceneHandler : Singleton<SceneHandler>
 {
-    public GameScene mainMenuScene, newGameScene;
+    public SceneReference mainMenuScene, newGameScene;
     public Action onSceneChanged, onSceneLoaded, onSceneUnloaded, onStartSceneChange, onReturnToTitle;
     public Action<float> onSceneLoadProgress;
     public Scene currScene;
     public int prevSceneIndex = -1;
-    public AsyncOperation loadSceneAsync;
-    public List<GameScene> gameScenes;
-
+    public List<SceneDependency> sceneDependencies;
+    
     public int latestLoadedSceneIndex { get { return currSceneIndex; }}
     public Scene activeScene { get { return SceneManager.GetActiveScene(); }}
-    public bool isMainMenu { get { return activeScene.name == mainMenuScene.sceneName; }}
+    public bool isMainMenu { get { return activeScene.name == mainMenuScene.SceneName; }}
 
     int currSceneIndex;
-    HashSet<GameScene> loadedScenes = new HashSet<GameScene>();
-    // Dictionary<string, GameScene> nameSceneDict; 
+    HashSet<string> loadedScenes = new HashSet<string>();
+    AsyncOperation loadSceneAsync;
 
     protected override void Awake() {
         base.Awake();
@@ -35,7 +39,7 @@ public class SceneHandler : Singleton<SceneHandler>
     }
     private void Start() {
         for(int i = 0; i < SceneManager.sceneCount; ++i) {
-            var gs = AssetRegistry.I.GetSceneByName(SceneManager.GetSceneAt(i).name);
+            var gs = SceneManager.GetSceneAt(i).name;
             if(!loadedScenes.Contains(gs))
                 loadedScenes.Add(gs);
         }
@@ -46,17 +50,6 @@ public class SceneHandler : Singleton<SceneHandler>
         SceneManager.sceneUnloaded -= OnSceneUnloaded;
         SceneManager.activeSceneChanged -= OnSceneChanged;
     }
-
-    // void BuildSceneDatabase() {
-    //     foreach(var s in gameScenes) {
-    //         if(nameSceneDict.ContainsKey(s.sceneName)) continue;
-    //             nameSceneDict.Add(s.sceneName, s);
-    //     }
-    //     // for(int i = 0; i < SceneManager.sceneCountInBuildSettings; ++i) {
-    //     //     var scene = SceneManager.GetSceneByBuildIndex(i);
-    //     //     // nameSceneDict.Add(scene.name, )
-    //     // }
-    // }
 
     void OnSceneChanged(Scene a, Scene newScene) {
         Debug.Log($"OnChangeScene({newScene.buildIndex}: {newScene.name})");
@@ -71,7 +64,7 @@ public class SceneHandler : Singleton<SceneHandler>
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-        loadedScenes.Add(AssetRegistry.I.GetSceneByName(scene.name));
+        loadedScenes.Add(scene.name);
         onSceneLoaded?.Invoke();
         if(loadedScenes.Count > 1 && isMainMenu) {
             SetActiveScene(scene);
@@ -80,66 +73,61 @@ public class SceneHandler : Singleton<SceneHandler>
     }
     void OnSceneUnloaded(Scene scene) {
         onSceneUnloaded?.Invoke();
-        loadedScenes.Remove(AssetRegistry.I.GetSceneByName(scene.name));
+        loadedScenes.Remove(scene.name);
         Debug.Log($"OnSceneUnloaded: {scene.name}; Loaded: {loadedScenes.Count}");
     }
 
     public void ReturnToMainMenu() {
-        LoadScene(mainMenuScene, false);
+        LoadScene(mainMenuScene.SceneName, false);
     }
     
     // public void UnloadScene(int index, Action<AsyncOperation> callback) {
     //     var unload = SceneManager.UnloadSceneAsync(index);
     //     unload.completed += callback;
     // }
-    public void UnloadScene(GameScene scene, Action<AsyncOperation> callback = null) {
-        Debug.Log($"Unload {scene.sceneName}");
-        if(!SceneManager.GetSceneByName(scene.sceneName).IsValid())
+    public void UnloadScene(string sceneName, Action<AsyncOperation> callback = null) {
+        Debug.Log($"Unload {sceneName}");
+        if(!SceneManager.GetSceneByName(sceneName).IsValid())
             return;
-        var unload = SceneManager.UnloadSceneAsync(scene.sceneName);
+        var unload = SceneManager.UnloadSceneAsync(sceneName);
         unload.completed += callback;
     }
 
     Coroutine loadSceneRoutine = null;
 
     public void LoadSceneByName(string sceneName, bool additive) {
-        LoadScene(AssetRegistry.I.GetSceneByName(sceneName), additive);
+        LoadScene(sceneName, additive);
     }
-    public void LoadScene(GameScene scene, bool additive) {
-        if(scene == mainMenuScene) {
-            SceneManager.LoadScene(scene.sceneName);
+    public void LoadScene(string sceneName, bool additive) {
+        if(sceneName == mainMenuScene.SceneName) {
+            SceneManager.LoadScene(sceneName);
             return;
         }
-        if(SceneManager.GetSceneByName(scene.sceneName).IsValid()) {
-            Debug.LogWarning($"tried to load existing: {scene.sceneName}");
+        if(SceneManager.GetSceneByName(sceneName).IsValid()) {
+            Debug.LogWarning($"tried to load existing: {sceneName}");
             return;
         }
         if(loadSceneRoutine != null) {
-            Debug.LogWarning("already loading a scene: " + scene.sceneName);
+            Debug.LogWarning("already loading a scene: " + sceneName);
             return;
         }
-        if(!additive) {
-            foreach(var s in loadedScenes) {
-                if(s == mainMenuScene || scene.requiredScenes.Contains(s))
-                    continue;
-                UnloadScene(s);
-            }
-        }
-        Debug.Log(string.Format("LoadScene: {0}", scene.sceneName));
-        loadSceneRoutine = StartCoroutine(LoadSceneAsync(scene, additive));
+        
+        Debug.Log(string.Format("LoadScene: {0}", sceneName));
+        loadSceneRoutine = StartCoroutine(LoadSceneAsync(sceneName, additive));
     }
 
-    IEnumerator LoadSceneAsync(GameScene scene, bool additive) 
+    IEnumerator LoadSceneAsync(string sceneName, bool additive) 
     {
         onStartSceneChange?.Invoke();
 
-        for(int i = 0; i < scene.requiredScenes.Count; ++i) {
-            if(loadedScenes.Contains(scene.requiredScenes[i]))
+        List<SceneReference> dependencies = GetSceneDependencies(sceneName);
+        for(int i = 0; i < dependencies.Count; ++i) {
+            if(loadedScenes.Contains(dependencies[i].SceneName))
                 continue;
-            yield return SceneManager.LoadSceneAsync(scene.requiredScenes[i].sceneName, LoadSceneMode.Additive);
-            loadedScenes.Add(scene.requiredScenes[i]);
+            yield return SceneManager.LoadSceneAsync(dependencies[i].SceneName, LoadSceneMode.Additive);
+            loadedScenes.Add(dependencies[i].SceneName);
         }
-        loadSceneAsync = SceneManager.LoadSceneAsync(scene.sceneName, LoadSceneMode.Additive);
+        loadSceneAsync = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         
         // loadSceneAsync.allowSceneActivation = false;
         while(!loadSceneAsync.isDone) {
@@ -147,7 +135,7 @@ public class SceneHandler : Singleton<SceneHandler>
             yield return null;
         }
 
-        SetActiveScene(scene.sceneName);
+        SetActiveScene(sceneName);
     }
     public void TriggerAllowSceneActivation() {
         if(loadSceneAsync == null) return;
@@ -165,5 +153,8 @@ public class SceneHandler : Singleton<SceneHandler>
     // public GameScene GetSceneByName(string sceneName) {
     //     return sceneDB.scenes.Find(x=>x.sceneName == sceneName);
     // }
+    List<SceneReference> GetSceneDependencies(string sceneName) {
+        return sceneDependencies.Find(x=>x.scene.SceneName == sceneName).required;
+    }
 }
 }

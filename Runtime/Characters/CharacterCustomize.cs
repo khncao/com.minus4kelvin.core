@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using m4k.InventorySystem;
 using m4k.Characters;
-using m4k.Utility;
 
 namespace m4k.Characters.Customization {
 

@@ -40,6 +40,8 @@ public class NavCharacterControl : MonoBehaviour
     float nextRepathThresh;
     private void Update()
     {
+        if(!agent.isOnNavMesh) return;
+
         if (target != null && (isPlayer || Time.time > nextRepathThresh)) {
             if((!agent.hasPath || agent.isPathStale) || target.position != lastTargetPos) {
                 agent.SetDestination(target.position);
@@ -51,25 +53,20 @@ public class NavCharacterControl : MonoBehaviour
         }
         
         agent.isStopped = !cc.charAnim.IsMobile || pause;
+
         if(agent.hasPath && cc.charAnim.IsMobile && isPathing) {
             if(agent.remainingDistance > agent.stoppingDistance) {
                 if(cc.rbChar)
                     cc.rbChar.Move(agent.velocity, false, false);
+                else
+                    cc.charAnim.SetMoveParams(0.5f, 0f, false);
             }
             else {
-                if(target && isPathing) {
+                if(target && (target.position - transform.position).sqrMagnitude < Mathf.Pow(agent.stoppingDistance, 2)) {
                     OnArrive();
                 }
-                if(cc.rbChar)
-                    cc.rbChar.Move(Vector3.zero, false, false);
             }
-            if(!cc.rbChar)
-                cc.charAnim.SetMoveParams(0.5f, 0f, false);
         }
-        else {
-            cc.charAnim.SetMoveParams(0, 0, false);
-        }
-            
 
         if(!isPathing) {
             if(agent.hasPath) {
@@ -101,6 +98,7 @@ public class NavCharacterControl : MonoBehaviour
         if(target)
             prevTarget = target;
         target = null;
+        cc.charAnim.SetMoveParams(0, 0, false);
         cc.iK?.EnableIk();
         if(agent.isOnNavMesh && agent.hasPath)
             agent.ResetPath();

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 namespace m4k.Interaction {
-[RequireComponent(typeof(SphereCollider))]
+[RequireComponent(typeof(Collider))]
 public class TriggerInteraction : MonoBehaviour
 {
     [System.Serializable]
@@ -16,7 +16,7 @@ public class TriggerInteraction : MonoBehaviour
     Collider col;
 
     private void Start() {
-        col = GetComponent<SphereCollider>(); 
+        col = GetComponent<Collider>(); 
         col.isTrigger = true;
     }
 

@@ -27,6 +27,7 @@ public class CharacterManager : Singleton<CharacterManager>
     // public System.Action<PlayerController> onPlayerRegistered;
     public System.Action<CharacterControl> onCharacterRegistered, onPlayerRegistered;
     public Character focused;
+    public GameObject playerPrefab;
 
     Dictionary<Character, CharacterControl> charInstanceDict = new Dictionary<Character, CharacterControl>();
     // CharacterControl _Player;
@@ -36,11 +37,11 @@ public class CharacterManager : Singleton<CharacterManager>
         UI.SetCharacter(focused);
     }
 
-    public void RegisterPlayer(Character character, CharacterControl inst) {
-        if(RegisterCharacter(character, inst)) {
-            Player = inst;
-        }
-    }
+    // public void RegisterPlayer(Character character, CharacterControl inst) {
+    //     if(RegisterCharacter(character, inst)) {
+    //         Player = inst;
+    //     }
+    // }
 
     // public void RegisterPlayer(PlayerController player) {
     //     if(Player != null) {
@@ -91,6 +92,10 @@ public class CharacterManager : Singleton<CharacterManager>
         activeCharacters.Remove(character);
         charInstanceDict.Remove(character);
 
+    }
+
+    public GameObject SpawnPlayer() {
+        return Instantiate(playerPrefab);
     }
 }
 }

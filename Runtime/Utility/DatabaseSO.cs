@@ -15,6 +15,5 @@ public class AddressDatabase {
 public class DatabaseSO : ScriptableObject {
     public List<Item> items;
     public List<Character> characters;
-    public List<GameScene> scenes;
 }
 }
