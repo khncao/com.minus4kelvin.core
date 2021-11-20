@@ -24,6 +24,7 @@ public class UIThemeSO : ScriptableObject {
     public Color accent1;
     public Color tint1;
 
+#if UNITY_EDITOR
     [ContextMenu("Apply Theme")]
     void Apply() {
         // var objs = FindObjectsOfType<UIObject>();
@@ -67,4 +68,6 @@ public class UIThemeSO : ScriptableObject {
         
         AssetDatabase.SaveAssets();
     }
+#endif
+
 }
