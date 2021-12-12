@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using m4k.Characters;
-using m4k.InventorySystem;
+using m4k.Items;
 using m4k.Progression;
 
 namespace m4k {

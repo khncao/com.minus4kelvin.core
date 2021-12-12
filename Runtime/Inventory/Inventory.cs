@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using m4k;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public enum InventoryType { Bag, Storage, Characters, ItemShop, CharacterShop, Craft }
 
 // [Serializable]

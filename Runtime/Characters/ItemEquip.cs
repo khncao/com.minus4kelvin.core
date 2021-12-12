@@ -1,7 +1,7 @@
 
 
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 
 [CreateAssetMenu(fileName = "ItemEquip", menuName = "ScriptableObjects/Items/ItemEquip", order = 0)]
 public class ItemEquip : Item {

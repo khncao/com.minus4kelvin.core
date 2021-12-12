@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Linq;
 using m4k.Interaction;
-using m4k.InventorySystem;
+using m4k.Items;
 
 namespace m4k.Progression {
 [System.Serializable]

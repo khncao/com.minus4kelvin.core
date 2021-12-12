@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 // using Uween;
 
 namespace m4k.Interaction {

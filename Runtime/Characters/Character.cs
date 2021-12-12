@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 
 namespace m4k.Characters {
 public enum Sex { None = 0, Unknown = 1, Male = 10, Female = 20 }

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class InventoryUI : MonoBehaviour
 {
     public Canvas inventoryCanvas;

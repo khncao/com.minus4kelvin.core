@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public ItemInstance item;

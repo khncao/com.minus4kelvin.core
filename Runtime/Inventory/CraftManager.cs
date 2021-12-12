@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 // public enum CraftType { None, Bar, Kitchen, Brew, Foundry, Stonemason, Sawmill }
 // public class CraftType {
 //     public static readonly string Bar = "Bar";

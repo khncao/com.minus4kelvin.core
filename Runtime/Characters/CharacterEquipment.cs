@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 
 // public enum EquipType { Body, Head, Hat, Hairstyle, Outfit, RHand, LHand, }
 

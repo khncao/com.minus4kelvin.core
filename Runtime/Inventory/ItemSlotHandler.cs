@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 // [ExecuteInEditMode]
 public class ItemSlotHandler : MonoBehaviour, IDropHandler
 {

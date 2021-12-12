@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 // using UnityEngine.AddressableAssets;
 // using UnityEngine.ResourceManagement.AsyncOperations;
-using m4k.InventorySystem;
+using m4k.Items;
 using m4k.Characters;
 using m4k.Progression;
 

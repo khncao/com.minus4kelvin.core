@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class ItemArranger : MonoBehaviour { //ITaskInteractable
     public Item[] items;
     public GameObject[] itemInstances;

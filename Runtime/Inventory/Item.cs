@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 // using UnityEngine.AddressableAssets;
 // using UnityEngine.ResourceManagement;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 
 public enum ItemType {
     Item = 0, Buildable = 10, Character = 40, Recipe = 50, Equip = 60, Achievement = 100,

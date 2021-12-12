@@ -2,7 +2,7 @@
 // using System.Collections.Generic;
 using UnityEngine;
 // using m4k.BuildSystem;
-using m4k.InventorySystem;
+using m4k.Items;
 using m4k.Characters;
 
 namespace m4k {
