@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using m4k.Characters;
 
 namespace m4k.Progression {
@@ -11,10 +12,11 @@ public class DialogueUI : MonoBehaviour
     public GameObject dialogueUIObj;//, choicesObj;
     public TMP_Text speakerNameTxt, dialogueTxt;
     public Image speakerImgUI, choiceDivider;
-    public TMP_Text[] choicesTxt;
+    public List<TMP_Text> choicesTxt;
     public AudioClip nextLineSfx;
 
     DialogueManager dialogueManager;
+    int _highlightedChoiceInd;
 
     public void Init(DialogueManager dm) {
         dialogueManager = dm;
@@ -24,11 +26,11 @@ public class DialogueUI : MonoBehaviour
         dialogueManager.InputNextLine();
     }
 
-    public void UpdateDialogueUI(Character character, string line) {
+    public void UpdateDialogueUI(Character character, string line, bool usePortrait) {
         if(character) {
             UpdateDialogueSpeaker(character.name);
 
-            if(character.itemIcon) {
+            if(usePortrait && character.itemIcon) {
                 UpdateDialogueSprite(character.itemIcon);
             }
         }
@@ -52,24 +54,33 @@ public class DialogueUI : MonoBehaviour
     public void EnableChoices() {
         choiceDivider.enabled = true;
 
-        for(int i = 0; i < choicesTxt.Length; ++i) {
+        for(int i = 0; i < choicesTxt.Count; ++i) {
             choicesTxt[i].enabled = true;
         }
+        EventSystem.current.SetSelectedGameObject(choiceDivider.gameObject);
     }
     public void DisableChoices() {
         choiceDivider.enabled = false;
 
-        for(int i = 0; i < choicesTxt.Length; ++i) {
+        for(int i = 0; i < choicesTxt.Count; ++i) {
             if(choicesTxt[i])
                 choicesTxt[i].enabled = false;
         }
     }
 
-    public void ProcessChoices(List<Dialogue.Choice> choices) {
+    public void ProcessChoices(List<Choice> choices) {
         EnableChoices();
         
-        for(int i = 0; i < choicesTxt.Length; ++i) {
+        for(int i = 0; i < choicesTxt.Count; ++i) {
             choicesTxt[i].text = i < choices.Count && choices[i] != null ? choices[i].text : "";
+        }
+    }
+
+    public void SelectChoice() {
+        var choiceInd = choicesTxt.FindIndex(x=>x.gameObject == EventSystem.current.currentSelectedGameObject);
+        if(choiceInd != -1) {
+            dialogueManager.SelectChoice(choiceInd);
+            DisableChoices();
         }
     }
     

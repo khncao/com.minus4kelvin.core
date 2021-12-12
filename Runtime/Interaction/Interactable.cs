@@ -29,7 +29,6 @@ public class Interactable : MonoBehaviour
     public string description;
     public InteractableType interactableType;
     public bool destroyOnInteract;
-    public bool isKeyState; // for conditions; requires id
     public InteractableUnityEvents events;
     public Conditions conditions;
     public float interactCd;
@@ -65,8 +64,6 @@ public class Interactable : MonoBehaviour
             Debug.LogWarning("Non-self-triggering interactable does not have collider");
         }
         
-        if(string.IsNullOrEmpty(id))
-            id = name;
         if(string.IsNullOrEmpty(description)) {
             description = transform.parent.name;
         }
@@ -135,15 +132,6 @@ public class Interactable : MonoBehaviour
         interactCount++;
         events.onInteract?.Invoke();
         events.onInteractToggle?.Invoke(!IsToggled);
-
-        if(isKeyState && interactCount == 1){
-            if(string.IsNullOrEmpty(id)) {
-                Debug.LogWarning("Interactable tagged as key state has no ID");
-            }
-            else {
-                ProgressionManager.I.RegisterCompletedState(id);
-            }
-        }
 
         if(interactCd > 0) {
             isOnCd = true;

@@ -5,23 +5,33 @@ using m4k.InventorySystem;
 using m4k.Progression;
 
 namespace m4k {
-
+// TODO: condition serializereference; ToString; bool operators
 [System.Serializable]
 public class Conditions  
 {
     public bool removeRequiredItems;
     public SerializableDictionary<Item, int> requiredItems;
-    public SerializableDictionary<string, long> requiredRecordTemp; // record goal for record period interval(hour/day/)
+
+    [Tooltip("Record goal within one record period interval(hour/day/etc). Resets at next record period interval")]
+    public SerializableDictionary<string, long> requiredRecordTemp;
+
+    [Tooltip("Record goal for sum of archived values and instance period value")]
     public SerializableDictionary<string, long> requiredRecordTotal;
+
     public List<string> requiredStates;
+    public List<Object> requiredStateObjs;
+
+    // [SerializeReference]
+    // public List<Condition> conditions;
 
     public System.Action<Conditions> onChange;
     public System.Action onComplete;
     
-    public bool HasCompleted { get { return completed; }}
+    public bool HasCompleted { get { return _completed; }}
     [System.NonSerialized]
-    bool completed = false;
+    bool _completed = false;
 
+    // Listens to relevant onChange events to update condition completion status
     public void RegisterChangeListener() {
         UnregisterChangeListener();
         if(requiredRecordTemp.Count > 0 || requiredRecordTotal.Count > 0)
@@ -43,7 +53,7 @@ public class Conditions
 
     
     public bool CheckCompleteReqs() {
-        if(completed) {
+        if(_completed) {
             return true;
         }
         
@@ -53,6 +63,7 @@ public class Conditions
             if(rec.Sum < i.Value)
                 return false;
         }
+
         foreach(var i in requiredRecordTemp) {
             Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
 
@@ -67,6 +78,13 @@ public class Conditions
                 return false;
             }
         }
+        for(int i = 0; i < requiredStateObjs.Count; ++i) {
+            if(requiredStateObjs[i] == null)
+                continue;
+            if(!ProgressionManager.I.CheckCompletionState(requiredStateObjs[i].name)) {
+                return false;
+            }
+        }
 
         foreach(var i in requiredItems) {
             if(InventoryManager.I.mainInventory.GetItemTotalAmount(i.Key) < i.Value) {
@@ -76,7 +94,7 @@ public class Conditions
         if(removeRequiredItems)
             RemoveRequiredItems();
 
-        completed = true;
+        _completed = true;
         UnregisterChangeListener();
         onComplete?.Invoke();
         return true;

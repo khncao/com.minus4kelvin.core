@@ -10,8 +10,8 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 ### Installation
 - Add Git URL package through Package Manager
 
-### Running Goals
-- Refine framework features and optimize performance
+### Todo
+- Character system improvements with traits; integration with dialogue and AI
 - Further isolation of gameplay elements with defines
 
 ### Inventory
@@ -22,7 +22,8 @@ Includes various elements of a 3D mecanim character such as control, animation, 
 ### Interaction
 Various forms of 3D interaction(hover, click, trigger, visibility, etc). Multiple interactable cycling, UI, manager, etc. 
 ### Progression
-Dialogue, objectives, conditions, storyline, playables, states. States such as completion, dialogue, objectives, etc. are handled by Progression Manager.
+Todo: xNode optional integration, character features(affinity, storyline), better import/export text-scriptableobject
+Dialogue, objectives, conditions, playables, key states, etc. Aims for ease of writing extensive narratives with some branching capability. WIP
 ### UI
 Color picker, message queue, world to screen follow, UI themer, etc.
 ### Utility
