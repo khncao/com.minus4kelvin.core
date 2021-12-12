@@ -132,6 +132,10 @@ public class Interactable : MonoBehaviour
         interactCount++;
         events.onInteract?.Invoke();
         events.onInteractToggle?.Invoke(!IsToggled);
+        
+        if(interactCount == 1 && !string.IsNullOrEmpty(id)) {
+            ProgressionManager.I.RegisterCompletedState(id);
+        }
 
         if(interactCd > 0) {
             isOnCd = true;

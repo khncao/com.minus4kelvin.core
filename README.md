@@ -5,6 +5,8 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - TextMeshPro
 - Cinemachine
 - Timeline
+- (Optional)(NaughtyAttributes)[https://github.com/dbrizov/NaughtyAttributes] for editor QOL and some features
+- (Optional)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability
 - Tested working on Unity 2020.3.6f1+
 
 ### Installation

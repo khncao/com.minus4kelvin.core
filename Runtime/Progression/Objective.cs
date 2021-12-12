@@ -21,12 +21,14 @@ public class Objective : ScriptableObject
     [Tooltip("Actively listen to start conditions and start objective if start conditions met")]
     public bool autoStartOnCondsMet;
 
-    [Tooltip("Auto complete with no further interaction on conditions met")]
-    public bool autoCompleteOnCondsMet;
+    // [Tooltip("Auto complete with no further interaction on conditions met")]
+    // public bool autoCompleteOnCondsMet;
 
     [Tooltip("On conditions met, objective choice is registered to interactable dialogue. If auto start enabled, actively listens for conditions met")]
     public Conditions startConds;
     public Conditions completeConds, failConds;
+
+    [Tooltip("KeyActions(global, scene, interactables) that are called when not loading from save")]
     public List<string> onStartActions, onCompletedActions;
 
     [Tooltip("Next objective to automatically start in chain")]
@@ -62,6 +64,8 @@ public class Objective : ScriptableObject
         choiceAction = new KeyAction(objectiveChoice.key, ()=>ProgressObjective());
 
         // load state
+        state = ObjectiveState.NotStarted;
+
         if(_progression.CheckIfObjectiveInProgress(ObjectiveId) || (
             startConds.CheckCompleteReqs() && autoStartOnCondsMet
         )) {
@@ -72,6 +76,11 @@ public class Objective : ScriptableObject
             Debug.Log($"Loaded complete objective: {ObjectiveId}");
             CompleteObjective(true);
         }
+
+        // Reset private fields in ScriptableObjects
+        startConds.Init();
+        completeConds.Init();
+        failConds.Init();
     }
 
     // GUI hud objective tracker entry
@@ -81,11 +90,14 @@ public class Objective : ScriptableObject
 
         completeConds.RegisterChangeListener();
         failConds.RegisterChangeListener();
-        completeConds.onChange += UpdateObjectiveUI;
-        failConds.onChange += UpdateObjectiveUI;
+        completeConds.onChange -= OnConditionChange;
+        completeConds.onChange += OnConditionChange;
+        failConds.onChange -= OnConditionChange;
+        failConds.onChange += OnConditionChange;
+        failConds.onComplete -= OnFail;
         failConds.onComplete += OnFail;
 
-        UpdateObjectiveUI();
+        OnConditionChange();
     }
 
     void RemoveObjectiveTracker() {
@@ -93,52 +105,34 @@ public class Objective : ScriptableObject
             Destroy(_uiTxt.gameObject);
         completeConds.UnregisterChangeListener();
         failConds.UnregisterChangeListener();
-        completeConds.onChange -= UpdateObjectiveUI;
-        failConds.onChange -= UpdateObjectiveUI;
+        completeConds.onChange -= OnConditionChange;
+        failConds.onChange -= OnConditionChange;
         failConds.onComplete -= OnFail;
     }
 
-    void UpdateObjectiveUI(Conditions conds = null) {
+    void OnConditionChange(Conditions conds = null) {
         if(!_uiTxt)
             return;
         string body = $" - {objectiveName}: {objectiveDescrip}.\n";
 
-        foreach(var i in completeConds.requiredRecordTotal) {
-            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
-            
-            string col = rec.Sum < i.Value ? "white" : "green";
-            body += $"    <color={col}>- {rec.id}: {rec.Sum}/{i.Value}</color>\n";
+        foreach(var c in completeConds.conditions) {
+            body += $"    {c.ToString()}\n";
         }
 
-        foreach(var i in completeConds.requiredRecordTemp) {
-            Record rec = RecordManager.I.GetOrCreateRecord(i.Key);
-            
-            string col = rec.sessionVal < i.Value ? "white" : "green";
-            body += $"    <color={col}>- {rec.id}: {rec.sessionVal}/{i.Value}</color>\n";
-        }
-
-        foreach(var i in completeConds.requiredStates) {
-            if(string.IsNullOrEmpty(i)) 
-                continue;
-            string col = _progression.CheckCompletionState(i) ? "green" : "white";
-            body += $"    <color={col}>- {i}</color>\n";
-        }
-
-        foreach(var i in completeConds.requiredItems) {
-            if(!i.Key) continue;
-            var currVal = InventoryManager.I.mainInventory.GetItemTotalAmount(i.Key);
-            string col = currVal < i.Value ? "white" : "green";
-            body += $"    <color={col}>- {i.Key.itemName}: {currVal}/{i.Value}</color>\n";
-        }
         _uiTxt.text = body;
     }
 
     void OnFail() {
-        // onFail?.Invoke();
+        if(state != ObjectiveState.Started)
+            return;
+        state = ObjectiveState.Failed;
         RemoveObjectiveTracker();
         Debug.Log($"{objectiveName} failed");
     }
 
+    public void FailObjective() {
+        OnFail();
+    }
 
     public void StartObjective(bool loading = false) {
         if(state != ObjectiveState.NotStarted) {
@@ -148,12 +142,11 @@ public class Objective : ScriptableObject
         // Debug.Log("Started objective: " + objectiveName);
         if(!loading) {
             Feedback.I.SendLineQueue("Started objective: " + objectiveName, true);
+            ProgressionManager.I.InvokeKeyActions(onStartActions);
         }
         objectiveChoice.text = string.IsNullOrEmpty(midChoiceLine) ? choiceLine : midChoiceLine;
         _progression.StartObjective(this);
         RegisterObjectiveTracker();
-        // onStart?.Invoke();
-        ProgressionManager.I.InvokeKeyActions(onStartActions);
     }
 
     public void ProgressObjective() {
@@ -162,14 +155,12 @@ public class Objective : ScriptableObject
         if(state == ObjectiveState.NotStarted) {
             DialogueManager.I.ReplaceDialogue(begLines, 0);
             StartObjective();
-            if(!autoCompleteOnCondsMet)
-                return;
+            // if(!autoCompleteOnCondsMet)
+            //     return;
         }
-        bool completed = completeConds.CheckCompleteReqs();
-        if(completed) {
+        if(state != ObjectiveState.Completed && completeConds.CheckCompleteReqs()) {
             CompleteObjective();
             DialogueManager.I.ReplaceDialogue(endLines, 0);
-            RewardItems(InventoryManager.I.mainInventory);
         }
         else {
             DialogueManager.I.ReplaceDialogue(midLines, 0);
@@ -178,20 +169,21 @@ public class Objective : ScriptableObject
 
     public void CompleteObjective(bool loading = false) {
         state = ObjectiveState.Completed;
-        // onCompleted?.Invoke();
-        ProgressionManager.I.InvokeKeyActions(onCompletedActions);
+        
         _dialogue?.RemoveChoice(objectiveChoice);
         
         // Debug.Log("Finished objective: " + objectiveName);
         if(!loading) {
+            ProgressionManager.I.InvokeKeyActions(onCompletedActions);
             Feedback.I.SendLineQueue("Finished objective: " + objectiveName, 
         true);
             _progression.FinishObjective(this);
             RemoveObjectiveTracker();
             _progression.RegisterCompletedState(ObjectiveId);
+            completeConds.FinalizeConditions();
+            RewardItems(InventoryManager.I.mainInventory);
+            nextObjective?.StartObjective();
         }
-
-        nextObjective?.StartObjective();
     }
 
     void RewardItems(Inventory inventory) {

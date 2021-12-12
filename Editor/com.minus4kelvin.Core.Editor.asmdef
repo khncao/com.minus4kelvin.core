@@ -2,7 +2,7 @@
     "name": "com.minus4kelvin.Core.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:b39e51532aaf1aa42afe103341854a22"
+        "com.minus4kelvin.Core.Runtime"
     ],
     "includePlatforms": [
         "Editor"

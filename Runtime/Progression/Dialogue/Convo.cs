@@ -35,9 +35,9 @@ public class Convo : ScriptableObject
     [System.NonSerialized]
     Convo _instance;
 
-#if UNITY_EDITOR
-    // NaughtyAttributes added next commit with optional define
-    // [NaughtyAttributes.Button]
+#if UNITY_EDITOR && NAUGHTY_ATTRIBUTES
+    // mirror lines to lineSOs; lineSOs hold ref to existing lines
+    [NaughtyAttributes.Button]
     void UpdateLineSos() {
         for(int i = 0; i < lines.Count; ++i) {
             if(lineSos.Count < i + 1 || lineSos[i] == null) {
@@ -54,7 +54,8 @@ public class Convo : ScriptableObject
         }
     }
 
-    // [NaughtyAttributes.Button]
+    // create subconvo for convo choice branching
+    [NaughtyAttributes.Button]
     void CreateSubConvo() {
         var convo = ScriptableObject.CreateInstance<Convo>();
         convo.name = $"Subconvo_{subConvos.Count}";
@@ -63,7 +64,8 @@ public class Convo : ScriptableObject
         AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(this));
     }
 
-    // [NaughtyAttributes.Button]
+    // move to wizard utility for general subasset usage
+    [NaughtyAttributes.Button]
     void DeleteSelected() {
         string s = "";
         foreach(var i in Selection.objects) {
@@ -78,7 +80,7 @@ public class Convo : ScriptableObject
         AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(this));
     }
     
-    // [NaughtyAttributes.Button]
+    [NaughtyAttributes.Button]
     void DeleteLineSos() {
         if(!EditorUtility.DisplayDialog("Delete LineSO subassets", "Are you sure you want to delete all LineSO subassets?", "Confirm", "Cancel"))
             return;
@@ -86,7 +88,7 @@ public class Convo : ScriptableObject
         lineSos.Clear();
     }
 
-    // [NaughtyAttributes.Button]
+    [NaughtyAttributes.Button]
     void DeleteSubConvos() {
         if(!EditorUtility.DisplayDialog("Delete Convo subassets", "Are you sure you want to delete all Convo subassets?", "Confirm", "Cancel"))
             return;
