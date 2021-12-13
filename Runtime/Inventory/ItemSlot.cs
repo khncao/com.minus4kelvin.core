@@ -68,10 +68,19 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
             itemTxtUI.text = item.item.maxAmount > 1 && item.amount > 0 ? item.amount.ToString() : "";
 
             if(disableItemImg) {
-                disableItemImg.enabled = slotManager.interactableOverride ? 
-                !slotManager.isInteractableOverride : 
-                !item.item.conditions.CheckCompleteReqs() || 
-                (item.amount == 0);
+                if(slotManager.interactableOverride) {
+                    disableItemImg.enabled = !slotManager.isInteractableOverride;
+                }
+                else if(item.item is ItemConditional) {
+                    disableItemImg.enabled = item.item.Primary(null);
+                }
+                else {
+                    disableItemImg.enabled = item.amount == 0;
+                }
+                // disableItemImg.enabled = slotManager.interactableOverride ? 
+                // !slotManager.isInteractableOverride : 
+                // (item.item is ItemConditional && !item.item.conditions.CheckCompleteReqs()) || 
+                // item.amount == 0;
                 isInteractable = !disableItemImg.enabled;
             }
         }
@@ -87,10 +96,10 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 		if(eventData.button.ToString() == "Left")
 		{
 			if(eventData.clickCount == 2) {			
-                item.item.DoubleClick(this);
+                item.item.Secondary(this);
 			}
             else {
-                item.item.SingleClick(this);
+                item.item.Primary(this);
                 slotManager.selected = this;
                 // Debug.Log($"selected: {item.itemName}");
             }

@@ -25,6 +25,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     Dictionary<ItemTag, List<Item>> itemTagLists;
     [System.NonSerialized]
     Dictionary<ItemType, List<Item>> itemTypeLists;
+    Dictionary<System.Type, List<Item>> itemTypeListDict;
     [System.NonSerialized]
     Dictionary<string, Convo> idConvosDict;
 
@@ -38,6 +39,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         charDict = new Dictionary<string, Character>();
         itemTagLists = new Dictionary<ItemTag, List<Item>>();
         itemTypeLists = new Dictionary<ItemType, List<Item>>();
+        itemTypeListDict = new Dictionary<System.Type, List<Item>>();
         idConvosDict = new Dictionary<string, Convo>();
 
         for(int i = 0; i < database.items.Count; ++i) {
@@ -59,6 +61,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
                 itemTypeLists[item.itemType].Add(item);
             else
                 itemTypeLists.Add(item.itemType, new List<Item>(){ item });
+
+            if(itemTypeListDict.ContainsKey(item.GetType()))
+                itemTypeListDict[item.GetType()].Add(item);
+            else
+                itemTypeListDict.Add(item.GetType(), new List<Item>(){ item });
         }
 
         for(int i = 0; i < database.characters.Count; ++i) {
@@ -115,6 +122,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     public List<Item> GetItemListByType(ItemType type) {
         List<Item> get;
         itemTypeLists.TryGetValue(type, out get);
+        return get;
+    }
+    public List<Item> GetItemListByType(System.Type type) {
+        List<Item> get;
+        itemTypeListDict.TryGetValue(type, out get);
         return get;
     }
 

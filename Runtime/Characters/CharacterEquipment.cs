@@ -60,7 +60,7 @@ public class CharacterEquipment : MonoBehaviour
                 charEquips.Add(e);
 				if(!loadoutParent) continue;
 
-                var items = AssetRegistry.I.GetItemListByType(ItemType.Equip);
+                var items = AssetRegistry.I.GetItemListByType(typeof(ItemEquip));
                 for(int i = 0; i < items.Count; ++i) {
                     if(!items[i].HasTag(t) || !items[i].prefab) 
                         continue;

@@ -51,21 +51,24 @@ public class ItemInstance {
     }
 }
 
-[CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
+// [CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
 [System.Serializable]
 public class Item : ScriptableObject
 {
     public string itemName;
     public string description;
+#if NAUGHTY_ATTRIBUTES
+    [NaughtyAttributes.ShowAssetPreview(128, 128)]
+#endif
     public Sprite itemIcon;
     public ItemType itemType;
     public List<ItemTag> itemTags;
     public GameObject prefab;
     // public AssetReference prefabRef;
-    public Conditions conditions;
+    // public Conditions conditions;
     public int maxAmount = 1;
     public float value;
-    public string guid;
+    // public string guid;
 
     // public GameObject prefab { get { return prefabRef.Asset as GameObject; }}
     
@@ -88,11 +91,31 @@ public class Item : ScriptableObject
         return tagHash.Contains(tag);
     }
 
-    public virtual void SingleClick(ItemSlot slot) {
-        
+    /// <summary>
+    /// For input events such as primary/single click actions or CheckConditionsMet for ItemConditional
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Primary(ItemSlot slot) {
+        return true;
     }
-    public virtual void DoubleClick(ItemSlot slot) {
 
+    /// <summary>
+    /// For input events such as secondary/double click
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Secondary(ItemSlot slot) {
+        return true;
+    }
+
+    /// <summary>
+    /// For input events such as middle mouse/long press
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Tertiary(ItemSlot slot) {
+        return true;
     }
 
     public virtual void AddToInventory(int amount, bool notify) {
@@ -105,10 +128,10 @@ public class Item : ScriptableObject
         description = item.description;
         prefab = item.prefab;
         // prefabRef = item.prefabRef;
-        conditions = item.conditions;
+        // conditions = item.conditions;
         maxAmount = item.maxAmount;
         value = item.value;
-        guid = item.guid;
+        // guid = item.guid;
         itemIcon = item.itemIcon;
         itemTags = item.itemTags;
         itemType = item.itemType;

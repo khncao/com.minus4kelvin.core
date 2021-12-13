@@ -44,23 +44,19 @@ public class ProgressionManager : Singleton<ProgressionManager>
     
     private void Start() {
         UI.Init(this);
-        _achieves = AssetRegistry.I.GetItemListByType(ItemType.Achievement);
+        _achieves = AssetRegistry.I.GetItemListByType(typeof(ItemConditional));
         _achieveInv = new Inventory(16, 0, true);
 
-        foreach(var i in _achieves) {
-            int unlocked = 0;
-            if(i.conditions.CheckCompleteReqs()) {;
-                unlocked = 1;
-            }
-            _achieveInv.AddItemAmount(i, unlocked);
-        }
+        CheckAchievements();
         UI.achieveSlotManager.AssignInventory(_achieveInv);
     }
 
     public void CheckAchievements() {
+        if(_achieves == null || _achieves.Count < 1) 
+            return;
         foreach(var i in _achieves) {
             int unlocked = 0;
-            if(i.conditions.CheckCompleteReqs()) {;
+            if(i.Primary(null)) {;
                 unlocked = 1;
                 if(_achieveInv.GetItemTotalAmount(i) < 1)
                     _achieveInv.AddItemAmount(i, unlocked);

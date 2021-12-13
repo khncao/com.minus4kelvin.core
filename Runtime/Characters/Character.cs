@@ -38,20 +38,10 @@ public class Character : Item
     [Header("Character")]
     public List<CharExpression> expressions;
 
-    public override void SingleClick(ItemSlot slot)
+    public override bool Primary(ItemSlot slot)
     {
-        base.SingleClick(slot);
         CharacterManager.I.SetFocused(this);
-    }
-
-    public static Character NewInstance(string n) {
-        var charItem = ScriptableObject.CreateInstance<Character>();
-        charItem.itemName = n;
-        charItem.name = charItem.itemName;
-        charItem.itemType = ItemType.Character;
-        charItem.maxAmount = 1;
-        charItem.conditions = new Conditions();
-        return charItem;
+        return true;
     }
 }
 
