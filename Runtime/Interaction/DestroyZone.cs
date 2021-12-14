@@ -2,8 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DestroyZone : MonoBehaviour
+namespace m4k.Interaction {
+/// <summary>
+/// Process IDestroyables
+/// </summary>
+public class DestroyZone : MonoBehaviour, IInteractable
 {
+    public bool Interact(GameObject go) {
+        IDestroyable destroyable;
+        go.TryGetComponent<IDestroyable>(out destroyable);
+        if(destroyable != null) {
+            destroyable.Destroy();
+            return true;
+        }
+        else
+            return false;
+    }
     // public string collisionTag;
     // private void OnTriggerStay(Collider other) {
     //     var destroyable = other.GetComponent<IDestroyable>();
@@ -12,4 +26,5 @@ public class DestroyZone : MonoBehaviour
             
     //     // Destroy(other.transform.root.gameObject);
     // }
+}
 }

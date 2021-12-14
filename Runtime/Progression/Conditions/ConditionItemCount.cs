@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using m4k.Items;
 
 namespace m4k.Progression {
@@ -12,6 +13,10 @@ public class ConditionItemCount : Condition {
     string _lastCheckStatus = "";
 
     public override bool CheckConditionMet() {
+        if(!item) {
+            Debug.LogError("No item in condition");
+            return false;
+        }
         return Comparisons.Compare(op, InventoryManager.I.mainInventory.GetItemTotalAmount(item), val);
     }
 
@@ -21,6 +26,10 @@ public class ConditionItemCount : Condition {
     }
 
     public override string ToString() {
+        if(!item) {
+            Debug.LogError("No item in condition");
+            return "";
+        }
         int itemCt = InventoryManager.I.mainInventory.GetItemTotalAmount(item);
         bool pass = Comparisons.Compare(op, itemCt, val);
 

@@ -5,7 +5,7 @@ using UnityEngine.Animations;
 using UnityEngine.Playables;
 
 namespace m4k.Characters {
-public class CharacterAnimation : MonoBehaviour
+public class CharacterAnimation : MonoBehaviour, ISittable
 {
 	// public AnimationClip testClip1;
 	// PlayableGraph playableGraph;
@@ -199,6 +199,8 @@ public class CharacterAnimation : MonoBehaviour
 		preSitPosition = transform.position;
 		transform.position = seat.transform.position;
 		transform.rotation = seat.transform.rotation;
+		cc.navChar.agent.nextPosition = transform.position;
+		cc.navChar.agent.updatePosition = false;
 		sitting = true;
 		if(seatAudioSource) {
 			seatAudioSource.PlayOneShot(seatAudioSource.clip);
@@ -221,11 +223,9 @@ public class CharacterAnimation : MonoBehaviour
 
 	float footstepCD = 0.1f, lastFootstepTime;
 	void HandleFootsteps() {
-		// if(footstepAudioSource) {
-			if(footstepAudioPlayer) {
+		if(footstepAudioPlayer) {
 			float footfall = anim.GetFloat(footfallHash);
 			if(Time.time - lastFootstepTime > footstepCD && footfall > 0.1f) {
-				// footstepAudioSource.PlayOneShot(footstepAudioSource.clip);
 				footstepAudioPlayer.PlayRandomClip();
 				lastFootstepTime = Time.time;
 			}

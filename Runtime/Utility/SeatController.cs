@@ -1,19 +1,20 @@
 ﻿// using System.Collections;
 // using System.Collections.Generic;
 using UnityEngine;
-// using m4k.BuildSystem;
-using m4k.Items;
-using m4k.Characters;
 
 namespace m4k {
-public class SeatController : MonoBehaviour//, IBuildable
+public interface ISittable {
+    void Sit(SeatController seat);
+    void Unsit();
+}
+
+public class SeatController : MonoBehaviour, IInteractable
 {
     public int seatIndex;
     public Renderer visualRend;
     public Transform UITargetTrans;
-    public ItemArranger tableTop;
     public Renderer pointRenderer;
-    public CharacterAnimation charAnim;
+    public ISittable sitter;
     public bool hasZone, occupied, available = true;
     public System.Action<SeatController> onUpdateSeat;
 
@@ -27,13 +28,23 @@ public class SeatController : MonoBehaviour//, IBuildable
     void Start() {
         if(!visualRend)
             visualRend = transform.parent.GetComponentInChildren<Renderer>();
-        if(!tableTop)
-            tableTop = GetComponentInChildren<ItemArranger>();
         origPointerMat = pointRenderer.material;
     }
+
     private void OnDisable() {
         Feedback.I?.worldToScreenUIFollow.UnregisterFollowUI(UITargetTrans);
     }
+
+    public bool Interact(GameObject go) {
+        ISittable sittable;
+        go.TryGetComponent<ISittable>(out sittable);
+        if(sittable != null) {
+            sittable.Sit(this);
+            return true;
+        }
+        return false;
+    }
+
     public void RegisterLabels() {
         seatLabel = Feedback.I.worldToScreenUIFollow.RegisterDefaultTxtUI(visualRend, UITargetTrans).GetComponentInChildren<TMPro.TMP_Text>();
         
@@ -53,15 +64,14 @@ public class SeatController : MonoBehaviour//, IBuildable
         pointRenderer.material = origPointerMat;
     }
 
-    public void AssignSeat(CharacterAnimation ca) {
-        charAnim = ca;
+    public void AssignSeat(ISittable s) {
+        sitter = s;
         reserved = true;
     }
 
     public void UnassignSeat() {
         reserved = false;
-        tableTop?.HideItems();
-        charAnim = null;
+        sitter = null;
     }
     public void OnToggleBuildableVisual(bool b) {
         pointRenderer.enabled = b;
@@ -75,7 +85,7 @@ public class SeatController : MonoBehaviour//, IBuildable
             UpdateSeat();
         }
         else {
-            charAnim?.Unsit();
+            sitter?.Unsit();
         }
     }
     void OnChangeOccupied() {

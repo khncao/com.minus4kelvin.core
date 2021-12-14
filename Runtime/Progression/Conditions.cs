@@ -40,6 +40,7 @@ public class Conditions
     // [System.NonSerialized]
     // bool _completed = false;
 
+    // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     public void Init() {
         _alreadyFinalized = false;
     }

@@ -80,6 +80,9 @@ public class SceneHandler : Singleton<SceneHandler>
     public void ReturnToMainMenu() {
         LoadScene(mainMenuScene.SceneName, false);
     }
+    public void NewGameStart() {
+        LoadScene(newGameScene.SceneName, false);
+    }
     
     // public void UnloadScene(int index, Action<AsyncOperation> callback) {
     //     var unload = SceneManager.UnloadSceneAsync(index);

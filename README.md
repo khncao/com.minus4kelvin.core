@@ -11,6 +11,7 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 
 ### Installation
 - Add Git URL package through Package Manager
+- or, clone and add as local package
 
 ### Todo
 - Character system improvements with traits; integration with dialogue and AI
@@ -29,4 +30,4 @@ Dialogue, objectives, conditions, playables, key states, etc. Aims for ease of w
 ### UI
 Color picker, message queue, world to screen follow, UI themer, etc.
 ### Utility
-Asset registry database, record keeping, object pooler, material swapper, scene scriptableobject, etc.
+Asset registry database, record keeping, object pooler, material swapper, scene utilities, etc.

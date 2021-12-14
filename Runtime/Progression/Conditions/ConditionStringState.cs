@@ -11,7 +11,8 @@ public class ConditionStringState : Condition {
 
     public override bool CheckConditionMet() {
         if(string.IsNullOrEmpty(key)) {
-            Debug.LogWarning($"Key empty: {key}");
+            Debug.LogError("Key empty");
+            return false;
         }
         if(isNot)
             return !ProgressionManager.I.CheckCompletionState(key);
@@ -20,8 +21,10 @@ public class ConditionStringState : Condition {
     }
 
     public override string ToString() {
-        if(string.IsNullOrEmpty(key)) 
+        if(string.IsNullOrEmpty(key)) {
+            Debug.LogError("Key empty");
             return "";
+        }
             
         string col;
         if(isNot) {

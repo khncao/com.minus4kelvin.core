@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using m4k.Items;
-using m4k.Progression;
 
 namespace m4k.Interaction {
 public class InventoryInteraction : MonoBehaviour

@@ -13,7 +13,8 @@ public class ConditionRecordTotal : Condition {
 
     public override bool CheckConditionMet() {
         if(string.IsNullOrEmpty(key)) {
-            Debug.LogWarning($"Key empty: {key}");
+            Debug.LogError("Key empty");
+            return false;
         }
         Record rec = RecordManager.I.GetOrCreateRecord(key);
         
@@ -21,8 +22,10 @@ public class ConditionRecordTotal : Condition {
     }
 
     public override string ToString() {
-        if(string.IsNullOrEmpty(key))
+        if(string.IsNullOrEmpty(key)) {
+            Debug.LogError("Key empty");
             return "";
+        }
 
         Record rec = RecordManager.I.GetOrCreateRecord(key);
         

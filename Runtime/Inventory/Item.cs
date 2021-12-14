@@ -55,6 +55,9 @@ public class ItemInstance {
 [System.Serializable]
 public class Item : ScriptableObject
 {
+    /// <summary>
+    /// Display name; label
+    /// </summary>
     public string itemName;
     public string description;
 #if NAUGHTY_ATTRIBUTES

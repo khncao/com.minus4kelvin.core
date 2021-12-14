@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace m4k.Interaction {
-public interface IInteractAgent {
-    bool CanInteract { get; set; }
-    void OnInteract(Interactable i);
-}
-public interface IInteractable {
-    void Interact();
-}
 public class InteractionManager : Singleton<InteractionManager>
 {
     public TMPro.TMP_Text interactTxt;
     public TMPro.TMP_Text cycleTxt;
     public bool interactBlocked = false;
+
+    public bool CurrInteractEnforcesNeutral { get {
+        if(!currInteractable) return false;
+        return currInteractable.enforcePlayerNeutral;
+    }}
+    public Interactable CurrentInteractable { get { return currInteractable; }}
 
     List<Interactable> interactables = new List<Interactable>();
     Interactable currInteractable;
@@ -75,9 +74,6 @@ public class InteractionManager : Singleton<InteractionManager>
             return false;
         currInteractable.Interact();
         return true;
-    }
-    public bool CanInteract() {
-        return currInteractable;
     }
 }
 }

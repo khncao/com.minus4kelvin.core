@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
-using m4k.Characters;
 
 namespace m4k {
 public class Cams : Singleton<Cams>
@@ -13,6 +12,8 @@ public class Cams : Singleton<Cams>
     public List<CamBase> camBases;
 
     public bool MainCamActive { get { return currCamBase == mainCamBase; }}
+
+    Transform _mainCamTarget;
 
     protected override void Awake() {
         base.Awake();
@@ -25,22 +26,22 @@ public class Cams : Singleton<Cams>
     void Start() {
         Init();
         ClearCamTarget();
-        CharacterManager.I.onPlayerRegistered += SnapToPlayer;
-    }
-    void SnapToPlayer(CharacterControl cc) {
-        mainCamBase.transform.position = cc.charAnim.headHold.position;
     }
     
     public void Init() {
-        if(CharacterManager.I.Player)
-            SnapToPlayer(CharacterManager.I.Player);
-
         SetCam(mainCamBase);
     }
 
     // public void SetLookTarget(Transform t, bool isCharacter = false) {
     //     rigFaceTarget = t;
     // }
+    public void SetMainCamTarget(Transform t) {
+        mainCamBase.transform.position = t.position;
+        _mainCamTarget = t;
+    }
+    public void SetCamTarget(Transform t) {
+        currCamBase.transform.position = t.position;
+    }
     public void SetCamTarget(GameObject target) {
         SetCam("target");
         currCamBase.transform.position = target.transform.position;
@@ -68,10 +69,10 @@ public class Cams : Singleton<Cams>
     }
     
     private void FixedUpdate() {
-        if(!CharacterManager.I.Player || !currCamBase || currCamBase != mainCamBase)
+        if(!_mainCamTarget || !currCamBase || currCamBase != mainCamBase)
             return;
         
-        currCamBase.MoveRig(CharacterManager.I.Player.charAnim.headHold.position);
+        mainCamBase.MoveRig(_mainCamTarget.position);
         
         // if global cam focus target is set, and is aimable cam
         // if(rigFaceTarget) { 

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace m4k.UI {
+/// <summary>
+/// Have normal canvas UI objects follow a point in world space. Change script execution order near tail end to eliminate visible follow delays.
+/// </summary>
 public class WorldToScreenUIFollow : MonoBehaviour
 {
 	class UITarget {

@@ -136,7 +136,8 @@ public class Objective : ScriptableObject
 
     public void StartObjective(bool loading = false) {
         if(state != ObjectiveState.NotStarted) {
-            Debug.LogWarning("Started objective in started/completed state");
+            Debug.LogWarning($"Tried to start {ObjectiveId} more than once");
+            return;
         }
         state = ObjectiveState.Started;
         // Debug.Log("Started objective: " + objectiveName);

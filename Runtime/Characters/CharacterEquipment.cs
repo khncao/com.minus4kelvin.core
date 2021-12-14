@@ -118,8 +118,10 @@ public class CharacterEquipment : MonoBehaviour
 			Destroy(slot.instance);
 
 		slot.item = newItem;
-		if(!newItem || !newItem.prefab) 
+		if(!newItem || !newItem.prefab) {
+			Debug.LogWarning("Equip item null or no prefab");
 			return null;
+		}
 		slot.instance = Instantiate(slot.item.prefab);
 		if(slot.equipParent)
 			slot.instance.transform.SetParent(slot.equipParent, false);

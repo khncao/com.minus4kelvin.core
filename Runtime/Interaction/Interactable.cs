@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using m4k.Progression;
-using m4k.Characters;
+// using m4k.Characters;
 
 namespace m4k.Interaction {
 [System.Serializable]
@@ -17,7 +17,7 @@ public enum InteractableType {
     ActiveConditionListener = 101,
 }
 
-public class Interactable : MonoBehaviour
+public class Interactable : MonoBehaviour, IInteractable
 {
     [System.Serializable]
     public class InteractableUnityEvents {
@@ -116,10 +116,10 @@ public class Interactable : MonoBehaviour
         }
     }
 
-    public bool Interact() {
-        if(enforcePlayerNeutral && (!CharacterManager.I.Player.charAnim.IsMobile || !CharacterManager.I.Player.charAnim.IsNeutral)) {
-            return false;
-        }
+    public bool Interact(GameObject go = null) {
+        // if(enforcePlayerNeutral && (!CharacterManager.I.Player.charAnim.IsMobile || !CharacterManager.I.Player.charAnim.IsNeutral)) {
+        //     return false;
+        // }
         if(!conditions.CheckCompleteReqs()) {
             Feedback.I.SendLine("Requirements not met");
             return false;
@@ -142,8 +142,8 @@ public class Interactable : MonoBehaviour
             StartCoroutine(InteractCooldown());
         }
 
-        if(!string.IsNullOrEmpty(playerAnim))
-            CharacterManager.I.Player.charAnim.PlayAnimation(playerAnim);
+        // if(!string.IsNullOrEmpty(playerAnim))
+        //     CharacterManager.I.Player.charAnim.PlayAnimation(playerAnim);
         
         if(destroyOnInteract) {
             InteractionManager.I.UnregisterInteractable(this);

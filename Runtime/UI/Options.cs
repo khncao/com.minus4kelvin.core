@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿// Adapted from PixelCrushers menu system
+
+using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
 using System.Collections.Generic;

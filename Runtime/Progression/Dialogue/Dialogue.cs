@@ -12,6 +12,7 @@ public class Dialogue : MonoBehaviour
     public Character character;
     public string choiceLine;
     public string exitChoiceLine = "End";
+    public bool choicesOnConvoEnd = true;
     public bool useCharPortrait = true;
     public bool allowInteract = true;
     public bool blockPlayerInput = false;

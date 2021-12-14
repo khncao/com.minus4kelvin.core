@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace m4k.Progression {
 [Serializable]
@@ -9,6 +10,10 @@ public class ConditionObjectNameState : Condition {
     string _lastCheckStatus = "";
 
     public override bool CheckConditionMet() {
+        if(!keyObject) {
+            Debug.LogError("No keyObject");
+            return false;
+        }
         if(isNot)
             return !ProgressionManager.I.CheckCompletionState(keyObject.name);
         else
@@ -16,8 +21,10 @@ public class ConditionObjectNameState : Condition {
     }
 
     public override string ToString() {
-        if(keyObject == null) 
+        if(!keyObject) {
+            Debug.LogError("No keyObject");
             return "";
+        }
             
         string col;
         if(isNot) {

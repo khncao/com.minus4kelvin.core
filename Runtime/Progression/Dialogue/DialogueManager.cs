@@ -32,8 +32,6 @@ public class DialogueManager : Singleton<DialogueManager>
 
         if(!UI) UI = GetComponentInChildren<DialogueUI>();
         UI.Init(this);
-
-
     }
 
     public void StopDialogue() {
@@ -125,7 +123,8 @@ public class DialogueManager : Singleton<DialogueManager>
                 }
                 ReplaceDialogue(_currConvo.nextConvo, ind);
             }
-            else if(StartChoicePrompt()) {
+            else if(_currDialogue.choicesOnConvoEnd) {
+                StartChoicePrompt();
             }
             else {
                 StopDialogue();
