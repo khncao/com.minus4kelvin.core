@@ -9,7 +9,8 @@ namespace m4k {
 [RequireComponent(typeof(PlayableDirector))]
 public class PlayableController : MonoBehaviour
 {
-    public string id;
+    [Tooltip("If enabled, will register the name of finished playable assets as key states in ProgressionManager")]
+    public bool isKeyState;
     public bool isCinematic;
     PlayableDirector director;
 
@@ -36,8 +37,8 @@ public class PlayableController : MonoBehaviour
     }
 
     void OnStop(PlayableDirector director) {
-        if(!string.IsNullOrEmpty(id))
-            ProgressionManager.I.RegisterCompletedState(id);
+        if(isKeyState && director.playableAsset)
+            ProgressionManager.I.RegisterCompletedState(director.playableAsset.name);
         if(isCinematic)
             PlayableManager.I.ToggleCinematic(false);
         // Debug.Log("OnStop Playable");

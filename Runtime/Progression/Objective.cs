@@ -66,15 +66,15 @@ public class Objective : ScriptableObject
         // load state
         state = ObjectiveState.NotStarted;
 
-        if(_progression.CheckIfObjectiveInProgress(ObjectiveId) || (
-            startConds.CheckCompleteReqs() && autoStartOnCondsMet
-        )) {
-            Debug.Log($"Loaded inprogress objective: {ObjectiveId}");
-            StartObjective(true);
-        }
-        else if(_progression.CheckCompletionState(ObjectiveId)) {
+        if(_progression.CheckCompletionState(ObjectiveId)) {
             Debug.Log($"Loaded complete objective: {ObjectiveId}");
             CompleteObjective(true);
+        }
+        else if(_progression.CheckIfObjectiveInProgress(ObjectiveId) || 
+        (startConds.CheckCompleteReqs() && autoStartOnCondsMet)) 
+        {
+            Debug.Log($"Loaded inprogress objective: {ObjectiveId}");
+            StartObjective(true);
         }
 
         // Reset private fields in ScriptableObjects
@@ -178,8 +178,8 @@ public class Objective : ScriptableObject
             ProgressionManager.I.InvokeKeyActions(onCompletedActions);
             Feedback.I.SendLineQueue("Finished objective: " + objectiveName, 
         true);
-            _progression.FinishObjective(this);
             RemoveObjectiveTracker();
+            _progression.FinishObjective(this);
             _progression.RegisterCompletedState(ObjectiveId);
             completeConds.FinalizeConditions();
             RewardItems(InventoryManager.I.mainInventory);

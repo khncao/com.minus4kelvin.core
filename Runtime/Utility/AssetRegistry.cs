@@ -137,6 +137,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     }
 
 #if UNITY_EDITOR
+    public static DatabaseSO Database { 
+        get { 
+            Initialize(); 
+            return _database; 
+        }}
     static DatabaseSO _database;
     static string pathToDb = "Assets/Data/DatabaseSO.asset";
     static string[] searchFolders = new string[] { "Assets/Data" };

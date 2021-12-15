@@ -3,6 +3,7 @@ namespace m4k.Progression {
 [System.Serializable]
 public class ConditionalChoice {
     public string text;
+    public string key;
     public Convo nextConvo;
     public Conditions conditions;
     // replace dialogue convo if conditions met, skipping text
@@ -24,6 +25,7 @@ public class ConditionalChoice {
             if(_choice == null) {
                 _choice = new Choice();
                 _choice.text = text;
+                _choice.key = key;
                 _choice.nextConvo = nextConvo;
             }
             return _choice;

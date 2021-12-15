@@ -150,7 +150,10 @@ public class ProgressionManager : Singleton<ProgressionManager>
 
     public void Serialize(ref ProgressionData data) {
         foreach(var i in interactablesDict) {
-            _interactableStates.Add(i.Key, i.Value.interactCount);
+            if(_interactableStates.ContainsKey(i.Key))
+                _interactableStates[i.Key] = i.Value.interactCount;
+            else
+                _interactableStates.Add(i.Key, i.Value.interactCount);
         }
 
         data.interactableStates = _interactableStates;

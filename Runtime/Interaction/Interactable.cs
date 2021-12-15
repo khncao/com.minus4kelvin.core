@@ -24,7 +24,7 @@ public class Interactable : MonoBehaviour, IInteractable
         public UnityEvent onInteractable, onInteract, onNonInteractable;
         public ToggleUnityEvent onInteractToggle;
     }
-
+    [Tooltip("If id is not empty, will register with ProgressionManager for serializing interactCount. On first interact, will register id as key state")]
     public string id;
     public string description;
     public InteractableType interactableType;
@@ -45,7 +45,7 @@ public class Interactable : MonoBehaviour, IInteractable
     Material[] origMats, tempMats;
     Renderer rend;
     Collider col;
-    bool isInteractable, isOnCd;
+    bool isInteractable, isOnCd, _isRoot;
     float cd;
 
     private void Start() {
@@ -63,9 +63,11 @@ public class Interactable : MonoBehaviour, IInteractable
         && !col) {
             Debug.LogWarning("Non-self-triggering interactable does not have collider");
         }
-        
+        if(transform.root == transform) {
+            _isRoot = true;
+        }
         if(string.IsNullOrEmpty(description)) {
-            description = transform.parent.name;
+            description = _isRoot ? name : transform.parent.name;
         }
         if(!string.IsNullOrEmpty(id))
             ProgressionManager.I.RegisterInteractable(this);
@@ -148,7 +150,10 @@ public class Interactable : MonoBehaviour, IInteractable
         if(destroyOnInteract) {
             InteractionManager.I.UnregisterInteractable(this);
             OnNonInteractable();
-            Destroy(gameObject);
+            if(_isRoot)
+                Destroy(gameObject);
+            else
+                Destroy(transform.parent.gameObject);
         }
         return true;
     }

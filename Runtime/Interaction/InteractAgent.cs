@@ -61,7 +61,7 @@ public class InteractAgent : MonoBehaviour
     }
 
     private void OnTriggerEnter(Collider other) {
-        if(!navChar.target || other.transform != navChar.target)
+        if(!navChar || !navChar.target || other.transform != navChar.target)
             return;
 
         if(ProcessInteractions(other)) {

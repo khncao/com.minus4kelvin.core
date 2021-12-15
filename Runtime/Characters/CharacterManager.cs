@@ -6,9 +6,17 @@ using m4k.Characters.Customization;
 namespace m4k.Characters {
 [System.Serializable]
 public class CharacterState {
-    public string sceneName;
-    public Character character;
-    public GameObject instance;
+    public string name; // Character.name SO filename
+    public int impression;
+    // status, states
+    public CharacterState(string n) {
+        name = n;
+    }
+}
+
+[System.Serializable]
+public class CharacterData {
+    public SerializableDictionary<string, CharacterState> characterStates;
 }
 
 public class CharacterManager : Singleton<CharacterManager>
@@ -17,16 +25,37 @@ public class CharacterManager : Singleton<CharacterManager>
     public CharacterControl Player;
     public List<Character> activeCharacters;
     // public List<PlayerController> players;
-    // public System.Action<PlayerController> onPlayerRegistered;
-    public System.Action<CharacterControl> onCharacterRegistered, onPlayerRegistered;
     public Character focused;
     public GameObject playerPrefab;
+    public int minImpression = -100, maxImpression = 100;
+
+    // public System.Action<PlayerController> onPlayerRegistered;
+    public System.Action<CharacterControl> onCharacterRegistered, onPlayerRegistered;
 
     Dictionary<Character, CharacterControl> charInstanceDict = new Dictionary<Character, CharacterControl>();
+    SerializableDictionary<string, CharacterState> _characterStates = new SerializableDictionary<string, CharacterState>();
 
     public void SetFocused(Character character) {
         focused = character;
         UI.SetCharacter(focused);
+    }
+
+    public CharacterState TryGetCharacterState(string charName) {
+        CharacterState state = null;
+        _characterStates.TryGetValue(charName, out state);
+        return state;
+    }
+
+    public bool AddCharacterImpression(Character character, int amount) => AddCharacterImpression(character.name, amount);
+
+    public bool AddCharacterImpression(string charName, int amount) {
+        CharacterState state = null;
+        _characterStates.TryGetValue(charName, out state);
+        if(state != null) {
+            state.impression = Mathf.Clamp(state.impression + amount, minImpression, maxImpression);
+            return true;
+        }
+        return false;
     }
 
     // public void RegisterPlayer(Character character, CharacterControl inst) {
@@ -54,6 +83,13 @@ public class CharacterManager : Singleton<CharacterManager>
         return chara;
     }
     public bool RegisterCharacter(Character character, CharacterControl instance) {
+        if(!_characterStates.ContainsKey(character.name)) {
+            CharacterState state = new CharacterState(character.name);
+            state.impression = character.initialImpression;
+
+            _characterStates.Add(character.name, state);
+        }
+
         if(!activeCharacters.Contains(character)) {
             activeCharacters.Add(character);
             charInstanceDict.Add(character, instance);
@@ -89,6 +125,13 @@ public class CharacterManager : Singleton<CharacterManager>
 
     public GameObject SpawnPlayer() {
         return Instantiate(playerPrefab);
+    }
+
+    public void Serialize(ref CharacterData characterData) {
+        characterData.characterStates = _characterStates;
+    }
+    public void Deserialize(CharacterData characterData) {
+        _characterStates = characterData.characterStates;
     }
 }
 }

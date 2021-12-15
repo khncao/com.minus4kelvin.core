@@ -28,7 +28,6 @@ public class CharacterEquipment : MonoBehaviour
     public Equipmentizer equipmentizer;
     public Transform loadoutParent;
     public Item rHandItem;
-    public List<Item> prequipItems;
     public List<CharacterEquipInstance> charEquips;
 
     public CharacterEquipInstance rHand;
@@ -38,14 +37,17 @@ public class CharacterEquipment : MonoBehaviour
 #if UNITY_EDITOR
     [ContextMenu("Setup equip slots")]
     void SetupSlots() {
-        List<GameObject> prequippedInst = new List<GameObject>();
-        if(loadoutParent) {
+		// find active equip gameobjects under loadout
+		List<GameObject> prequippedInst = new List<GameObject>();
+        if(loadoutParent && prequippedInst.Count < 1) {
             for(int i = 0; i < loadoutParent.childCount; ++i) {
                 var go = loadoutParent.GetChild(i).gameObject;
                 if(!go.activeInHierarchy) continue;
                 prequippedInst.Add(go);
             }
         }
+
+		// create CharacterEquipInstance for each equipTag type; populate with item, instance, and equipParent if applicable
 		foreach(var t in ItemEquip.equipTags) {
 			if(charEquips.Find(x=>x.tag == t) == null) {
 				var e = new CharacterEquipInstance(t);
@@ -60,7 +62,8 @@ public class CharacterEquipment : MonoBehaviour
                 charEquips.Add(e);
 				if(!loadoutParent) continue;
 
-                var items = AssetRegistry.I.GetItemListByType(typeof(ItemEquip));
+                // var items = AssetRegistry.I.GetItemListByType(typeof(ItemEquip))
+				var items = AssetRegistry.Database.items;
                 for(int i = 0; i < items.Count; ++i) {
                     if(!items[i].HasTag(t) || !items[i].prefab) 
                         continue;
