@@ -6,6 +6,9 @@ using UnityEngine.Timeline;
 using m4k.Progression;
 
 namespace m4k {
+/// <summary>
+/// Handle PlayableDirector callbacks. Will try to find and set timeline binds from PlayableManager.
+/// </summary>
 [RequireComponent(typeof(PlayableDirector))]
 public class PlayableController : MonoBehaviour
 {
@@ -24,9 +27,9 @@ public class PlayableController : MonoBehaviour
         //     // BindAllSimilar<Cinemachine.CinemachineBrain>(director, "_cam", Cams.MainBrain);
         //     BindAllType<Cinemachine.CinemachineBrain>(director, Cams.MainBrain);
         // }
-        BindTimelineGlobal(director);
-
+        
         yield return new WaitForEndOfFrame();
+        BindTimelineGlobal(director);
         if(director.playOnAwake) OnStart(director);
     }
 
@@ -38,19 +41,38 @@ public class PlayableController : MonoBehaviour
 
     void OnStop(PlayableDirector director) {
         if(isKeyState && director.playableAsset)
-            ProgressionManager.I.RegisterCompletedState(director.playableAsset.name);
+            ProgressionManager.I?.RegisterCompletedState(director.playableAsset.name);
         if(isCinematic)
-            PlayableManager.I.ToggleCinematic(false);
+            PlayableManager.I?.ToggleCinematic(false);
         // Debug.Log("OnStop Playable");
     }
 
+    /// <summary>
+    /// Bind search criteria: no generic binding or bound object is disabled
+    /// Bind search key: output stream name or object name of existing bind
+    /// </summary>
+    /// <param name="director"></param>
     public void BindTimelineGlobal(PlayableDirector director)
     {
         foreach(var output in director.playableAsset.outputs) 
         {
-            if(!output.sourceObject || director.GetGenericBinding(output.sourceObject))
+            if(!output.sourceObject || output.outputTargetType == null) 
                 continue;
-            GameObject go = PlayableManager.I.GetBindTarget(output.streamName);
+
+            Object genBind = director.GetGenericBinding(output.sourceObject);
+            Component monoObj = null;
+            if(genBind && genBind is Component) 
+                monoObj = genBind as Component;
+            if(genBind)
+                if(!monoObj || monoObj && monoObj.gameObject.activeInHierarchy)
+                    continue;
+
+            // string s = $"Stream: {output.streamName}\nType: {output.outputTargetType}";
+            // if(output.sourceObject) s += $"\nObject: {output.sourceObject.name}";
+            // Debug.Log(s);
+            
+            GameObject go = null;
+            go = monoObj ? PlayableManager.I.GetBindTarget(monoObj.gameObject.name) : PlayableManager.I.GetBindTarget(output.streamName);
             if(!go)
                 continue;
             if(output.outputTargetType.Equals(typeof(GameObject))) {
@@ -61,6 +83,7 @@ public class PlayableController : MonoBehaviour
                 director.SetGenericBinding(output.sourceObject, bind);
             }
             
+            // handle cinemachine binds
             if(!(output.sourceObject is CinemachineTrack))
                 continue;
             var cinemachineTrack = output.sourceObject as CinemachineTrack;
