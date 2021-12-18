@@ -22,9 +22,9 @@ public class CharacterEquipInstance {
     }
 }
 
-public class CharacterEquipment : MonoBehaviour
+public class CharacterLoadout : MonoBehaviour
 {
-    public CharacterAnimation charAnim;
+	public CharacterControl charControl;
     public Equipmentizer equipmentizer;
     public Transform loadoutParent;
     public Item rHandItem;
@@ -33,6 +33,7 @@ public class CharacterEquipment : MonoBehaviour
     public CharacterEquipInstance rHand;
 
     bool initialized = false;
+	
 
 #if UNITY_EDITOR
     [ContextMenu("Setup equip slots")]
@@ -52,12 +53,12 @@ public class CharacterEquipment : MonoBehaviour
 			if(charEquips.Find(x=>x.tag == t) == null) {
 				var e = new CharacterEquipInstance(t);
                 
-				if(t == ItemTag.Holdable) {
-					e.equipParent = charAnim.rHandHold;
-					e.tag = ItemTag.Holdable;
-				}
+				// if(t == ItemTag.Holdable) {
+				// 	e.equipParent = charAnim.rHandHold;
+				// 	e.tag = ItemTag.Holdable;
+				// }
 				if(t == ItemTag.Hat) 
-					e.equipParent = charAnim.headHold;
+					e.equipParent = charControl.Head;
 
                 charEquips.Add(e);
 				if(!loadoutParent) continue;
@@ -82,6 +83,7 @@ public class CharacterEquipment : MonoBehaviour
     public void Start()
     {
         if(initialized) return;
+		charControl = GetComponent<CharacterControl>();
 		for(int i = 0; i < charEquips.Count; ++i) {
 			if(charEquips[i].instance) {
 				charEquips[i].rend = charEquips[i].instance.GetComponentInChildren<SkinnedMeshRenderer>();

@@ -6,12 +6,25 @@ namespace m4k.Characters {
 public class CharacterControl : MonoBehaviour
 {
     public Character character;
-    public CharacterAnimation charAnim;
-    public CharacterEquipment charEquip;
-    public CharacterIK iK;
-    public NavCharacterControl navChar;
-    public RigidbodyCharacterController rbChar;
+    public Animator animator;
     public float moveMult = 1f;
+
+    [SerializeField]
+    Transform head;
+
+    public Transform Head { 
+        get {
+            if(!head) head = animator.GetBoneTransform(HumanBodyBones.Head);
+            return head;
+        }
+    }
+
+    private void Awake() {
+        if(!animator) animator = GetComponent<Animator>();
+        if(animator && !head) {
+            head = animator.GetBoneTransform(HumanBodyBones.Head);
+        }
+    }
 
     private void Start() {
         if(!character) {

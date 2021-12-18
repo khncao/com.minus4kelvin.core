@@ -1,31 +1,30 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.Characters;
 
 namespace m4k.Interaction {
 public class InteractAgent : MonoBehaviour
 {
-    public NavCharacterControl navChar;
+    public IMoveTargetable movable;
     public LayerMask interactLayers;
 
     [System.NonSerialized]
     Collider[] hits = new Collider[10];
 
     private void Start() {
-        if(!navChar) navChar = GetComponent<NavCharacterControl>();
-        navChar.onArrive += OnArrive;
-        navChar.onNewTarget += OnNewTarget;
+        if(movable == null) movable = GetComponent<IMoveTargetable>();
+        movable.OnArrive += OnArrive;
+        movable.OnNewTarget += OnNewTarget;
     }
 
     private void OnDisable() {
-        if(!navChar) return;
-        navChar.onArrive -= OnArrive;
-        navChar.onNewTarget -= OnNewTarget;
+        if(movable == null) return;
+        movable.OnArrive -= OnArrive;
+        movable.OnNewTarget -= OnNewTarget;
     }
 
-    void OnNewTarget(Transform target) {
-        OnArrive(target);
+    void OnNewTarget() {
+        OnArrive();
     }
 
     bool ProcessInteractions(Collider other) {
@@ -38,34 +37,27 @@ public class InteractAgent : MonoBehaviour
         return interacted;
     }
 
-    void OnArrive(Transform target) {
+    void OnArrive() {
         hits.Clear<Collider>();
-        Physics.OverlapSphereNonAlloc(transform.position, 0.5f, hits, interactLayers, QueryTriggerInteraction.Collide);
-        // bool interacted = false;
+        Physics.OverlapSphereNonAlloc(transform.position, 1f, hits, interactLayers, QueryTriggerInteraction.Collide);
 
         for(int i = 0; i < hits.Length; ++i) {
-            if(!target || hits[i] == null || hits[i].transform != target) 
+            if(!movable.Target || hits[i] == null || hits[i].transform != movable.Target) 
                 continue;
 
             ProcessInteractions(hits[i]);
-            // if(ProcessInteractions(hits[i]))
-            //     interacted = true;
 
-            // process only first hit
-            navChar.target = null;
+            movable.Stop();
             break;
         }
-        // if(interacted) {
-        //     navChar.StopAgent();
-        // }
     }
 
     private void OnTriggerEnter(Collider other) {
-        if(!navChar || !navChar.target || other.transform != navChar.target)
+        if(movable == null || !movable.Target || other.transform != movable.Target)
             return;
 
         if(ProcessInteractions(other)) {
-            navChar.StopAgent();
+            movable.Stop();
         }
     }
 }

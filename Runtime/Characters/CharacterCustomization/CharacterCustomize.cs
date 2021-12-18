@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using m4k.Items;
-using m4k.Characters;
 
 namespace m4k.Characters.Customization {
 
@@ -18,6 +17,8 @@ public class CharacterCustomizeOptions {
 
     [System.NonSerialized]
     public CharacterControl charCtrl;
+    [System.NonSerialized]
+    public CharacterLoadout charLoadout;
 }
 
 [System.Serializable] 
@@ -53,11 +54,13 @@ public class CustomizeItemLibrary {
 public class CharacterCustomize : Singleton<CharacterCustomize>
 {
     public GameObject mannequinPrefab;
-    public CharacterControl mannequin;
     public CharacterCustomizeUI UI;
     public CustomizeItemLibrary[] itemLibraries;
     public List<CharacterCustomizeOptions> characterCustomizations = new List<CharacterCustomizeOptions>();
+
     bool isCustomizing;
+    CharacterControl mannequinControl;
+    CharacterLoadout mannequinEquips;
     CharacterCustomizeOptions currCharCustomize;
     List<string> givenNames = new List<string>(){ "Orange", "Red", "Bat", "Glow", "Dusk", };
 
@@ -92,11 +95,13 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
             Debug.LogWarning("item not found");
         return index;
     }
+
     public CustomizeItemLibrary GetLibrary(ItemTag type) {
         CustomizeItemLibrary library = null;
         itemLibraryDict.TryGetValue(type, out library);
         return library;
     }
+
     CharacterCustomizeOptions GetCharacterCustomize(string cn) {
         int ind = characterCustomizations.FindIndex(x=>x.characterName == cn);
         if(ind == -1) {
@@ -104,6 +109,7 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         }
         return characterCustomizations[ind];
     }
+
     public void ApplyCustomizationsOnCharacterSpawn(Character character, GameObject instance) {
         var cc = GetCharacterCustomize(character.name);
         if(cc == null) 
@@ -113,19 +119,23 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
             if(library == null) continue;
             cc.options[i].library = library;
         }
-        var chara = instance.GetComponent<CharacterControl>();
-        cc.charCtrl = chara;
+        cc.charCtrl = instance.GetComponent<CharacterControl>();
+        cc.charLoadout = instance.GetComponent<CharacterLoadout>();
+        cc.charLoadout.Start();
         cc.characterName = character.name;
         currCharCustomize = cc;
-        LoadCharacterCustomizations(cc.charCtrl);
+        LoadCharacterCustomizations(cc.charLoadout);
     }
+
     public void CustomizeFocused() {
         if(!CharacterManager.I.focused) return;
         SetCharacter(CharacterManager.I.focused);
     }
+
     public void CustomizePlayer() {
         SetCharacter(CharacterManager.I.Player);
     }
+
     public void SetCharacter(Character character) {
         var chara = CharacterManager.I.GetCharInstance(character);
         if(!chara) {
@@ -140,10 +150,11 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         // isCurrPlayer = character == Characters.I.Player.cc;
         isCustomizing = true;
         // mannequinAnim.gameObject.SetActive(true);
-        var mannequin = Instantiate(mannequinPrefab);
-        mannequin.transform.position = new Vector3(0, 1000f, 0);
-        this.mannequin = mannequin.GetComponentInChildren<CharacterControl>();
-
+        var mannequinInst = Instantiate(mannequinPrefab);
+        mannequinInst.transform.position = new Vector3(0, 1000f, 0);
+        mannequinControl = mannequinInst.GetComponent<CharacterControl>();
+        mannequinEquips = mannequinInst.GetComponent<CharacterLoadout>();
+        
         var cc = GetCharacterCustomize(character.character.name);
         if(cc == null) {
             // Debug.Log("Creating new customization profile");
@@ -156,21 +167,25 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
                 option.library = itemLibraries[i];
                 cc.options.Add(option);
 
-                var charEquip = character.charEquip.GetSlotFromTag(itemLibraries[i].optionType);
-                if(charEquip == null || !charEquip.item) 
+                cc.charCtrl = character;
+                cc.charLoadout = character.GetComponent<CharacterLoadout>();
+
+                var equip = cc.charLoadout.GetSlotFromTag(itemLibraries[i].optionType);
+
+                if(equip == null || !equip.item) 
                     continue;
-                option.itemName = charEquip.item.name;
-                itemLibraries[i].tempItemInd = GetItemIndex(charEquip.item);
+                option.itemName = equip.item.name;
+                itemLibraries[i].tempItemInd = GetItemIndex(equip.item);
             }
         }
 
         cc.charCtrl = character;
         currCharCustomize = cc;
-        LoadCharacterCustomizations(this.mannequin);
+        LoadCharacterCustomizations(mannequinEquips);
 
         UI.SetupOptions(currCharCustomize);
-        this.mannequin.charAnim.TogglePoseMode(true);
-            Cams.I.SetCamTarget(this.mannequin.gameObject);
+        this.mannequinEquips.GetComponent<Animator>().SetBool("pose", true);
+            Cams.I.SetCamTarget(this.mannequinEquips.gameObject);
     }
 
     public void FinalizeCharacter() {
@@ -192,7 +207,7 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
                 o.blendShapes[k] = o.library.bsSliders[k].slider1.value;
             }
         }
-        LoadCharacterCustomizations(currCharCustomize.charCtrl);
+        LoadCharacterCustomizations(currCharCustomize.charLoadout);
 
         CancelCustomize();
     }
@@ -201,23 +216,23 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
         Cams.I?.ClearCamTarget();
         isCustomizing = false;
         // mannequinAnim.gameObject.SetActive(false);
-        if(mannequin)
-            Destroy(mannequin.gameObject);
+        if(mannequinEquips)
+            Destroy(mannequinEquips.gameObject);
         UI.ToggleActive(false);
         UI.Reset(itemLibraries);
     }
 
     public void MannequinEquipItem(CustomizeItemLibrary library, Item item) {
-        library.itemInstances[library.tempItemInd] = mannequin.charEquip.EquipItem(item);
+        library.itemInstances[library.tempItemInd] = mannequinEquips.EquipItem(item);
     }
     public void MannequinChangeEquipColor(Item item, Color color, int matInd) {
-        mannequin.charEquip.ChangeEquipColor(item, color, matInd);
+        mannequinEquips.ChangeEquipColor(item, color, matInd);
     }
     public void MannequinSetBlendshapeWeight(Item item, int bsInd, float weight) {
-        mannequin.charEquip.SetBlendshapeWeight(item, bsInd, weight);
+        mannequinEquips.SetBlendshapeWeight(item, bsInd, weight);
     }
 
-    void LoadCharacterCustomizations(CharacterControl chara) {
+    void LoadCharacterCustomizations(CharacterLoadout charEquip) {
         for(int i = 0; i < currCharCustomize.options.Count; ++i) {
             var o = currCharCustomize.options[i];
             if(string.IsNullOrEmpty(o.itemName)) {
@@ -227,20 +242,20 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
             var item = AssetRegistry.I.GetItemFromName(o.itemName);
             o.library.tempItemInd = GetItemIndex(item);
 
-            var equipInst = chara.charEquip.EquipItem(item);
+            var equipInst = charEquip.EquipItem(item);
 
-            if(chara == mannequin) {
+            if(charEquip == mannequinEquips) {
                 if(!equipInst)
                     Debug.LogWarning("no equip instance");
                 o.library.itemInstances[o.library.tempItemInd] = equipInst;
             }
             if(o.colors != null)
                 for(int j = 0; j < o.colors.Length; ++j) {
-                    chara.charEquip.ChangeEquipColor(item, o.colors[j], j);
+                    charEquip.ChangeEquipColor(item, o.colors[j], j);
                 }
             if(o.blendShapes != null)
                 for(int k = 0; k < o.blendShapes.Length; ++k) {
-                    chara.charEquip.SetBlendshapeWeight(item, k, o.blendShapes[k]);
+                    charEquip.SetBlendshapeWeight(item, k, o.blendShapes[k]);
                 }
         }
     }
@@ -268,7 +283,7 @@ public class CharacterCustomize : Singleton<CharacterCustomize>
                 o.blendShapes[j] = Random.Range(0, 101);
             }
         }
-        LoadCharacterCustomizations(mannequin);
+        LoadCharacterCustomizations(mannequinEquips);
         UI.UpdateOptions(currCharCustomize);
     }
 

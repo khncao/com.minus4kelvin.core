@@ -13,6 +13,7 @@ public class CharacterIK : MonoBehaviour
     public float bodyWeight = 0.2f, headWeight = 0.7f, eyeWeight = 0.2f, clampWeight = 0.5f;
     public bool debug;
     // public TwoBoneIKConstraint rHandIk;
+    
     Transform lookTarget, rHandTarget, lHandTarget;
     Transform faceTarget;
     float ikTimer, ikWeight;
@@ -20,12 +21,10 @@ public class CharacterIK : MonoBehaviour
     float lookTimer, faceTimer, rHandTimer;
     Animator anim;
     bool facing, looking, rHandIkBool;
-    NavCharacterControl nav;
     Transform prevLookTarget, prevRHandTarget;
 
     private void Start() {
         anim = GetComponentInChildren<Animator>();
-        nav = GetComponent<NavCharacterControl>();
     }
 
     public void EnableIk() {

@@ -93,7 +93,6 @@ public class CharacterManager : Singleton<CharacterManager>
         if(!activeCharacters.Contains(character)) {
             activeCharacters.Add(character);
             charInstanceDict.Add(character, instance);
-            instance.charEquip?.Start();
             CharacterCustomize.I.ApplyCustomizationsOnCharacterSpawn(character, instance.gameObject);
             onCharacterRegistered?.Invoke(instance);
 
@@ -102,7 +101,7 @@ public class CharacterManager : Singleton<CharacterManager>
             //     players.Add(player);
             if(instance.CompareTag("Player")) {
                 Player = instance;
-                Cams.I.SetMainCamTarget(instance.charAnim.headHold);
+                Cams.I.SetMainCamTarget(instance.Head);
                 onPlayerRegistered?.Invoke(Player);
             }
                 
