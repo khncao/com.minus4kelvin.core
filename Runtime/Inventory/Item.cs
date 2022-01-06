@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 // using UnityEngine.AddressableAssets;
 // using UnityEngine.ResourceManagement;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 
 public enum ItemType {
     Item = 0, Buildable = 10, Character = 40, Recipe = 50, Equip = 60, Achievement = 100,
@@ -18,29 +18,35 @@ public enum ItemTag {
     
 }
 
+/// <summary>
+/// For inventory serialization
+/// </summary>
 [System.Serializable]
-public class ItemData {
-    public string itemName;
+public struct ItemData {
+    public string name;
     public int amount;
     public ItemData(string n, int a) {
-        itemName = n;
+        name = n;
         amount = a;
     }
 }
 
+/// <summary>
+/// For inspector editable item and amounts; used as data for inventory slots, transfers, etc.
+/// </summary>
 [System.Serializable]
 public class ItemInstance {
-    public string ItemName { get { 
+    public string DisplayName { get { 
         if(item) {
-            if(string.IsNullOrEmpty(item.itemName))
+            if(string.IsNullOrEmpty(item.displayName))
                 return item.name;
             else 
-                return item.itemName;
+                return item.displayName;
         }
         return "";
     }}
     public Item item;
-    public int amount = 1;
+    public int amount;
 
     [System.NonSerialized]
     public System.Action onChange;
@@ -51,21 +57,27 @@ public class ItemInstance {
     }
 }
 
-[CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
+// [CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
 [System.Serializable]
 public class Item : ScriptableObject
 {
-    public string itemName;
+    /// <summary>
+    /// Display name; label
+    /// </summary>
+    public string displayName;
     public string description;
+#if NAUGHTY_ATTRIBUTES
+    [NaughtyAttributes.ShowAssetPreview(128, 128)]
+#endif
     public Sprite itemIcon;
     public ItemType itemType;
     public List<ItemTag> itemTags;
     public GameObject prefab;
     // public AssetReference prefabRef;
-    public Conditions conditions;
+    // public Conditions conditions;
     public int maxAmount = 1;
     public float value;
-    public string guid;
+    // public string guid;
 
     // public GameObject prefab { get { return prefabRef.Asset as GameObject; }}
     
@@ -88,11 +100,31 @@ public class Item : ScriptableObject
         return tagHash.Contains(tag);
     }
 
-    public virtual void SingleClick(ItemSlot slot) {
-        
+    /// <summary>
+    /// For input events such as primary/single click actions or CheckConditionsMet for ItemConditional
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Primary(ItemSlot slot) {
+        return true;
     }
-    public virtual void DoubleClick(ItemSlot slot) {
 
+    /// <summary>
+    /// For input events such as secondary/double click
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Secondary(ItemSlot slot) {
+        return true;
+    }
+
+    /// <summary>
+    /// For input events such as middle mouse/long press
+    /// </summary>
+    /// <param name="slot"></param>
+    /// <returns></returns>
+    public virtual bool Tertiary(ItemSlot slot) {
+        return true;
     }
 
     public virtual void AddToInventory(int amount, bool notify) {
@@ -101,14 +133,14 @@ public class Item : ScriptableObject
 
     public virtual void Copy(Item item) {
         name = item.name;
-        itemName = item.itemName;
+        displayName = item.displayName;
         description = item.description;
         prefab = item.prefab;
         // prefabRef = item.prefabRef;
-        conditions = item.conditions;
+        // conditions = item.conditions;
         maxAmount = item.maxAmount;
         value = item.value;
-        guid = item.guid;
+        // guid = item.guid;
         itemIcon = item.itemIcon;
         itemTags = item.itemTags;
         itemType = item.itemType;

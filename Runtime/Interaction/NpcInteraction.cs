@@ -8,56 +8,44 @@ namespace m4k.Interaction {
 [RequireComponent(typeof(Interactable))]
 public class NpcInteraction : MonoBehaviour
 {
-    public CharacterControl cc;
-    // public Transform ikParent;
-    public Dialogue dialogue;
+    public CharacterIK iK;
+    public INavMovable movable;
+    public m4k.Progression.Dialogue dialogue;
 
     Interactable interactable;
+
     private void Start() {
         interactable = GetComponentInChildren<Interactable>();
-        if(!cc)
-            cc = GetComponentInParent<CharacterControl>();
+        if(!iK) iK = GetComponentInParent<CharacterIK>();
+        if(movable == null) movable = GetComponentInParent<INavMovable>();
     }
 
-    void SetLookAt() {
-        if(!cc || !cc.iK)
-            return;
-        // cc.iK.EnableIk();
-        // cc.iK.SetLook(interactable.otherCol.GetComponentInChildren<PlayerController>().headTarget);
-        cc.iK.SetLook(CharacterManager.I.Player.charAnim.headHold);
-    }
-    void RemoveLookAt() {
-        if(!cc || !cc.iK)
-            return;
-        cc.iK.SetLook(null);
-    }
     public void OnInteractable() {
-        SetLookAt();
-        // Game.I.SetFocusTarget(cc.iK.headTarget, true);
+        if(!iK)
+            return;
+        iK.SetLook(CharacterManager.I.Player.Head);
+        // Game.I?.SetFocusTarget(cc.iK.headTarget, true);
     }
     public void OnNonInteractable() {
-        RemoveLookAt();
-        // if(Game.I)
-        //     Game.I.SetFocusTarget(null, false);
-        EndDialogue();
-    }
-
-    public void StartDialogue() {
-        if(dialogue) {
-            cc?.navChar.StopAgent();
-            dialogue.AssignDialogue();
-            DialogueManager.I.onEndDialogue += OnEndDialogue;
-        }
-    }
-    void EndDialogue() {
+        if(iK)
+            iK.SetLook(null);
+        // Game.I?.SetFocusTarget(null, false);
         if(DialogueManager.I && dialogue) {
             dialogue.EndDialogue();
         }
     }
 
+    public void StartDialogue() {
+        if(dialogue) {
+            movable.Pause();
+            dialogue.AssignDialogue();
+            DialogueManager.I.onEndDialogue += OnEndDialogue;
+        }
+    }
+
     void OnEndDialogue() {
         DialogueManager.I.onEndDialogue -= OnEndDialogue;
-        cc?.navChar.ResumeLastTarget();
+        movable.Resume();
     }
 }
 }

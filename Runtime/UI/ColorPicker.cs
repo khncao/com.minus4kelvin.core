@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using m4k.InventorySystem;
+using m4k.Items;
 
 namespace m4k.UI {
 public class ColorPicker : MonoBehaviour, IBeginDragHandler, IDragHandler

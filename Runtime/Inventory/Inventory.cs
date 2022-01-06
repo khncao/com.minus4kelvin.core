@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using m4k;
 
-namespace m4k.InventorySystem {
-public enum InventoryType { Bag, Storage, Characters, ItemShop, CharacterShop, Craft }
+namespace m4k.Items {
+public enum InventoryType { Bag, Storage, Characters, Craft }
 
 // [Serializable]
 // public class TransactionRecord {
@@ -68,6 +67,7 @@ public class Inventory
         timer = new TickTimer();
     }
 
+
     public bool IsInventoryFull() {
         return Array.IndexOf(items, null) == -1;
         // return items.IndexOf(null) == -1;
@@ -101,6 +101,8 @@ public class Inventory
     public bool IsReservedIndexEmpty(int ind) {
         return aux[ind] == null;
     }
+
+
 
     public int AddItemAmount(Item item, int amount, bool playNotify = false) {
         if(!item) {
@@ -143,7 +145,7 @@ public class Inventory
         }
         
         if(playNotify && amount < initAmount) {
-            Feedback.I.SendLineQueue(string.Format("Obtained {0} {1}", initAmount - amount, item.itemName));
+            Feedback.I.SendLineQueue(string.Format("Obtained {0} {1}", initAmount - amount, item.displayName));
         }
 
         AddToTotalItems(item, initAmount - amount);
@@ -174,13 +176,15 @@ public class Inventory
         }
         
         if(playNotify && amount < initAmount) {
-            Feedback.I.SendLineQueue(string.Format("Removed {0} {1}", initAmount - amount, item.itemName));
+            Feedback.I.SendLineQueue(string.Format("Removed {0} {1}", initAmount - amount, item.displayName));
         }
 
         RemoveFromTotalItems(item, initAmount - amount);
         onChange?.Invoke();
         return amount;
     }
+
+
 
     public int GetItemTotalAmount(Item item) {
         int total = 0;
@@ -191,7 +195,8 @@ public class Inventory
 
         return total;
     }
-    public int GetItemSpace(Item item) {
+
+    public int GetMaxAmountItemsFit(Item item) {
         int total = 0;
         var existing = FindAllExisting(item);
         var empty = GetNumberEmptySlots();
@@ -203,6 +208,7 @@ public class Inventory
 
         return total;
     }
+
     public int GetNumberEmptySlots() {
         int num = 0;
         for(int i = 0; i < items.Length; ++i) {
@@ -211,6 +217,7 @@ public class Inventory
         }
         return num;
     }
+
     public void SortAmountDescend() {
         Array.Sort(items, CompareByItemAmount);
         totalItemsList.Sort(CompareByItemAmount);
@@ -226,12 +233,21 @@ public class Inventory
         onCurrencyChange?.Invoke(val, currency);
     }
 
+    public void AddItemAmounts(List<ItemInstance> itemInstances) {
+        foreach(var i in itemInstances) {
+            AddItemAmount(i.item, i.amount);
+        }
+    }
+
     public void AddItemAmounts(List<Item> its, List<int> amounts = null) {
         for(int i = 0; i < its.Count; ++i) {
             int a = amounts == null ? 0 : amounts[i];
             AddItemAmount(its[i], a);
         }
     }
+
+
+
     public static int Transfer(Inventory from, Inventory to, List<ItemInstance> items) {
         int count = 0;
         for(int i = 0; i < items.Count; ++i) {
@@ -239,13 +255,14 @@ public class Inventory
         }
         return count;
     }
+
     public static int Transfer(Inventory from, Inventory to, int amount, Item item, bool monetary = false) 
     {
         if(amount > from.GetItemTotalAmount(item)) {
             Debug.Log("Transfer amount exceeds owned amount");
             return amount;
         }
-        else if(amount > to.GetItemSpace(item)) {
+        else if(amount > to.GetMaxAmountItemsFit(item)) {
             Debug.Log("Transfer amount exceeds destination inventory space");
             return amount;
         }
@@ -263,10 +280,13 @@ public class Inventory
 
         return 0;
     }
+
     public static float GetCostValue(Item item, int amount) {
         return item.value * amount;
     }
     
+
+
     int CompareByItemAmount(ItemInstance a, ItemInstance b) {
         if(a.amount > b.amount)
             return 1;
@@ -296,6 +316,7 @@ public class Inventory
                 totalItemsList.RemoveAt(itemTotalInd);
         }
     }
+
     ItemInstance[] FindAllExisting(Item item) {
         return Array.FindAll(items, x=>x != null && x.item == item);
         // return items.FindAll(x=>x != null && x.item == item);
@@ -325,13 +346,13 @@ public class Inventory
         items = new ItemInstance[maxSize];
         
         for(int i = 0; i < _items.Count; ++i) {
-            var item = AssetRegistry.I.GetItemFromName(_items[i].itemName);
+            var item = AssetRegistry.I.GetItemFromName(_items[i].name);
             AddItemAmount(item, _items[i].amount);
         }
         
         if(auxSize > 0) aux = new ItemInstance[auxSize];
         for(int i = 0; i < _aux.Count; ++i) {
-            var item = AssetRegistry.I.GetItemFromName(_aux[i].itemName);
+            var item = AssetRegistry.I.GetItemFromName(_aux[i].name);
             AssignReserved(i, item, _aux[i].amount);
         }
         timer.OnLoad();

@@ -6,27 +6,40 @@ namespace m4k.Characters {
 public class CharacterControl : MonoBehaviour
 {
     public Character character;
-    public CharacterAnimation charAnim;
-    public CharacterEquipment charEquip;
-    public CharacterIK iK;
-    public NavCharacterControl navChar;
-    public RigidbodyCharacterController rbChar;
+    public Animator animator;
+    public INavMovable movable;
     public float moveMult = 1f;
 
-    private void Start() {
-        if(!character) {
-            // Debug.Log("Character has no character item");
-            return;
+    [SerializeField]
+    Transform head;
+
+    public Transform Head { 
+        get {
+            if(!head) head = animator.GetBoneTransform(HumanBodyBones.Head);
+            return head;
         }
+    }
+
+    private void Awake() {
+        if(!animator) animator = GetComponent<Animator>();
+        if(movable == null) movable = GetComponent<INavMovable>();
+        if(animator && !head) {
+            head = animator.GetBoneTransform(HumanBodyBones.Head);
+        }
+    }
+
+    private void Start() {
         OnEnable();
     }
+
     private void OnEnable() {
-        if(character && CharacterManager.I)
-            CharacterManager.I.RegisterCharacter(character, this);
+        if(CharacterManager.I)
+            CharacterManager.I.RegisterCharacter(this);
     }
+    
     private void OnDisable() {
-        if(character && CharacterManager.I)
-            CharacterManager.I.RemoveCharacter(character);
+        if(CharacterManager.I)
+            CharacterManager.I.RemoveCharacter(this);
     }
 }
 }

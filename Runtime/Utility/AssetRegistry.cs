@@ -1,17 +1,19 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System.Collections.Generic;
 // using UnityEngine.AddressableAssets;
 // using UnityEngine.ResourceManagement.AsyncOperations;
-using m4k.InventorySystem;
+using m4k.Items;
 using m4k.Characters;
+using m4k.Progression;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace m4k {
 public class AssetRegistry : Singleton<AssetRegistry> {
-    static DatabaseSO database;
-    static string pathToDb = "Assets/Data/DatabaseSO.asset";
-    static string[] searchFolders = new string[] { "Assets/Data" };
-    // static string dataPath = "Assets/Data/";
+    public DatabaseSO database;
+    [Tooltip("Default: Assets/Data")]
     public string dataPathOverride;
 
     [System.NonSerialized]
@@ -23,16 +25,22 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     Dictionary<ItemTag, List<Item>> itemTagLists;
     [System.NonSerialized]
     Dictionary<ItemType, List<Item>> itemTypeLists;
-    // Dictionary<string, Item> nameItemDict;
+    Dictionary<System.Type, List<Item>> itemTypeListDict;
+    [System.NonSerialized]
+    Dictionary<string, Convo> idConvosDict;
 
     protected override void Awake() {
         base.Awake();
         if(m_ShuttingDown) return;
-        // nameItemDict = new Dictionary<string, Item>();
+        if(!database || database.items == null) {
+            UpdateDatabase();
+        }
         itemNameDict = new Dictionary<string, Item>();
         charDict = new Dictionary<string, Character>();
         itemTagLists = new Dictionary<ItemTag, List<Item>>();
         itemTypeLists = new Dictionary<ItemType, List<Item>>();
+        itemTypeListDict = new Dictionary<System.Type, List<Item>>();
+        idConvosDict = new Dictionary<string, Convo>();
 
         for(int i = 0; i < database.items.Count; ++i) {
             Item item = database.items[i];
@@ -53,6 +61,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
                 itemTypeLists[item.itemType].Add(item);
             else
                 itemTypeLists.Add(item.itemType, new List<Item>(){ item });
+
+            if(itemTypeListDict.ContainsKey(item.GetType()))
+                itemTypeListDict[item.GetType()].Add(item);
+            else
+                itemTypeListDict.Add(item.GetType(), new List<Item>(){ item });
         }
 
         for(int i = 0; i < database.characters.Count; ++i) {
@@ -60,6 +73,12 @@ public class AssetRegistry : Singleton<AssetRegistry> {
                 Debug.Log("Already contains: " + database.characters[i].name);
             }
             charDict.Add(database.characters[i].name, database.characters[i]);
+        }
+
+        for(int i = 0; i < database.convos.Count; ++i) {
+            if(!idConvosDict.ContainsKey(database.convos[i].id)) {
+                idConvosDict.Add(database.convos[i].id, database.convos[i]);
+            }
         }
     }
 
@@ -85,13 +104,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         }
         return item;
     }
-    // public Item GetItemFromName(string name) {
-    //     if(!nameItemDict.ContainsKey(name))
-    //         LoadAsset(name);
-    //     Item item;
-    //     nameItemDict.TryGetValue(name, out item);
-    //     return item;
-    // }
+
     public Character GetCharacterFromName(string name) {
         Character chara;
         charDict.TryGetValue(name, out chara);
@@ -111,17 +124,37 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         itemTypeLists.TryGetValue(type, out get);
         return get;
     }
+    public List<Item> GetItemListByType(System.Type type) {
+        List<Item> get;
+        itemTypeListDict.TryGetValue(type, out get);
+        return get;
+    }
+
+    public Convo GetConvoById(string id) {
+        Convo convo;
+        idConvosDict.TryGetValue(id, out convo);
+        return convo;
+    }
 
 #if UNITY_EDITOR
+    public static DatabaseSO Database { 
+        get { 
+            Initialize(); 
+            return _database; 
+        }}
+    static DatabaseSO _database;
+    static string pathToDb = "Assets/Data/DatabaseSO.asset";
+    static string[] searchFolders = new string[] { "Assets/Data" };
+
     static void Initialize() {
-        if(database) return;
-        database = (DatabaseSO)AssetDatabase.LoadAssetAtPath(pathToDb, typeof(DatabaseSO));
-        if(!database) {
+        if(_database) return;
+        _database = (DatabaseSO)AssetDatabase.LoadAssetAtPath(pathToDb, typeof(DatabaseSO));
+        if(!_database) {
             string[] result = AssetDatabase.FindAssets("t:DatabaseSO");
             if(result.Length > 0)
-                database = (DatabaseSO)AssetDatabase.LoadAssetAtPath<DatabaseSO>(AssetDatabase.GUIDToAssetPath(result[0]));
+                _database = (DatabaseSO)AssetDatabase.LoadAssetAtPath<DatabaseSO>(AssetDatabase.GUIDToAssetPath(result[0]));
         }
-        if(!database) {
+        if(!_database) {
             Debug.LogWarning("DatabaseSO not found. Expected location: 'Assets/Data/DatabaseSO.asset'");
         }
     }
@@ -132,11 +165,12 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     }
 
     [MenuItem("Tools/Update Database")]
-    [InitializeOnLoadMethod]
+    // [InitializeOnLoadMethod]
     static void UpdateDatabase() {
         Initialize();
-        UpdateTypeRegistry<Item>("t:Item", searchFolders, ref database.items);
-        UpdateTypeRegistry<Character>("t:Character", searchFolders, ref database.characters);
+        UpdateTypeRegistry<Item>("t:Item", searchFolders, ref _database.items);
+        UpdateTypeRegistry<Character>("t:Character", searchFolders, ref _database.characters);
+        UpdateTypeRegistry<Convo>("t:Convo", searchFolders, ref _database.convos);
     }
 
     static void UpdateTypeRegistry<T>(string query, string[] searchFolders, ref List<T> l) where T : UnityEngine.Object

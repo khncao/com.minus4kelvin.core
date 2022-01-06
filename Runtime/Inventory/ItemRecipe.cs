@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 [CreateAssetMenu(menuName="ScriptableObjects/Items/Item Recipe")]
 public class ItemRecipe : Item
 {
@@ -13,15 +13,15 @@ public class ItemRecipe : Item
     public int craftTime;
     // public bool enforceOrder;
 
-    public override void DoubleClick(ItemSlot slot)
+    public override bool Secondary(ItemSlot slot)
     {
-        base.DoubleClick(slot);
         // Debug.Log("ItemRecipe double click");
         if(InventoryManager.I.craftSlotManager.inventory.totalItemsList.Count > 0) {
             Feedback.I.SendLine("Items still in craft window");
-            return;
+            return false;
         }
         InventoryManager.I.UI.InitiateItemTransfer(slot);
+        return true;
     }
 }
 // [System.Serializable]

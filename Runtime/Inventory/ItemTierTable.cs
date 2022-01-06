@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 [CreateAssetMenu(menuName="ScriptableObjects/ItemTierTable")]
 public class ItemTierTable : ScriptableObject
 {

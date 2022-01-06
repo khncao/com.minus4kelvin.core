@@ -1,6 +1,6 @@
 
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 
 namespace m4k.Progression {
 public class ProgressionUI : MonoBehaviour {

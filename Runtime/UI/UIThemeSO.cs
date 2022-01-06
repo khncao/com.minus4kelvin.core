@@ -4,6 +4,9 @@ using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
+/// <summary>
+/// Applies theme preset to all prefabs found with UIObject component in "Assets/Prefabs" directory
+/// </summary>
 [CreateAssetMenu(fileName = "UIThemeSO", menuName = "ScriptableObjects/UIThemeSO", order = 0)]
 public class UIThemeSO : ScriptableObject {
     [Header("Text")]
@@ -24,6 +27,7 @@ public class UIThemeSO : ScriptableObject {
     public Color accent1;
     public Color tint1;
 
+#if UNITY_EDITOR
     [ContextMenu("Apply Theme")]
     void Apply() {
         // var objs = FindObjectsOfType<UIObject>();
@@ -67,4 +71,6 @@ public class UIThemeSO : ScriptableObject {
         
         AssetDatabase.SaveAssets();
     }
+#endif
+
 }

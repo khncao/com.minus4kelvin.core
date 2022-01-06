@@ -1,34 +1,36 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 // using Uween;
 
 namespace m4k.Interaction {
 [RequireComponent(typeof(Interactable))]
 public class ItemInteraction : MonoBehaviour
 {
-    public Item item;
+    public ItemItem item;
     public GameObject prefab;
     public ItemArranger arranger;
     public bool spawnItem;
     GameObject instance;
     // public AnimationClip animationClip;
     Interactable interactable;
-    string itemName;
 
     private void Start() {
         interactable = GetComponent<Interactable>();
         interactable?.events.onInteract.AddListener(Interact);
 
-        if(item)
-            prefab = item.prefab;
-        if(arranger && spawnItem)
+        if(!item || !item.prefab) {
+            Debug.Log("ItemInteraction has no item or no item prefab");
+            return;
+        }
+        prefab = item.prefab;
+        if(!spawnItem) 
+            return;
+        if(arranger)
             arranger.UpdateItems(item);
-        else if(prefab && spawnItem)
+        else if(prefab)
             instance = Instantiate(prefab, transform);
-        itemName = item ? item.itemName : prefab.name;
-
     }
     public void Interact() {
         // if(instance) {

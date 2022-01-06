@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 // public enum CraftType { None, Bar, Kitchen, Brew, Foundry, Stonemason, Sawmill }
 // public class CraftType {
 //     public static readonly string Bar = "Bar";
@@ -148,7 +148,7 @@ public class CraftManager : MonoBehaviour
         if(!recipeSlots.selected) {
             return false;
         }
-        Debug.Log($"recipe: {recipeSlots.selected.item.ItemName}");
+        Debug.Log($"recipe: {recipeSlots.selected.item.DisplayName}");
         var recipe = recipeSlots.selected.item.item as ItemRecipe;
         int craftable = CheckRecipeCraftable(recipe);
 

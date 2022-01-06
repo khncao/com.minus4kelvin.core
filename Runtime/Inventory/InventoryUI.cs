@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class InventoryUI : MonoBehaviour
 {
     public Canvas inventoryCanvas;
@@ -148,7 +148,7 @@ public class InventoryUI : MonoBehaviour
     public void UpdateHoverWindow(ItemSlot slot) {
         hoverSlot = slot;
         itemContext.transform.position = hoverSlot.transform.position;
-        hoverNameTxt.text = hoverSlot.item.ItemName;
+        hoverNameTxt.text = hoverSlot.item.DisplayName;
         hoverInfoTxt.text = hoverSlot.item.item.description;
     }
     public void ToggleHoverWindow(bool enabled) {

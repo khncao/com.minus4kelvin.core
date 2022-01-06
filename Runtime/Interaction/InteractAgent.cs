@@ -1,76 +1,64 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.Characters;
 
 namespace m4k.Interaction {
 public class InteractAgent : MonoBehaviour
 {
-    public CharacterControl cc;
+    public INavMovable movable;
     public LayerMask interactLayers;
 
     [System.NonSerialized]
     Collider[] hits = new Collider[10];
 
     private void Start() {
-        if(!cc) cc = GetComponent<CharacterControl>();
-        cc.navChar.onArrive += OnArrive;
-        cc.navChar.onNewTarget += OnNewTarget;
+        if(movable == null) movable = GetComponent<INavMovable>();
+        movable.OnArrive += OnArrive;
+        movable.OnNewTarget += OnNewTarget;
     }
 
-    void OnNewTarget(Transform target) {
-        OnArrive(target);
+    private void OnDisable() {
+        if(movable == null) return;
+        movable.OnArrive -= OnArrive;
+        movable.OnNewTarget -= OnNewTarget;
     }
 
-    void OnArrive(Transform target) {
+    void OnNewTarget() {
+        OnArrive();
+    }
+
+    bool ProcessInteractions(Collider other) {
+        bool interacted = false;
+        var interactables = other.GetComponents<IInteractable>();
+        for(int i = 0; i < interactables.Length; ++i) {
+            if(interactables[i].Interact(gameObject)) 
+                interacted = true;
+        }
+        return interacted;
+    }
+
+    void OnArrive() {
         hits.Clear<Collider>();
-        Physics.OverlapSphereNonAlloc(transform.position, 0.5f, hits, interactLayers, QueryTriggerInteraction.Collide);
+        Physics.OverlapSphereNonAlloc(transform.position, 1f, hits, interactLayers, QueryTriggerInteraction.Collide);
 
         for(int i = 0; i < hits.Length; ++i) {
-            if(!target || hits[i] == null || hits[i].transform != target) 
+            if(!movable.Target || hits[i] == null || hits[i].transform != movable.Target) 
                 continue;
 
-            Interactable interactable;
-            hits[i].TryGetComponent<Interactable>(out interactable);
-            DestroyZone destroyZone;
-            hits[i].TryGetComponent<DestroyZone>(out destroyZone);
+            ProcessInteractions(hits[i]);
 
-            if(interactable) {
-                interactable.Interact();
-            }
-            else 
-            if(destroyZone) {
-                GetComponent<IDestroyable>().Destroy();
-            }
-            cc.navChar.target = null;
+            movable.Stop();
             break;
         }
     }
 
     private void OnTriggerEnter(Collider other) {
-        if(!cc.navChar.target || other.transform != cc.navChar.target)
+        if(movable == null || !movable.Target || other.transform != movable.Target)
             return;
 
-        Interactable interactable;
-        other.TryGetComponent<Interactable>(out interactable);
-        DestroyZone destroyZone;
-        other.TryGetComponent<DestroyZone>(out destroyZone);
-        SeatController seat;
-        other.TryGetComponent<SeatController>(out seat);
-        if(interactable) {
-            interactable.Interact();
-            cc.navChar.StopAgent();
+        if(ProcessInteractions(other)) {
+            movable.Stop();
         }
-        else if(destroyZone) {
-            GetComponent<IDestroyable>().Destroy();
-        }
-        else if(seat && !seat.occupied) {
-            cc.charAnim.Sit(seat);
-            cc.navChar.agent.nextPosition = transform.position;
-            cc.navChar.agent.updatePosition = false;
-            cc.navChar.StopAgent();
-        }
-        cc.navChar.target = null;
     }
 }
 }

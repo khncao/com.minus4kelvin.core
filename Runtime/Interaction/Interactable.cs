@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using m4k.Progression;
-using m4k.Characters;
+// using m4k.Characters;
 
 namespace m4k.Interaction {
 [System.Serializable]
@@ -17,19 +17,18 @@ public enum InteractableType {
     ActiveConditionListener = 101,
 }
 
-public class Interactable : MonoBehaviour
+public class Interactable : MonoBehaviour, IInteractable
 {
     [System.Serializable]
     public class InteractableUnityEvents {
         public UnityEvent onInteractable, onInteract, onNonInteractable;
         public ToggleUnityEvent onInteractToggle;
     }
-
+    [Tooltip("If id is not empty, will register with ProgressionManager for serializing interactCount. On first interact, will register id as key state")]
     public string id;
     public string description;
     public InteractableType interactableType;
     public bool destroyOnInteract;
-    public bool isKeyState; // for conditions; requires id
     public InteractableUnityEvents events;
     public Conditions conditions;
     public float interactCd;
@@ -46,7 +45,7 @@ public class Interactable : MonoBehaviour
     Material[] origMats, tempMats;
     Renderer rend;
     Collider col;
-    bool isInteractable, isOnCd;
+    bool isInteractable, isOnCd, _isRoot;
     float cd;
 
     private void Start() {
@@ -64,11 +63,11 @@ public class Interactable : MonoBehaviour
         && !col) {
             Debug.LogWarning("Non-self-triggering interactable does not have collider");
         }
-        
-        if(string.IsNullOrEmpty(id))
-            id = name;
+        if(transform.root == transform) {
+            _isRoot = true;
+        }
         if(string.IsNullOrEmpty(description)) {
-            description = transform.parent.name;
+            description = _isRoot ? name : transform.parent.name;
         }
         if(!string.IsNullOrEmpty(id))
             ProgressionManager.I.RegisterInteractable(this);
@@ -86,7 +85,8 @@ public class Interactable : MonoBehaviour
         }
     }
     private void OnDisable() {
-        InteractionManager.I?.UnregisterInteractable(this);
+        if(InteractionManager.I)
+            InteractionManager.I.UnregisterInteractable(this);
         OnNonInteractable();
     }
 
@@ -119,10 +119,10 @@ public class Interactable : MonoBehaviour
         }
     }
 
-    public bool Interact() {
-        if(enforcePlayerNeutral && (!CharacterManager.I.Player.charAnim.IsMobile || !CharacterManager.I.Player.charAnim.IsNeutral)) {
-            return false;
-        }
+    public bool Interact(GameObject go = null) {
+        // if(enforcePlayerNeutral && (!CharacterManager.I.Player.charAnim.IsMobile || !CharacterManager.I.Player.charAnim.IsNeutral)) {
+        //     return false;
+        // }
         if(!conditions.CheckCompleteReqs()) {
             Feedback.I.SendLine("Requirements not met");
             return false;
@@ -135,14 +135,9 @@ public class Interactable : MonoBehaviour
         interactCount++;
         events.onInteract?.Invoke();
         events.onInteractToggle?.Invoke(!IsToggled);
-
-        if(isKeyState && interactCount == 1){
-            if(string.IsNullOrEmpty(id)) {
-                Debug.LogWarning("Interactable tagged as key state has no ID");
-            }
-            else {
-                ProgressionManager.I.RegisterCompletedState(id);
-            }
+        
+        if(interactCount == 1 && !string.IsNullOrEmpty(id)) {
+            ProgressionManager.I.RegisterCompletedState(id);
         }
 
         if(interactCd > 0) {
@@ -150,13 +145,16 @@ public class Interactable : MonoBehaviour
             StartCoroutine(InteractCooldown());
         }
 
-        if(!string.IsNullOrEmpty(playerAnim))
-            CharacterManager.I.Player.charAnim.PlayAnimation(playerAnim);
+        // if(!string.IsNullOrEmpty(playerAnim))
+        //     CharacterManager.I.Player.charAnim.PlayAnimation(playerAnim);
         
         if(destroyOnInteract) {
             InteractionManager.I.UnregisterInteractable(this);
             OnNonInteractable();
-            Destroy(gameObject);
+            if(_isRoot)
+                Destroy(gameObject);
+            else
+                Destroy(transform.parent.gameObject);
         }
         return true;
     }

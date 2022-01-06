@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 namespace m4k.UI {
+/// <summary>
+/// Automatically registers a basic following UI object
+/// </summary>
 public class FollowUIComponent : MonoBehaviour
 {
     public string label;

@@ -1,22 +1,30 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class ItemArranger : MonoBehaviour { //ITaskInteractable
-    public Item[] items;
-    public GameObject[] itemInstances;
+    [Tooltip("Concrete points for gameObject instance placement; should be children of this component")]
     public Transform[] objPlaces;
+    [Tooltip("Cast ItemArranger down to first ray hit in hitLayers")]
     public bool downSurfacePlacement;
-    public bool hasSurface;
+    [Tooltip("Layers hit for downSurfacePlacement ray cast")]
     public LayerMask hitLayers;
     // public float radius;
+
+    public bool hasSurface { get; private set; }
+    public bool isActive { get { return gameObject.activeInHierarchy; }}
+    public List<ItemInstance> itemInstances { get; private set; }
+
     bool initialized;
+    
+    Item[] _items;
+    GameObject[] _spawnedItems;
 
 
     private void Start() {
         hitLayers = LayerMask.NameToLayer("Buildable");
-        items = new Item[objPlaces.Length];
-        itemInstances = new GameObject[objPlaces.Length];
+        _items = new Item[objPlaces.Length];
+        _spawnedItems = new GameObject[objPlaces.Length];
         if(downSurfacePlacement) {
             RaycastHit hit;
             if(Physics.Raycast(transform.position, -transform.up, out hit, 5, hitLayers, QueryTriggerInteraction.Ignore)) {
@@ -28,27 +36,41 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
         initialized = true;
     }
 
-    public void UpdateItems(List<Item> newItems) {
-        // if(newItems.Count > objPlaces.Length) {
-        //     Debug.LogError("More items than places");
-        //     return;
-        // }
+    /// <summary>
+    /// If gameobject instance matches new, recycle; otherwise destroy & replace. 
+    /// Only up to amount of placement transforms will have item arranged. 
+    /// </summary>
+    /// <param name="newItems"></param>
+    public void UpdateItems(List<ItemInstance> newItems) {
         if(!initialized) Start();
         GameObject item;
-        for(int i = 0; i < objPlaces.Length; ++i) {
-            if(i > newItems.Count - 1) 
-                continue;
-            if(newItems[i] == items[i]) {
-                item = itemInstances[i];
-                itemInstances[i].SetActive(true);
+        int objPlaceIdx = 0;
+        itemInstances = newItems;
+
+        for(int i = 0; i < newItems.Count; ++i) 
+        {
+            for(int j = 0; j < newItems[i].amount; ++j) 
+            {
+                if(newItems[i].item == _items[objPlaceIdx]) {
+                    item = _spawnedItems[objPlaceIdx];
+                    item.SetActive(true);
+                }
+                else {
+                    DestroyImmediate(_spawnedItems[objPlaceIdx]);
+                    item = Instantiate(newItems[i].item.prefab);
+                    item.transform.SetParent(objPlaces[objPlaceIdx], false);
+                }
+                _items[objPlaceIdx] = newItems[i].item;
+                _spawnedItems[objPlaceIdx] = item;
+
+                objPlaceIdx++;
+                if(objPlaceIdx >= objPlaces.Length)
+                    return;
             }
-            else {
-                Destroy(itemInstances[i]);
-                item = Instantiate(newItems[i].prefab);
-                item.transform.SetParent(objPlaces[i], false);
-                items[i] = newItems[i];
-                itemInstances[i] = item;
-            }
+        }
+        while(objPlaceIdx < objPlaces.Length) {
+            _spawnedItems[objPlaceIdx]?.SetActive(false);
+            objPlaceIdx++;
         }
     }
 
@@ -64,21 +86,22 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
     //     }        
     // }
 
+    // Single item
     public void UpdateItems(Item newItem) {
-        if(newItem == items[0]) {
-            itemInstances[0].SetActive(true);
+        if(newItem == _items[0]) {
+            _spawnedItems[0].SetActive(true);
         }
         else {
-            itemInstances[0] = Instantiate(newItem.prefab);
-            itemInstances[0].transform.SetParent(objPlaces[0], false);
-            items[0] = newItem;
+            _spawnedItems[0] = Instantiate(newItem.prefab);
+            _spawnedItems[0].transform.SetParent(objPlaces[0], false);
+            _items[0] = newItem;
         }
     }
 
     public void HideItems() {
-        for(int i = 0; i < itemInstances.Length; ++i) {
-            if(itemInstances[i])
-                itemInstances[i].SetActive(false);
+        for(int i = 0; i < _spawnedItems.Length; ++i) {
+            if(_spawnedItems[i])
+                _spawnedItems[i].SetActive(false);
         }
     }
 

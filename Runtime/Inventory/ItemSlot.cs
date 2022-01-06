@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public ItemInstance item;
@@ -63,15 +63,24 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 itemImgUI.color = Color.white;
             }
             if(itemNameUI)
-                itemNameUI.text = item.ItemName;
+                itemNameUI.text = item.DisplayName;
             
             itemTxtUI.text = item.item.maxAmount > 1 && item.amount > 0 ? item.amount.ToString() : "";
 
             if(disableItemImg) {
-                disableItemImg.enabled = slotManager.interactableOverride ? 
-                !slotManager.isInteractableOverride : 
-                !item.item.conditions.CheckCompleteReqs() || 
-                (item.amount == 0);
+                if(slotManager.interactableOverride) {
+                    disableItemImg.enabled = !slotManager.isInteractableOverride;
+                }
+                else if(item.item is ItemConditional) {
+                    disableItemImg.enabled = item.item.Primary(null);
+                }
+                else {
+                    disableItemImg.enabled = item.amount == 0;
+                }
+                // disableItemImg.enabled = slotManager.interactableOverride ? 
+                // !slotManager.isInteractableOverride : 
+                // (item.item is ItemConditional && !item.item.conditions.CheckCompleteReqs()) || 
+                // item.amount == 0;
                 isInteractable = !disableItemImg.enabled;
             }
         }
@@ -87,10 +96,10 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 		if(eventData.button.ToString() == "Left")
 		{
 			if(eventData.clickCount == 2) {			
-                item.item.DoubleClick(this);
+                item.item.Secondary(this);
 			}
             else {
-                item.item.SingleClick(this);
+                item.item.Primary(this);
                 slotManager.selected = this;
                 // Debug.Log($"selected: {item.itemName}");
             }
@@ -134,7 +143,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 // image.SetNativeSize();
                 slotManager.inventoryManager.UI.dragImg.color = Color.white;
             }
-            dragTxt.text = item.item.itemName;
+            dragTxt.text = item.item.displayName;
             dragRt = dragTxt.transform as RectTransform;
 			canvasRt = slotManager.inventoryManager.UI.inventoryCanvas.transform as RectTransform;
 

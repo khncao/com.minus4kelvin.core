@@ -1,12 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.InventorySystem;
+using m4k.Items;
 
 namespace m4k.Characters {
-public enum Sex { None = 0, Unknown = 1, Male = 10, Female = 20 }
-
-// public enum Origin { }
+public enum Sex { None = 0, Unknown = 1, Other = 2, Male = 10, Female = 20 }
 
 public enum Profession { None = 0, Unknown = 1, Student = 10, Farmer = 20,  }
 
@@ -25,49 +23,33 @@ public class CharacterDescriptors {
     public Profession profession;
     public List<Trait> traits;
 }
+
+[System.Serializable]
+public class CharacterGeneratedProfile {
+    public string name;
+    public int impression;
+    public CharacterDescriptors descriptors;
+}
+
 [System.Serializable]
 public struct CharExpression {
     public string name;
     public AnimationClip anim;
     public Sprite portrait;
 }
+
 [System.Serializable]
 [CreateAssetMenu(menuName="ScriptableObjects/Items/Character")]
 public class Character : Item
 {
     [Header("Character")]
     public List<CharExpression> expressions;
+    public int initialImpression;
 
-    public override void SingleClick(ItemSlot slot)
+    public override bool Primary(ItemSlot slot)
     {
-        base.SingleClick(slot);
         CharacterManager.I.SetFocused(this);
-    }
-
-    public static Character NewInstance(string n) {
-        var charItem = ScriptableObject.CreateInstance<Character>();
-        charItem.itemName = n;
-        charItem.name = charItem.itemName;
-        charItem.itemType = ItemType.Character;
-        charItem.maxAmount = 1;
-        charItem.conditions = new Conditions();
-        return charItem;
+        return true;
     }
 }
-
-[System.Serializable]
-public class CharacterProfile {
-    public string baseCharName;
-    public string nameOverride;
-    public string descriptionOverride;
-    public Sprite iconOverride;
-    // public CharacterCustomizeOptions customizations;
-
-}
-// [System.Serializable]
-// public struct CharacterEntry {
-//     public string name;
-//     public string guid;
-//     public Character character;
-// }
 }

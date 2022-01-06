@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace m4k.InventorySystem {
+namespace m4k.Items {
 // [ExecuteInEditMode]
 public class ItemSlotHandler : MonoBehaviour, IDropHandler
 {
@@ -117,8 +117,11 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
         else if(items != null) {
             int slotInd = 0;
             for(int i = 0; i < items.Count; ++i) {
-                if(items.Count > i && items[i] != null) {
-                    if((inventory.condHide && !items[i].item.conditions.CheckCompleteReqs()) || (hideLockedSlots && !slots[slotInd].isInteractable)) {
+                if(items.Count > i && items[i] != null) 
+                {
+                    if((inventory.condHide && items[i].item is ItemConditional && items[i].item.Primary(null)) 
+                    || (hideLockedSlots && !slots[slotInd].isActiveAndEnabled)) 
+                    {
                         slots[slotInd].UnassignItem();
                         continue;
                     }

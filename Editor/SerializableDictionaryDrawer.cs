@@ -1,3 +1,7 @@
+/// <summary>
+/// From Unity Wiki
+/// </summary>
+
 using System;
 using System.Reflection;
 
@@ -22,6 +26,7 @@ public class SerializableDictionaryDrawer : PropertyDrawer {
 
         var firstLine = position;
         firstLine.height = EditorGUIUtility.singleLineHeight;
+        label.text += $"[{list.count.ToString()}]";
         EditorGUI.PropertyField(firstLine, property, label);
 
         if (property.isExpanded) {

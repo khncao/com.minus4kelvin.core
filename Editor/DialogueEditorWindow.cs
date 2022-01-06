@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace m4k.Progression {
 #if UNITY_EDITOR
+// TODO: recurse subassets during import/export
 public class DialogueEditorWindow : EditorWindow {
 
     [MenuItem("Tools/Dialogues/Dialogues Editor Window")]
@@ -14,10 +15,6 @@ public class DialogueEditorWindow : EditorWindow {
         window.Show();
     }
 
-    static List<DialogueSO> dialogues = new List<DialogueSO>();
-    static List<TextAsset> jsonDialogues = new List<TextAsset>();
-    static string[] soPaths = new string[] {"Assets/Data/Dialogue"};
-    static string[] jsonPaths = new string[] {"Assets/Data/Dialogue/export"};
     // DialogueSO dialogue;
     // Vector2 scrollPos = Vector2.zero;
     // List<List<bool>> foldoutLines = new List<List<bool>>(2);
@@ -91,17 +88,24 @@ public class DialogueEditorWindow : EditorWindow {
     //     EditorGUILayout.EndScrollView();
     // }
 
+    static List<Convo> dialogues = new List<Convo>();
+    static List<TextAsset> jsonDialogues = new List<TextAsset>();
+    static string[] soPaths = new string[] {"Assets/Data/Dialogue/_import"};
+    static string[] jsonPaths = new string[] {"Assets/Data/Dialogue/_export"};
+
+    // Find and update convos at soPaths and cache
     static void UpdateDialogues() {
         dialogues.Clear();
-        string[] soGuids = AssetDatabase.FindAssets("t:DialogueSO", soPaths);
+        string[] soGuids = AssetDatabase.FindAssets("t:Convo", soPaths);
 
         for(int i = 0; i < soGuids.Length; ++i) {
-            var dialogueAsset = (DialogueSO)AssetDatabase.
-                        LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(soGuids[i]), typeof(DialogueSO));
+            var dialogueAsset = (Convo)AssetDatabase.
+                        LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(soGuids[i]), typeof(Convo));
 
             dialogues.Add(dialogueAsset);
         }
     }
+    // Find and update jsons at jsonPaths and cache
     static void UpdateDialogueJsons() {
         jsonDialogues.Clear();
         string[] jsonGuids = AssetDatabase.FindAssets("t:TextAsset", jsonPaths);
@@ -113,21 +117,26 @@ public class DialogueEditorWindow : EditorWindow {
         }
     }
 
-    [MenuItem("Tools/Dialogues/Export DialogueSOs to JSON")]
+    // WIP TODO: serialize references by guid; serialize subassets
+    // Currently can only be used to export/import main convo assets within editor session; instanceID will not survive editor reload
+
+    [MenuItem("Tools/Dialogues/Export Convos to JSON")]
     static void ExportDialogues() {
         UpdateDialogues();
         for(int i = 0; i < dialogues.Count; ++i) {
-            string json = JsonUtility.ToJson(dialogues[i]);
+            string json = JsonUtility.ToJson(dialogues[i], true);
             string path = Path.Combine(jsonPaths[0], dialogues[i].name);
             File.WriteAllText(path + ".json", json);
         }
+        AssetDatabase.Refresh();
     }
-    [MenuItem("Tools/Dialogues/Sync JSON to DialogueSOs")]
+
+    [MenuItem("Tools/Dialogues/Sync JSON to Convos")]
     static void SyncDialogues() {
         UpdateDialogues();
         UpdateDialogueJsons();
         if(jsonDialogues.Count != dialogues.Count) {
-            Debug.LogError("Differing number of json and dialogueSOs");
+            Debug.LogError("Differing number of json and convos");
             return;
         }
         for(int i = 0; i < jsonDialogues.Count; ++i) {

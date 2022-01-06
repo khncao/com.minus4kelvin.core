@@ -5,25 +5,29 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - TextMeshPro
 - Cinemachine
 - Timeline
+- (Required tentative)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability. May phase out if implement own custom editor for conditions.
+- (Optional)(NaughtyAttributes)[https://github.com/dbrizov/NaughtyAttributes] for editor QOL and some features
 - Tested working on Unity 2020.3.6f1+
 
 ### Installation
-- Add Git URL(https://github.com/khncao/com.minus4kelvin.core.git) through Unity Package Manager
+- Add Git URL package through Package Manager
+- or, clone and add as local package
 
-### Running Goals
-- Refine framework features and optimize performance
+### Todo
+- Character system improvements with traits; integration with dialogue and AI
 - Further isolation of gameplay elements with defines
 
 ### Inventory
 Item scriptableobject class serves as basis for many item-like uses such as consumables, equipment, buildables, etc.  
 Includes singleton manager class, UI display classes, rated item tier table, and simple crafting implementation.
 ### Characters
-Includes various elements of a 3D mecanim character such as control, animation, IK, equipment, customization, etc. A manager class handles runtime character registration and management. 
+Includes various elements of a character such as control, 3D IK, loadout, customization, etc. A manager class handles runtime character registration and management. 
 ### Interaction
 Various forms of 3D interaction(hover, click, trigger, visibility, etc). Multiple interactable cycling, UI, manager, etc. 
 ### Progression
-Dialogue, objectives, conditions, storyline, playables, states. States such as completion, dialogue, objectives, etc. are handled by Progression Manager.
+Todo: xNode optional integration, character features(affinity, storyline), better import/export text-scriptableobject
+Dialogue, objectives, conditions, playables, key states, etc. Aims for ease of writing extensive narratives with some branching capability. WIP
 ### UI
 Color picker, message queue, world to screen follow, UI themer, etc.
 ### Utility
-Asset registry database, record keeping, object pooler, material swapper, scene scriptableobject, etc.
+Asset registry database, record keeping, object pooler, material swapper, scene utilities, etc.

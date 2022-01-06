@@ -28,7 +28,7 @@ public class CharacterUI : MonoBehaviour {
             portraitImg.enabled = true;
             portraitImg.sprite = character.itemIcon;
         }
-        characterNameTxt.text = character.itemName;
+        characterNameTxt.text = character.displayName;
     }
     public void Reset() {
         currentCharacter = null;
