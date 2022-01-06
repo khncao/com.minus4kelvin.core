@@ -7,6 +7,7 @@ public class CharacterControl : MonoBehaviour
 {
     public Character character;
     public Animator animator;
+    public INavMovable movable;
     public float moveMult = 1f;
 
     [SerializeField]
@@ -21,25 +22,24 @@ public class CharacterControl : MonoBehaviour
 
     private void Awake() {
         if(!animator) animator = GetComponent<Animator>();
+        if(movable == null) movable = GetComponent<INavMovable>();
         if(animator && !head) {
             head = animator.GetBoneTransform(HumanBodyBones.Head);
         }
     }
 
     private void Start() {
-        if(!character) {
-            // Debug.Log("Character has no character item");
-            return;
-        }
         OnEnable();
     }
+
     private void OnEnable() {
-        if(character && CharacterManager.I)
-            CharacterManager.I.RegisterCharacter(character, this);
+        if(CharacterManager.I)
+            CharacterManager.I.RegisterCharacter(this);
     }
+    
     private void OnDisable() {
-        if(character && CharacterManager.I)
-            CharacterManager.I.RemoveCharacter(character);
+        if(CharacterManager.I)
+            CharacterManager.I.RemoveCharacter(this);
     }
 }
 }

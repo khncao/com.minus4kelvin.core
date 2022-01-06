@@ -22,17 +22,16 @@ public class CharacterData {
 public class CharacterManager : Singleton<CharacterManager>
 {
     public CharacterUI UI;
-    public CharacterControl Player;
-    public List<Character> activeCharacters;
-    // public List<PlayerController> players;
+    public CharacterControl Player; // todo: deprecate 
+    public List<CharacterControl> activeCharacterControls;
     public Character focused;
     public GameObject playerPrefab;
     public int minImpression = -100, maxImpression = 100;
 
-    // public System.Action<PlayerController> onPlayerRegistered;
-    public System.Action<CharacterControl> onCharacterRegistered, onPlayerRegistered;
+    public System.Action<CharacterControl> onCharacterRegistered, onCharacterUnregistered, onPlayerRegistered, onPlayerUnregistered;
 
-    Dictionary<Character, CharacterControl> charInstanceDict = new Dictionary<Character, CharacterControl>();
+    Dictionary<string, List<CharacterControl>> _tagCharacterControlsDict = new Dictionary<string, List<CharacterControl>>();
+    Dictionary<Character, CharacterControl> _charInstanceDict = new Dictionary<Character, CharacterControl>();
     SerializableDictionary<string, CharacterState> _characterStates = new SerializableDictionary<string, CharacterState>();
 
     public void SetFocused(Character character) {
@@ -58,73 +57,86 @@ public class CharacterManager : Singleton<CharacterManager>
         return false;
     }
 
-    // public void RegisterPlayer(Character character, CharacterControl inst) {
-    //     if(RegisterCharacter(character, inst)) {
-    //         Player = inst;
-    //     }
-    // }
-
-    // public void RegisterPlayer(PlayerController player) {
-    //     if(Player != null) {
-    //         Debug.LogError("Player already registered");
-    //         return;
-    //     }
-    //     Player = player;
-    //     onPlayerRegistered?.Invoke(Player);
-    // }
-
     public CharacterControl GetCharInstance(string charName) {
         return GetCharInstance(AssetRegistry.I.GetCharacterFromName(charName));
     }
     public CharacterControl GetCharInstance(Character character) {
+        if(!character) return null;
         CharacterControl chara = null;
-        charInstanceDict.TryGetValue(character, out chara);
+        _charInstanceDict.TryGetValue(character, out chara);
         if(!chara) Debug.LogWarning("character not found");
         return chara;
     }
-    public bool RegisterCharacter(Character character, CharacterControl instance) {
-        if(!_characterStates.ContainsKey(character.name)) {
-            CharacterState state = new CharacterState(character.name);
-            state.impression = character.initialImpression;
 
-            _characterStates.Add(character.name, state);
-        }
+    public void RegisterCharacter(CharacterControl cc) {
+        if(!activeCharacterControls.Contains(cc)) {
+            activeCharacterControls.Add(cc);
+            onCharacterRegistered?.Invoke(cc);
 
-        if(!activeCharacters.Contains(character)) {
-            activeCharacters.Add(character);
-            charInstanceDict.Add(character, instance);
-            CharacterCustomize.I.ApplyCustomizationsOnCharacterSpawn(character, instance.gameObject);
-            onCharacterRegistered?.Invoke(instance);
-
-            // PlayerController player = instance.GetComponent<PlayerController>();
-            // if(player && !players.Contains(player)) 
-            //     players.Add(player);
-            if(instance.CompareTag("Player")) {
-                Player = instance;
-                Cams.I.SetMainCamTarget(instance.Head);
-                onPlayerRegistered?.Invoke(Player);
+            if(cc.CompareTag("Player")) {
+                if(!Player) Player = cc;
+                onPlayerRegistered?.Invoke(cc);
             }
-                
-            return true;
+
+            if(!_tagCharacterControlsDict.ContainsKey(cc.tag)) {
+                _tagCharacterControlsDict.Add(cc.tag, new List<CharacterControl>());
+            }
+            _tagCharacterControlsDict[cc.tag].Add(cc);
         }
-        return false;
+
+        if(!cc.character) return;
+
+        if(!_characterStates.ContainsKey(cc.character.name)) {
+            CharacterState state = new CharacterState(cc.character.name);
+            state.impression = cc.character.initialImpression;
+
+            _characterStates.Add(cc.character.name, state);
+        }
+
+        if(!_charInstanceDict.ContainsKey(cc.character)) {
+            _charInstanceDict.Add(cc.character, cc);
+            CharacterCustomize.I.ApplyCustomizationsOnCharacterSpawn(cc.character, cc.gameObject);
+        }
     }
-    public void RemoveCharacter(Character character) {
-        var instance = GetCharInstance(character);
+    
+    public void RemoveCharacter(CharacterControl cc) {
+        if(activeCharacterControls.Contains(cc)) {
+            activeCharacterControls.Remove(cc);
+            onCharacterUnregistered?.Invoke(cc);
+
+            if(cc.CompareTag("Player")) {
+                onPlayerUnregistered?.Invoke(cc);
+                if(Player == cc) Player = null;
+            }
+
+            if(_tagCharacterControlsDict.ContainsKey(cc.tag)) {
+                if(_tagCharacterControlsDict[cc.tag].Contains(cc))
+                    _tagCharacterControlsDict[cc.tag].Remove(cc);
+            }
+        }
+
+        var instance = GetCharInstance(cc.character);
         if(!instance) return;
-
-        // PlayerController player = instance.GetComponent<PlayerController>();
-        // if(player && players.Contains(player)) 
-        //     players.Remove(player);
             
-        activeCharacters.Remove(character);
-        charInstanceDict.Remove(character);
+        _charInstanceDict.Remove(cc.character);
 
+    }
+
+    public List<CharacterControl> GetCharacterControls(string tag) {
+        List<CharacterControl> characterControls = null;
+        _tagCharacterControlsDict.TryGetValue(tag, out characterControls);
+        if(characterControls == null) {
+            characterControls = new List<CharacterControl>();
+            _tagCharacterControlsDict.Add(tag, characterControls);
+            Debug.LogWarning($"Get created character tag list");
+        }
+        return characterControls;
     }
 
     public GameObject SpawnPlayer() {
         return Instantiate(playerPrefab);
     }
+
 
     public void Serialize(ref CharacterData characterData) {
         characterData.characterStates = _characterStates;

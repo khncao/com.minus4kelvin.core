@@ -18,29 +18,35 @@ public enum ItemTag {
     
 }
 
+/// <summary>
+/// For inventory serialization
+/// </summary>
 [System.Serializable]
-public class ItemData {
-    public string itemName;
+public struct ItemData {
+    public string name;
     public int amount;
     public ItemData(string n, int a) {
-        itemName = n;
+        name = n;
         amount = a;
     }
 }
 
+/// <summary>
+/// For inspector editable item and amounts; used as data for inventory slots, transfers, etc.
+/// </summary>
 [System.Serializable]
 public class ItemInstance {
-    public string ItemName { get { 
+    public string DisplayName { get { 
         if(item) {
-            if(string.IsNullOrEmpty(item.itemName))
+            if(string.IsNullOrEmpty(item.displayName))
                 return item.name;
             else 
-                return item.itemName;
+                return item.displayName;
         }
         return "";
     }}
     public Item item;
-    public int amount = 1;
+    public int amount;
 
     [System.NonSerialized]
     public System.Action onChange;
@@ -58,7 +64,7 @@ public class Item : ScriptableObject
     /// <summary>
     /// Display name; label
     /// </summary>
-    public string itemName;
+    public string displayName;
     public string description;
 #if NAUGHTY_ATTRIBUTES
     [NaughtyAttributes.ShowAssetPreview(128, 128)]
@@ -127,7 +133,7 @@ public class Item : ScriptableObject
 
     public virtual void Copy(Item item) {
         name = item.name;
-        itemName = item.itemName;
+        displayName = item.displayName;
         description = item.description;
         prefab = item.prefab;
         // prefabRef = item.prefabRef;

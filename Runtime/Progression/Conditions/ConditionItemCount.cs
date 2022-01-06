@@ -34,7 +34,7 @@ public class ConditionItemCount : Condition {
         bool pass = Comparisons.Compare(op, itemCt, val);
 
         string col = pass ? "green" : "white";
-        _lastCheckStatus = $"<color={col}>- {item.itemName}: {itemCt}/{val}</color>";
+        _lastCheckStatus = $"<color={col}>- {item.displayName}: {itemCt}/{val}</color>";
         return _lastCheckStatus;
     }
 }

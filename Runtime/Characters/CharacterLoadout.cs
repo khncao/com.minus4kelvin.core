@@ -116,7 +116,7 @@ public class CharacterLoadout : MonoBehaviour
 		return EquipItem(item, slot);
 	}
 	public GameObject EquipItem(Item newItem, CharacterEquipInstance slot) {
-		if(slot.item && slot.item.itemName == newItem.itemName) {
+		if(slot.item && slot.item.displayName == newItem.displayName) {
 			return slot.instance ? slot.instance : null;
 		}
 		if(slot.instance) 

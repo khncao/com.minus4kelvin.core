@@ -5,14 +5,14 @@ using UnityEngine;
 namespace m4k.Interaction {
 public class InteractAgent : MonoBehaviour
 {
-    public IMoveTargetable movable;
+    public INavMovable movable;
     public LayerMask interactLayers;
 
     [System.NonSerialized]
     Collider[] hits = new Collider[10];
 
     private void Start() {
-        if(movable == null) movable = GetComponent<IMoveTargetable>();
+        if(movable == null) movable = GetComponent<INavMovable>();
         movable.OnArrive += OnArrive;
         movable.OnNewTarget += OnNewTarget;
     }

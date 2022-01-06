@@ -63,7 +63,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 itemImgUI.color = Color.white;
             }
             if(itemNameUI)
-                itemNameUI.text = item.ItemName;
+                itemNameUI.text = item.DisplayName;
             
             itemTxtUI.text = item.item.maxAmount > 1 && item.amount > 0 ? item.amount.ToString() : "";
 
@@ -143,7 +143,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 // image.SetNativeSize();
                 slotManager.inventoryManager.UI.dragImg.color = Color.white;
             }
-            dragTxt.text = item.item.itemName;
+            dragTxt.text = item.item.displayName;
             dragRt = dragTxt.transform as RectTransform;
 			canvasRt = slotManager.inventoryManager.UI.inventoryCanvas.transform as RectTransform;
 

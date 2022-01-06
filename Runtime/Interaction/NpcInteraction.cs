@@ -9,7 +9,7 @@ namespace m4k.Interaction {
 public class NpcInteraction : MonoBehaviour
 {
     public CharacterIK iK;
-    public IMoveTargetable movable;
+    public INavMovable movable;
     public m4k.Progression.Dialogue dialogue;
 
     Interactable interactable;
@@ -17,7 +17,7 @@ public class NpcInteraction : MonoBehaviour
     private void Start() {
         interactable = GetComponentInChildren<Interactable>();
         if(!iK) iK = GetComponentInParent<CharacterIK>();
-        if(movable == null) movable = GetComponentInParent<IMoveTargetable>();
+        if(movable == null) movable = GetComponentInParent<INavMovable>();
     }
 
     public void OnInteractable() {

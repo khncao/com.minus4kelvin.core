@@ -5,11 +5,11 @@ namespace m4k {
 /// <summary>
 /// Common interface for directable navigation agents. Used by AI, tasks, etc.
 /// </summary>
-public interface IMoveTargetable {
+public interface INavMovable {
     Transform Target { get; }
     bool IsMoving { get; }
-    void SetTarget(Transform target, bool move);
-    void SetTarget(Vector3 position, bool move);
+    void SetTarget(Transform target);
+    void SetTarget(Vector3 position);
     void Move();
     void Stop();
     void Pause();

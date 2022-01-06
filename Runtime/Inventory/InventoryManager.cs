@@ -41,8 +41,8 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     void ResetInventories() {
         inventoryDict = new Dictionary<string, Inventory>();
 
-        mainInventory = GetOrRegisterInventory("main", 16);
-        characterInventory = GetOrRegisterInventory("character", 16);
+        mainInventory = GetOrRegisterSavedInventory("main", 16);
+        characterInventory = GetOrRegisterSavedInventory("character", 16);
 
         bagSlotManager.AssignInventory(mainInventory);
         characterSlotManager.AssignInventory(characterInventory);
@@ -152,13 +152,14 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         inventory.ModifyCurrency(amount);
     }
 
-    public Inventory GetOrRegisterInventory(string key, int maxSize, int auxSize = 0, bool isStatic = false, GameObject owner = null) {
+    public Inventory GetOrRegisterSavedInventory(string key, int maxSize, int auxSize = 0, bool isStatic = false, GameObject owner = null) {
         Inventory inv;
         inventoryDict.TryGetValue(key, out inv);
         if(inv != null) {
             if(!inv.owner) {
                 inv.owner = owner;
             }
+            Debug.Log($"Retrieved inventory; key: {key}");
             return inv;
         }
         if(inventoryDict.ContainsKey(key)) {
@@ -175,11 +176,11 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     }
 
     public void Serialize(ref InventoryData data) {
-        var _inventories = new List<Inventory>(inventoryDict.Values);
-        foreach(var inv in _inventories) {
-            if(inv.owner)
-                inv.id = inv.owner.scene.name + inv.owner.transform.parent.position.ToString();
-            inv.OnBeforeSerialize();
+        var _inventories = new List<Inventory>();
+        foreach(var inv in inventoryDict) {
+            inv.Value.id = inv.Key;
+            inv.Value.OnBeforeSerialize();
+            _inventories.Add(inv.Value);
         }
         data.inventories = _inventories;
     }

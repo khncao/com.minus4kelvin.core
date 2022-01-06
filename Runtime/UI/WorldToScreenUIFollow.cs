@@ -27,11 +27,11 @@ public class WorldToScreenUIFollow : MonoBehaviour
 		if(!canvasRectT) {
 			canvasRectT = GameObject.Find("WorldFollowCanvas").transform as RectTransform;
 		}
-		SceneHandler.I.onSceneChanged += OnSceneChange;
+		SceneHandler.I.onSceneLoaded += OnSceneLoaded;
 		mainCam = Cams.MainCam;
 	}
 
-	void OnSceneChange() {
+	void OnSceneLoaded() {
 		ClearAll();
 	}
 

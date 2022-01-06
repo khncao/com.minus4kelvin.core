@@ -5,8 +5,8 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - TextMeshPro
 - Cinemachine
 - Timeline
+- (Required tentative)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability. May phase out if implement own custom editor for conditions.
 - (Optional)(NaughtyAttributes)[https://github.com/dbrizov/NaughtyAttributes] for editor QOL and some features
-- (Optional)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability
 - Tested working on Unity 2020.3.6f1+
 
 ### Installation
@@ -21,7 +21,7 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 Item scriptableobject class serves as basis for many item-like uses such as consumables, equipment, buildables, etc.  
 Includes singleton manager class, UI display classes, rated item tier table, and simple crafting implementation.
 ### Characters
-Includes various elements of a 3D mecanim character such as control, animation, IK, equipment, customization, etc. A manager class handles runtime character registration and management. 
+Includes various elements of a character such as control, 3D IK, loadout, customization, etc. A manager class handles runtime character registration and management. 
 ### Interaction
 Various forms of 3D interaction(hover, click, trigger, visibility, etc). Multiple interactable cycling, UI, manager, etc. 
 ### Progression

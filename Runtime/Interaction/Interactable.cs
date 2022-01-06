@@ -85,7 +85,8 @@ public class Interactable : MonoBehaviour, IInteractable
         }
     }
     private void OnDisable() {
-        InteractionManager.I?.UnregisterInteractable(this);
+        if(InteractionManager.I)
+            InteractionManager.I.UnregisterInteractable(this);
         OnNonInteractable();
     }
 
