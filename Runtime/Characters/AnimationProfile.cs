@@ -4,7 +4,7 @@ using UnityEngine;
 // using UnityEngine.Animations;
 
 namespace m4k.Characters {
-[CreateAssetMenu(fileName = "AnimationProfile", menuName = "ScriptableObjects/AnimationProfile", order = 0)]
+[CreateAssetMenu(fileName = "AnimationProfile", menuName = "Data/AnimationProfile", order = 0)]
 public class AnimationProfile : ScriptableObject {
     // public AnimationClip greet, drink, eat, laugh, yes, no, cheer, jeer, sit;
     public AnimationGesture[] gestures;

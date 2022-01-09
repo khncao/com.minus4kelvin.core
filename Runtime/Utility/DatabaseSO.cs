@@ -12,7 +12,7 @@ public class AddressDatabase {
     public string address;
 }
 
-[CreateAssetMenu(fileName = "DatabaseSO", menuName = "ScriptableObjects/Singular/DatabaseSO", order = 0)]
+[CreateAssetMenu(fileName = "DatabaseSO", menuName = "Data/Singular/DatabaseSO", order = 0)]
 public class DatabaseSO : ScriptableObject {
     public List<Item> items;
     public List<Character> characters;

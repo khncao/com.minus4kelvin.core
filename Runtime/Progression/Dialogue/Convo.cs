@@ -8,15 +8,18 @@ using UnityEditor;
 
 namespace m4k.Progression {
 [System.Serializable]
-[CreateAssetMenu(menuName="ScriptableObjects/Progress/Convo")]
+[CreateAssetMenu(menuName="Data/Progress/Convo")]
 public class Convo : ScriptableObject
 {
     public List<Line> lines;
     public Convo nextConvo;
     public LineSO nextLine;
+    public bool isKeyState;
     public bool autoSkipIfSeen;
 
+    [InspectInline]
     public List<LineSO> lineSos;
+    [InspectInline]
     public List<Convo> subConvos;
 
     // single instance to allow convo modification at runtime
@@ -35,9 +38,9 @@ public class Convo : ScriptableObject
     [System.NonSerialized]
     Convo _instance;
 
-#if UNITY_EDITOR && NAUGHTY_ATTRIBUTES
+#if UNITY_EDITOR
     // mirror lines to lineSOs; lineSOs hold ref to existing lines
-    [NaughtyAttributes.Button]
+    [ContextMenu("Lines to LineSOs")]
     void UpdateLineSos() {
         for(int i = 0; i < lines.Count; ++i) {
             if(lineSos.Count < i + 1 || lineSos[i] == null) {
@@ -54,18 +57,7 @@ public class Convo : ScriptableObject
         }
     }
 
-    // create subconvo for convo choice branching
-    [NaughtyAttributes.Button]
-    void CreateSubConvo() {
-        var convo = ScriptableObject.CreateInstance<Convo>();
-        convo.name = $"Subconvo_{subConvos.Count}";
-        subConvos.Add(convo);
-        AssetDatabase.AddObjectToAsset(convo, this);
-        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(this));
-    }
-
     // move to wizard utility for general subasset usage
-    [NaughtyAttributes.Button]
     void DeleteSelected() {
         string s = "";
         foreach(var i in Selection.objects) {
@@ -79,16 +71,14 @@ public class Convo : ScriptableObject
         }
         AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(this));
     }
-    
-    [NaughtyAttributes.Button]
+    [ContextMenu("Delete LineSOs")]
     void DeleteLineSos() {
         if(!EditorUtility.DisplayDialog("Delete LineSO subassets", "Are you sure you want to delete all LineSO subassets?", "Confirm", "Cancel"))
             return;
         DeleteSubAssets<LineSO>();
         lineSos.Clear();
     }
-
-    [NaughtyAttributes.Button]
+    [ContextMenu("Delete Subconvos")]
     void DeleteSubConvos() {
         if(!EditorUtility.DisplayDialog("Delete Convo subassets", "Are you sure you want to delete all Convo subassets?", "Confirm", "Cancel"))
             return;

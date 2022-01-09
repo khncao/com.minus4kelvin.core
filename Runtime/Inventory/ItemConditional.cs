@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace m4k.Items {
 // for achievements, uiItems, etc
-[CreateAssetMenu(menuName="ScriptableObjects/Items/ItemConditional")]
+[CreateAssetMenu(menuName="Data/Items/ItemConditional")]
 [System.Serializable]
 public class ItemConditional : Item
 {

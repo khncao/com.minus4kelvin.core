@@ -28,6 +28,37 @@ public class TRegistry<T>
     public bool Contains(T t) {
         return instances.Contains(t);
     }
+
+    // static Dictionary<System.Type, MonoBehaviour> instanceDict = new Dictionary<System.Type, MonoBehaviour>();
+
+    // public static void RegisterInstance<T>(T obj) {
+    //     MonoBehaviour inst = null;
+    //     instanceDict.TryGetValue(typeof(T), out inst);
+    //     if(inst != null) {
+    //         Debug.LogWarning($"{typeof(T).ToString()} instance exists");
+    //         return;
+    //     }
+    //     instanceDict.Add(typeof(T), inst);
+    // }
+
+    // public static T GetInstance<T>() {
+    //     MonoBehaviour inst = null;
+    //     instanceDict.TryGetValue(typeof(T), out inst);
+
+    //     if(inst == null) {
+    //         // inst = GetComponentInChildren<T>() as MonoBehaviour;
+    //         if(!inst) {
+    //             Debug.LogWarning($"{typeof(T).ToString()} component not found");
+    //             return default(T);
+    //         }
+    //         instanceDict.Add(typeof(T), inst);
+    //     }
+    //     if(inst != null)
+    //         return (T)System.Convert.ChangeType(inst, typeof(T));
+            
+    //     Debug.LogWarning($"{typeof(T).ToString()} instance not found");;
+    //     return default(T);
+    // }
 }
 
 public interface IRegisterable {

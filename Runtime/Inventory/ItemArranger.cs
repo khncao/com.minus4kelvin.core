@@ -19,12 +19,17 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
     
     Item[] _items;
     GameObject[] _spawnedItems;
-
+    Inventory _inventory;
 
     private void Start() {
-        hitLayers = LayerMask.NameToLayer("Buildable");
         _items = new Item[objPlaces.Length];
         _spawnedItems = new GameObject[objPlaces.Length];
+        if(TryGetComponent<InventoryComponent>(out InventoryComponent ic)) {
+            _inventory = ic.inventory;
+            _inventory.onChange -= UpdateItems;
+            _inventory.onChange += UpdateItems;
+        }
+
         if(downSurfacePlacement) {
             RaycastHit hit;
             if(Physics.Raycast(transform.position, -transform.up, out hit, 5, hitLayers, QueryTriggerInteraction.Ignore)) {
@@ -34,6 +39,10 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
             else hasSurface = false;
         }
         initialized = true;
+    }
+
+    public void UpdateItems() {
+        UpdateItems(_inventory.totalItemsList);
     }
 
     /// <summary>

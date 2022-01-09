@@ -57,7 +57,7 @@ public class ItemInstance {
     }
 }
 
-// [CreateAssetMenu(menuName="ScriptableObjects/Items/Item")]
+// [CreateAssetMenu(menuName="Data/Items/Item")]
 [System.Serializable]
 public class Item : ScriptableObject
 {
@@ -66,9 +66,8 @@ public class Item : ScriptableObject
     /// </summary>
     public string displayName;
     public string description;
-#if NAUGHTY_ATTRIBUTES
-    [NaughtyAttributes.ShowAssetPreview(128, 128)]
-#endif
+
+    [PreviewSpriteAttribute]
     public Sprite itemIcon;
     public ItemType itemType;
     public List<ItemTag> itemTags;

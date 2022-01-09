@@ -4,7 +4,7 @@ using UnityEngine;
 using m4k.Items;
 
 namespace m4k.Progression {
-[CreateAssetMenu(menuName="ScriptableObjects/Progress/Objective")]
+[CreateAssetMenu(menuName="Data/Progress/Objective")]
 public class Objective : ScriptableObject
 {
     public enum ObjectiveState { NotStarted, Started, Completed, Failed };
@@ -15,7 +15,8 @@ public class Objective : ScriptableObject
     public string choiceLine;
     [Tooltip("Leave empty to use choiceLine")]
     public string midChoiceLine;
-    public Convo begLines, midLines, endLines;
+    public List<Line> begLines, midLines, endLines;
+    
     public ItemInstance[] rewardItems;
     
     [Tooltip("Actively listen to start conditions and start objective if start conditions met")]
@@ -43,6 +44,7 @@ public class Objective : ScriptableObject
 
     public string ObjectiveId { get { return name; }}
     
+    Convo begConvo, midConvo, endConvo;
     TMPro.TMP_Text _uiTxt;
     ProgressionManager _progression;
     Dialogue _dialogue;
@@ -76,6 +78,19 @@ public class Objective : ScriptableObject
             Debug.Log($"Loaded inprogress objective: {ObjectiveId}");
             StartObjective(true);
         }
+
+        begConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
+        midConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
+        endConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
+        begConvo.name = $"{ObjectiveId}_beg";
+        midConvo.name = $"{ObjectiveId}_mid";
+        endConvo.name = $"{ObjectiveId}_end";
+        foreach(var l in begLines) 
+            begConvo.lines.Add(l);
+        foreach(var l in midLines) 
+            midConvo.lines.Add(l);
+        foreach(var l in endLines) 
+            endConvo.lines.Add(l);
 
         // Reset private fields in ScriptableObjects
         startConds.Init();
@@ -154,17 +169,17 @@ public class Objective : ScriptableObject
         if(state == ObjectiveState.Completed)
             return;
         if(state == ObjectiveState.NotStarted) {
-            DialogueManager.I.ReplaceDialogue(begLines, 0);
+            DialogueManager.I.ReplaceDialogue(begConvo, 0);
             StartObjective();
             // if(!autoCompleteOnCondsMet)
             //     return;
         }
         if(state != ObjectiveState.Completed && completeConds.CheckCompleteReqs()) {
             CompleteObjective();
-            DialogueManager.I.ReplaceDialogue(endLines, 0);
+            DialogueManager.I.ReplaceDialogue(endConvo, 0);
         }
         else {
-            DialogueManager.I.ReplaceDialogue(midLines, 0);
+            DialogueManager.I.ReplaceDialogue(midConvo, 0);
         }
     }
 
