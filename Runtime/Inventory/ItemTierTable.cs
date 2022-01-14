@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace m4k.Items {
-[CreateAssetMenu(menuName="ScriptableObjects/ItemTierTable")]
+[CreateAssetMenu(menuName="Data/Items/ItemTierTable")]
 public class ItemTierTable : ScriptableObject
 {
     [System.Serializable]

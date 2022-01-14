@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace m4k.Items {
-[CreateAssetMenu(menuName="ScriptableObjects/Items/Item Recipe")]
+[CreateAssetMenu(menuName="Data/Items/Item Recipe")]
 public class ItemRecipe : Item
 {
     [Header("Recipe")]

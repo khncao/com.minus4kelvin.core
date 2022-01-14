@@ -39,7 +39,7 @@ public struct CharExpression {
 }
 
 [System.Serializable]
-[CreateAssetMenu(menuName="ScriptableObjects/Items/Character")]
+[CreateAssetMenu(menuName="Data/Items/Character")]
 public class Character : Item
 {
     [Header("Character")]

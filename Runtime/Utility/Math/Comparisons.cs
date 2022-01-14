@@ -1,3 +1,4 @@
+using System;
 
 namespace m4k {
 public enum ComparisonType {
@@ -8,45 +9,29 @@ public enum ComparisonType {
     LessThanOrEqual
 }
 public class Comparisons {
-    // TODO: constrained T
-    // <T> where T : IComparable
-    public static bool Compare(ComparisonType comparison, int left, int right) {
-        switch(comparison) {
-            case ComparisonType.GreaterOrEqual: {
-                return left >= right;
-            }
-            case ComparisonType.Greater: {
-                return left > right;
-            }
-            case ComparisonType.Equal: {
-                return left == right;
-            }
-            case ComparisonType.LessThan: {
-                return left < right;
-            }
-            case ComparisonType.LessThanOrEqual: {
-                return left <= right;
-            }
-        }
-        return false;
+    public static bool Compare<T>(ComparisonType comparison, T left, T right) where T : IComparable 
+    {
+        int result = left.CompareTo(right);
+
+        return Compare(comparison, result);
     }
 
-    public static bool Compare(ComparisonType comparison, long left, long right) {
-        switch(comparison) {
+    public static bool Compare(ComparisonType comparisonType, int result) {
+        switch(comparisonType) {
             case ComparisonType.GreaterOrEqual: {
-                return left >= right;
+                return result >= 0;
             }
             case ComparisonType.Greater: {
-                return left > right;
+                return result > 0;
             }
             case ComparisonType.Equal: {
-                return left == right;
+                return result == 0;
             }
             case ComparisonType.LessThan: {
-                return left < right;
+                return result < 0;
             }
             case ComparisonType.LessThanOrEqual: {
-                return left <= right;
+                return result <= 0;
             }
         }
         return false;

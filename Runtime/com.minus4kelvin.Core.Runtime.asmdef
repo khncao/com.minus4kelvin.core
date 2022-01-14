@@ -5,7 +5,6 @@
         "Unity.TextMeshPro",
         "Cinemachine",
         "Unity.Timeline",
-        "NaughtyAttributes.Core",
         "MackySoft.SerializeReferenceExtensions"
     ],
     "includePlatforms": [],
@@ -16,11 +15,6 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [
-        {
-            "name": "com.dbrizov.naughtyattributes",
-            "expression": "2.0.9",
-            "define": "NAUGHTY_ATTRIBUTES"
-        },
         {
             "name": "com.mackysoft.serializereference-extensions",
             "expression": "1.1.1",

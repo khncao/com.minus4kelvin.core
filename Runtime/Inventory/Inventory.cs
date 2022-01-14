@@ -152,6 +152,14 @@ public class Inventory
         onChange?.Invoke();
         return amount;
     }
+
+    public int RemoveItemAmounts(List<ItemInstance> items) {
+        int accum = 0;
+        foreach(var i in items) {
+            accum += RemoveItemAmount(i.item, i.amount);
+        }
+        return accum;
+    }
     
 
     public int RemoveItemAmount(Item item, int amount, bool playNotify = false) {
@@ -248,10 +256,12 @@ public class Inventory
 
 
 
-    public static int Transfer(Inventory from, Inventory to, List<ItemInstance> items) {
+    public static int Transfer(Inventory from, Inventory to, List<ItemInstance> items, bool monetary = false) {
         int count = 0;
-        for(int i = 0; i < items.Count; ++i) {
-            count += Transfer(from, to, items[i].amount, items[i].item);
+        ItemInstance[] itemsCopy = new ItemInstance[items.Count];
+        items.CopyTo(itemsCopy);
+        foreach(var i in itemsCopy) {
+            count += Transfer(from, to, i.amount, i.item, monetary);
         }
         return count;
     }
@@ -259,11 +269,11 @@ public class Inventory
     public static int Transfer(Inventory from, Inventory to, int amount, Item item, bool monetary = false) 
     {
         if(amount > from.GetItemTotalAmount(item)) {
-            Debug.Log("Transfer amount exceeds owned amount");
+            Feedback.I.SendLine("Transfer amount exceeds origin inventory amount");
             return amount;
         }
         else if(amount > to.GetMaxAmountItemsFit(item)) {
-            Debug.Log("Transfer amount exceeds destination inventory space");
+            Feedback.I.SendLine("Transfer amount exceeds destination inventory space");
             return amount;
         }
         if(monetary) {
@@ -284,7 +294,13 @@ public class Inventory
     public static float GetCostValue(Item item, int amount) {
         return item.value * amount;
     }
-    
+    public static float GetCostValue(List<ItemInstance> itemInstances) {
+        float total = 0f;
+        foreach(var i in itemInstances) {
+            total += i.item.value * i.amount;
+        }
+        return total;
+    }
 
 
     int CompareByItemAmount(ItemInstance a, ItemInstance b) {

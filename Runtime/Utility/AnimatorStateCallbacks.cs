@@ -6,13 +6,14 @@ using UnityEngine.Animations;
 public class AnimatorStateCallbacks : StateMachineBehaviour
 {
     public string stateName;
+
+    public AnimatorStateInfo stateInfo { get; private set; }
+    public int layerIndex { get; private set; }
+
     public System.Action<Animator, int, AnimatorControllerPlayable> onStateMachineEnter, onStateMachineExit;
     public System.Action<Animator, AnimatorStateInfo, int> onStateEnter, onStateUpdate, onStateExit, onStateMove;
     public System.Action<Animator, AnimatorStateInfo, int, AnimatorControllerPlayable> onStateIK;
-    public void Awake() {
-        if(string.IsNullOrEmpty(stateName))
-            stateName = this.name;
-    }
+
     public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash, AnimatorControllerPlayable controller) {
         base.OnStateMachineEnter(animator, stateMachinePathHash, controller);
         onStateMachineEnter?.Invoke(animator, stateMachinePathHash, controller);
@@ -24,6 +25,8 @@ public class AnimatorStateCallbacks : StateMachineBehaviour
 
     public override void OnStateEnter(Animator animator, AnimatorStateInfo animatorStateInfo, int layerIndex) {
         base.OnStateEnter(animator, animatorStateInfo, layerIndex);
+        this.stateInfo = animatorStateInfo;
+        this.layerIndex = layerIndex;
         onStateEnter?.Invoke(animator, animatorStateInfo, layerIndex);
     }
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo animatorStateInfo, int layerIndex) {

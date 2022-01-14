@@ -5,6 +5,7 @@ namespace m4k.Items {
 public class ItemArranger : MonoBehaviour { //ITaskInteractable
     [Tooltip("Concrete points for gameObject instance placement; should be children of this component")]
     public Transform[] objPlaces;
+    public Renderer containerRenderer;
     [Tooltip("Cast ItemArranger down to first ray hit in hitLayers")]
     public bool downSurfacePlacement;
     [Tooltip("Layers hit for downSurfacePlacement ray cast")]
@@ -19,12 +20,19 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
     
     Item[] _items;
     GameObject[] _spawnedItems;
+    Inventory _inventory;
 
-
-    private void Start() {
-        hitLayers = LayerMask.NameToLayer("Buildable");
+    private void Awake() {
         _items = new Item[objPlaces.Length];
         _spawnedItems = new GameObject[objPlaces.Length];
+        if(!TryGetComponent<InventoryComponent>(out InventoryComponent ic)) {
+            ic = gameObject.AddComponent<InventoryComponent>();
+            ic.inventorySlots = objPlaces.Length;
+        }
+        _inventory = ic.inventory;
+        _inventory.onChange -= UpdateItems;
+        _inventory.onChange += UpdateItems;
+
         if(downSurfacePlacement) {
             RaycastHit hit;
             if(Physics.Raycast(transform.position, -transform.up, out hit, 5, hitLayers, QueryTriggerInteraction.Ignore)) {
@@ -36,13 +44,21 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
         initialized = true;
     }
 
+    public void ToggleContainer(bool on) {
+        if(!containerRenderer) return;
+        containerRenderer.enabled = on;
+    }
+
+    void UpdateItems() {
+        UpdateItems(_inventory.totalItemsList);
+    }
+
     /// <summary>
     /// If gameobject instance matches new, recycle; otherwise destroy & replace. 
     /// Only up to amount of placement transforms will have item arranged. 
     /// </summary>
     /// <param name="newItems"></param>
     public void UpdateItems(List<ItemInstance> newItems) {
-        if(!initialized) Start();
         GameObject item;
         int objPlaceIdx = 0;
         itemInstances = newItems;
@@ -56,7 +72,7 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
                     item.SetActive(true);
                 }
                 else {
-                    DestroyImmediate(_spawnedItems[objPlaceIdx]);
+                    Destroy(_spawnedItems[objPlaceIdx]);
                     item = Instantiate(newItems[i].item.prefab);
                     item.transform.SetParent(objPlaces[objPlaceIdx], false);
                 }
@@ -68,10 +84,13 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
                     return;
             }
         }
+
         while(objPlaceIdx < objPlaces.Length) {
             _spawnedItems[objPlaceIdx]?.SetActive(false);
             objPlaceIdx++;
         }
+        
+        ToggleContainer(_inventory.totalItemsList.Count > 0);
     }
 
     // void ArrangeItems() {
@@ -103,6 +122,29 @@ public class ItemArranger : MonoBehaviour { //ITaskInteractable
             if(_spawnedItems[i])
                 _spawnedItems[i].SetActive(false);
         }
+    }
+
+    public void GetItems(List<ItemInstance> items) {
+        _inventory.AddItemAmounts(items);
+        // UpdateItems();
+    }
+
+    public void RemoveItems(List<ItemInstance> items) {
+        foreach(var i in items) 
+            _inventory.RemoveItemAmount(i.item, i.amount);
+        // UpdateItems();
+    }
+
+    public void GetInventory(Inventory from, List<ItemInstance> items = null) {
+        if(items == null) items = from.totalItemsList;
+        Inventory.Transfer(from, _inventory, items);
+        // UpdateItems();
+    }
+
+    public void GiveInventory(Inventory to, List<ItemInstance> items = null) {
+        if(items == null) items = _inventory.totalItemsList;
+        Inventory.Transfer(_inventory, to, items);
+        // UpdateItems();
     }
 
     // public void OnTaskInteract(Task task) {

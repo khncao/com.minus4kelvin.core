@@ -229,8 +229,7 @@ public class DialogueManager : Singleton<DialogueManager>
     // util lineSO ref to line index in convo; hacky way to have assignable lines
     int GetLineSOIndex(LineSO lineSO) {
         if(!_currConvo) return -1;
-        string[] s = lineSO.name.Split('_');
-        return System.Int32.Parse(s[s.Length - 1]);
+        return _currConvo.lineSos.FindIndex(x=>x == lineSO);
     }
 
     public Convo GetConvo(string id) {

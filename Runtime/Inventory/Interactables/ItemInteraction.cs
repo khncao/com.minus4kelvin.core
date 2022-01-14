@@ -1,17 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using m4k.Items;
+using m4k.Interaction;
 // using Uween;
 
-namespace m4k.Interaction {
+namespace m4k.Items {
 [RequireComponent(typeof(Interactable))]
 public class ItemInteraction : MonoBehaviour
 {
     public ItemItem item;
-    public GameObject prefab;
     public ItemArranger arranger;
-    public bool spawnItem;
+    public ParticleSystem particles;
+
     GameObject instance;
     // public AnimationClip animationClip;
     Interactable interactable;
@@ -24,13 +24,13 @@ public class ItemInteraction : MonoBehaviour
             Debug.Log("ItemInteraction has no item or no item prefab");
             return;
         }
-        prefab = item.prefab;
-        if(!spawnItem) 
-            return;
         if(arranger)
             arranger.UpdateItems(item);
-        else if(prefab)
-            instance = Instantiate(prefab, transform);
+
+        instance = Instantiate(item.prefab, transform);
+        gameObject.name = item && !string.IsNullOrEmpty(item.displayName) ? item.displayName : item.prefab.name;
+        if(interactable)
+            interactable.description = gameObject.name;
     }
     public void Interact() {
         // if(instance) {
@@ -38,13 +38,14 @@ public class ItemInteraction : MonoBehaviour
             // Feedback.I.SendLine("It appears to be " + itemName);
         // }
         if(item) {
-            // InventoryManager.I.mainInventory.AddItemAmount(item, 1, true);
             item.AddToInventory(1, true);
-            // if(interactable.destroyOnInteract)
-            //     Destroy(gameObject);
             
             // if(spawnItem)
             //     TweenSXYZ.Add(gameObject, 0.5f, Vector3.one * 0.2f).Then(()=>Destroy(transform.parent.gameObject));
+        }
+        if(particles) {
+            particles.Stop();
+            particles.Clear();
         }
         // if(animationClip && interactable) {
         //     var anim = interactable.otherCol.GetComponentInChildren<Animator>();

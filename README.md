@@ -6,7 +6,6 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - Cinemachine
 - Timeline
 - (Required tentative)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability. May phase out if implement own custom editor for conditions.
-- (Optional)(NaughtyAttributes)[https://github.com/dbrizov/NaughtyAttributes] for editor QOL and some features
 - Tested working on Unity 2020.3.6f1+
 
 ### Installation
@@ -14,8 +13,12 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - or, clone and add as local package
 
 ### Todo
-- Character system improvements with traits; integration with dialogue and AI
+- Character system improvements
+  - traits; integration with dialogue and AI
+  - improved customization and random generation
 - Further isolation of gameplay elements with defines
+- More inventory types: weight, grid
+- General game functions such as time and ticks
 
 ### Inventory
 Item scriptableobject class serves as basis for many item-like uses such as consumables, equipment, buildables, etc.  
