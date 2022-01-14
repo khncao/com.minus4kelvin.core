@@ -88,13 +88,8 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
 
     public void UpdateAllSlots() {
         InitSlots();
-        if(inventory == null) {
-            Debug.LogError(gameObject.name + " no inventory");
-            return;
-        }
-
-        if(inventory.items == null) {
-            Debug.LogError("Inventory items null");
+        if(inventory == null || inventory.items == null) {
+            // Debug.LogError(gameObject.name + " no inventory");
             return;
         }
         

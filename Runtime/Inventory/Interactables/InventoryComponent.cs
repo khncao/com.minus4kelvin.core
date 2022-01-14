@@ -8,32 +8,36 @@ public class InventoryComponent : MonoBehaviour
 {
     public int inventorySlots = 16;
     public int auxSlots = 1;
-    public string saveIdOverride;
+    [Header("Will register as saved inventory if saveId not empty, GuidComponent on same gameObject, or CharacterControl on same gameObject")]
+    public string saveId;
 
-    public Inventory inventory { get {
-        return _inventory != null ? _inventory : Intialize();
-    }}
+    public Inventory inventory { 
+        get {
+            return _inventory != null ? _inventory : Intialize();
+        }
+        set {
+            _inventory = value;
+        }
+    }
     [System.NonSerialized]
     Inventory _inventory;
 
-    bool _initialized = false;
-
-    private void Start() {
-        Intialize();
-    }
+    // private void Start() {
+    //     Intialize();
+    // }
 
     private Inventory Intialize() {
-        if(_initialized) 
+        if(_inventory != null) 
             return _inventory;
 
-        _initialized = true;
-        string id = $"{gameObject.scene.name}/{transform.position.ToString()}";
+        // string id = $"{gameObject.scene.name}/{transform.position.ToString()}";
+        string id = "";
 
         GuidComponent guidComponent;
         CharacterControl cc;
 
-        if(!string.IsNullOrEmpty(saveIdOverride)) {
-            id = saveIdOverride;
+        if(!string.IsNullOrEmpty(saveId)) {
+            id = saveId;
         }
         else if(TryGetComponent<GuidComponent>(out guidComponent)) {
             id = guidComponent.GetGuid().ToString();
@@ -42,7 +46,10 @@ public class InventoryComponent : MonoBehaviour
             id = cc.character.name;
         }
         
-        _inventory = InventoryManager.I.GetOrRegisterSavedInventory(id, inventorySlots, auxSlots, false, gameObject);
+        if(!string.IsNullOrEmpty(id))
+            _inventory = InventoryManager.I.GetOrRegisterSavedInventory(id, inventorySlots, auxSlots, false, gameObject);
+        else
+            _inventory = new Inventory(inventorySlots, auxSlots);
         
         return _inventory;
     }

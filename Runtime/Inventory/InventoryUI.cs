@@ -23,7 +23,7 @@ public class InventoryUI : MonoBehaviour
     public GameObject itemContext, contextMenu;
     public TMP_Text hoverNameTxt, hoverInfoTxt;
     public Button contextUseButton, contextBuyButton, contextSellButton, contextTransferButton;
-    public Button transferAllToBagButton, transferAllFromBagButton;
+    // public Button transferAllToBagButton, transferAllFromBagButton;
     public GameObject objectPreviewPanel;
     public TMP_Text dragTxt;
     public Image dragImg;
@@ -40,11 +40,16 @@ public class InventoryUI : MonoBehaviour
 
         quantityPromptInput.onValueChanged.AddListener(OnQuantityPromptChanged);
         craftButton.onClick.AddListener(OnClickCraft);
-        if(transferAllToBagButton)
-            transferAllToBagButton.onClick.AddListener(delegate {Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllToBag, "Transfer all to bag?");} );
 
-        if(transferAllFromBagButton)
-            transferAllFromBagButton.onClick.AddListener(delegate {Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllFromBag, "Transfer all from bag?");} );
+        // if(transferAllFromBagButton)
+        //     transferAllFromBagButton.onClick.AddListener(()=>
+        //     Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllFromBag, "Transfer all from bag?")
+        // );
+
+        // if(transferAllToBagButton)
+        //     transferAllToBagButton.onClick.AddListener(()=>
+        //     Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllToBag, "Transfer all to bag?")
+        // );
     }
 
     public void ToggleBag(bool enabled) {
@@ -122,6 +127,12 @@ public class InventoryUI : MonoBehaviour
     }
     public void ShowMonthReport() {
 
+    }
+    public void TransferAllFromBag() {
+        Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllFromBag, "Transfer all from bag?");
+    }
+    public void TransferAllToBag() {
+        Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllToBag, "Transfer all to bag?");
     }
 
     TMP_Text craftButtonText;
@@ -212,8 +223,9 @@ public class InventoryUI : MonoBehaviour
 
         if(from.item.item.maxAmount == 1) {
             quantValue = 1;
-            // EnableTransactionConfirmPrompt();
-            ConfirmTransaction();
+            Feedback.I.RegisterConfirmRequest(ConfirmQuantityPromptTransaction,
+            confirmTransactionText.text = "Complete transaction?");
+            //$"{Inventory.GetCostValue(inventoryManager.fromSlot.item.item, quantValue)} {currencyName}. Complete transaction?");
         }
         else {
             quantityPromptItem = from.item.item;
@@ -229,20 +241,13 @@ public class InventoryUI : MonoBehaviour
     void OnQuantityPromptChanged(string value) {
         quantValue = int.Parse(value);
     }
-    // void EnableTransactionConfirmPrompt() {
-    //     confirmTransactionText.text = string.Format("{0} {1}. Complete transaction?", Inventory.GetCostValue(inventoryManager.fromSlot.item.item, quantValue), currencyName);
-    //     confirmTransactionPrompt.SetActive(true);
-    // }
 
     // called by input quantity prompt confirm button
     public void ModifyQuantityPrompt(int amount) {
         quantValue = amount == 0 ? 0 : Mathf.Clamp(quantValue + amount, 0, ownedValue);
         quantityPromptInput.text = quantValue.ToString();
     }
-    public void ConfirmTransaction() {
-        Feedback.I.RegisterConfirmRequest(ConfirmQuantityPromptTransaction,
-        confirmTransactionText.text = string.Format("{0} {1}. Complete transaction?", Inventory.GetCostValue(inventoryManager.fromSlot.item.item, quantValue), currencyName));
-    }
+
     // called by confirm prompt confirm button
     public int ConfirmQuantityPromptTransaction() {
         inventoryManager.CompleteTransaction(quantValue);

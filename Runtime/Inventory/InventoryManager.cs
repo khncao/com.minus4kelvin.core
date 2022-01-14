@@ -11,7 +11,8 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     public Inventory mainInventory;
     public Inventory characterInventory;
     public ItemSlotHandler bagSlotManager, characterSlotManager, shopSlotManager, storageSlotManager, craftSlotManager, recipeSlotManager;
-    public List<Item> testItems1;
+    public GameObject itemDropPrefab, inventoryDropPrefab;
+    
 
     [System.NonSerialized]
     public ItemSlot fromSlot, toSlot;
@@ -25,11 +26,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     ItemSlotHandler currTransferSlots;
     Dictionary<string, Inventory> inventoryDict = new Dictionary<string, Inventory>();
 
-    public void TestAddBagItems() {
-        for(int i = 0; i < testItems1.Count; ++i) {
-            mainInventory.AddItemAmount(testItems1[i], 1, true);
-        }
-    }
+
     protected override void Awake() {
         base.Awake();
         if(m_ShuttingDown) return; 
@@ -52,6 +49,25 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
 
         UI.UpdateCurrency(0, 0, false);
     }
+
+    public GameObject SpawnItemDrop(ItemItem item, Vector3 pos) {
+        GameObject go = Instantiate(itemDropPrefab, pos, Quaternion.identity);
+        go.name = "Item";
+        var itemInteract = go.GetComponent<ItemInteraction>();
+        itemInteract.item = item;
+        return go;
+    }
+
+    public GameObject SpawnInventoryDrop(Inventory inventory, Vector3 pos) {
+        GameObject go = Instantiate(inventoryDropPrefab, pos, Quaternion.identity);
+        go.name = "Storage";
+        var invComponent = go.GetComponent<InventoryComponent>();
+        Inventory invClone = new Inventory(inventory.items.Length);
+        invClone.AddItemAmounts(inventory.totalItemsList);
+        invComponent.inventory = invClone;
+        return go;
+    }
+
     public void ToggleBag() {
         if(InTransaction) return;
         UI.ToggleBag(!UI.bagInventorySlots.activeInHierarchy);
@@ -140,7 +156,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         return Inventory.Transfer(mainInventory, currTransferSlots.inventory, mainInventory.totalItemsList);
     }
     public int TransferAllToBag() {
-        if(!InTransaction || inShop) return 0;
+        if(!inStorage) return 0;
         return Inventory.Transfer(currTransferSlots.inventory, mainInventory, currTransferSlots.inventory.totalItemsList);
     }
 

@@ -36,20 +36,15 @@ public struct ItemData {
 /// </summary>
 [System.Serializable]
 public class ItemInstance {
-    public string DisplayName { get { 
-        if(item) {
-            if(string.IsNullOrEmpty(item.displayName))
-                return item.name;
-            else 
-                return item.displayName;
-        }
-        return "";
-    }}
     public Item item;
     public int amount;
 
     [System.NonSerialized]
     public System.Action onChange;
+
+    public string DisplayName { get { 
+        return item ? item.displayName : "";
+    }}
 
     public ItemInstance(Item i, int a) {
         item = i;
@@ -61,10 +56,8 @@ public class ItemInstance {
 [System.Serializable]
 public class Item : ScriptableObject
 {
-    /// <summary>
-    /// Display name; label
-    /// </summary>
-    public string displayName;
+    [SerializeField]
+    string _displayName;
     public string description;
 
     [PreviewSpriteAttribute]
@@ -79,7 +72,18 @@ public class Item : ScriptableObject
     // public string guid;
 
     // public GameObject prefab { get { return prefabRef.Asset as GameObject; }}
-    
+    /// <summary>
+    /// Display name; label
+    /// </summary>
+    public string displayName {
+        get {
+            return !string.IsNullOrEmpty(_displayName) ? _displayName : name;
+        }
+        set {
+            _displayName = value;
+        }
+    }
+
     HashSet<ItemTag> tagHash;
 
     // public void LoadAssets() {
@@ -132,7 +136,7 @@ public class Item : ScriptableObject
 
     public virtual void Copy(Item item) {
         name = item.name;
-        displayName = item.displayName;
+        _displayName = item._displayName;
         description = item.description;
         prefab = item.prefab;
         // prefabRef = item.prefabRef;

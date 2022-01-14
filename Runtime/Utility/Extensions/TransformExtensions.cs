@@ -11,7 +11,7 @@ public static class TransformExtensions {
     /// <param name="list">List Component for comparison</param>
     /// <param name="closest">Result closest</param>
     /// <typeparam name="T"></typeparam>
-    public static void GetClosest<T>(this Transform refTransform, List<T> list, out T closest)
+    public static void GetClosest<T>(this Transform refTransform, IList<T> list, out T closest)
     {
         closest = default(T);
 

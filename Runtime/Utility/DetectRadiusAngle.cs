@@ -13,9 +13,9 @@ public class DetectRadiusAngle<T> where T : class {
 
     public Transform self { get; set; }
 
-    public List<T> others { get; private set; }
+    public IList<T> others { get; private set; }
 
-    public List<T> hits { get {
+    public IList<T> hits { get {
         CheckIfHitsStale();
         return _hits;
     }}
@@ -26,7 +26,7 @@ public class DetectRadiusAngle<T> where T : class {
     }}
 
     System.Predicate<T> query;
-    List<T> _hits;
+    IList<T> _hits;
     HashSet<T> _inRange;
     
     float _lastCheckTime;
@@ -43,7 +43,7 @@ public class DetectRadiusAngle<T> where T : class {
     /// <param name="maxSquaredRange">Max squared radius from self</param>
     /// <param name="viewAngles">Angle from transform forward for hits; leave empty or 0f to only check radius</param>
     /// <param name="query"></param>
-    public DetectRadiusAngle(Transform self, List<T> others, float maxSquaredRange, float viewAngles = 0f, System.Predicate<T> query = null) {
+    public DetectRadiusAngle(Transform self, IList<T> others, float maxSquaredRange, float viewAngles = 0f, System.Predicate<T> query = null) {
         this.self = self;
         this.others = others;
         this._viewAngles = viewAngles;
@@ -81,7 +81,7 @@ public class DetectRadiusAngle<T> where T : class {
 
         foreach(var t in others) {
             if(( (query != null && query.Invoke(t)) || query == null)
-            && IsValid(t)
+            && t != null && IsValid(t)
             ) {
                 _hits.Add(t);
                 _inRange.Add(t);

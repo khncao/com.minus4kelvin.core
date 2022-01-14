@@ -9,9 +9,9 @@ namespace m4k
 
     public class InspectInlineAttribute : PropertyAttribute
     {
-        public bool canEditRemoteTarget;
+        // public bool canEditRemoteTarget;
 
-        public bool canCreateSubasset;
+        public bool canCreateSubasset = true;
     }
 
 }

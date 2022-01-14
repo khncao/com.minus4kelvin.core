@@ -17,7 +17,7 @@ public class ConditionItemCount : Condition {
             Debug.LogError("No item in condition");
             return false;
         }
-        return Comparisons.Compare(op, InventoryManager.I.mainInventory.GetItemTotalAmount(item), val);
+        return Comparisons.Compare<int>(op, InventoryManager.I.mainInventory.GetItemTotalAmount(item), val);
     }
 
     public override void FinalizeCondition() {

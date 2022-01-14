@@ -137,48 +137,48 @@ namespace m4k
             SerializedProperty property,
             GUIContent label)
         {
-            float totalHeight = EditorGUIUtility.singleLineHeight;
-            if(property.objectReferenceValue == null || !AreAnySubPropertiesVisible(property)){
-                return totalHeight;
-            }
-            if(property.isExpanded) {
-                var data = property.objectReferenceValue as ScriptableObject;
-                if( data == null ) return EditorGUIUtility.singleLineHeight;
-                SerializedObject serializedObject = new SerializedObject(data);
-                SerializedProperty prop = serializedObject.GetIterator();
-                if (prop.NextVisible(true)) {
-                    do {
-                        if(prop.name == "m_Script") continue;
-                        var subProp = serializedObject.FindProperty(prop.name);
-                        float height = EditorGUI.GetPropertyHeight(subProp, null, true) + EditorGUIUtility.standardVerticalSpacing;
-                        totalHeight += height;
-                    }
-                    while (prop.NextVisible(false));
-                }
-                // Add a tiny bit of height if open for the background
-                totalHeight += EditorGUIUtility.standardVerticalSpacing;
-            }
-            return totalHeight;
+            // float totalHeight = EditorGUIUtility.singleLineHeight;
+            // if(property.objectReferenceValue == null || !AreAnySubPropertiesVisible(property)){
+            //     return totalHeight;
+            // }
+            // if(property.isExpanded) {
+            //     var data = property.objectReferenceValue as ScriptableObject;
+            //     if( data == null ) return EditorGUIUtility.singleLineHeight;
+            //     SerializedObject serializedObject = new SerializedObject(data);
+            //     SerializedProperty prop = serializedObject.GetIterator();
+            //     if (prop.NextVisible(true)) {
+            //         do {
+            //             if(prop.name == "m_Script") continue;
+            //             var subProp = serializedObject.FindProperty(prop.name);
+            //             float height = EditorGUI.GetPropertyHeight(subProp, null, true) + EditorGUIUtility.standardVerticalSpacing;
+            //             totalHeight += height;
+            //         }
+            //         while (prop.NextVisible(false));
+            //     }
+            //     // Add a tiny bit of height if open for the background
+            //     totalHeight += EditorGUIUtility.standardVerticalSpacing;
+            // }
+            // return totalHeight;
 
-        // var height = EditorGUIUtility.singleLineHeight;
-        //     if (property.isExpanded)
-        //     {
-        //         var serializedObject = property.serializedObject;
-        //         var asset = serializedObject.targetObject;
-        //         using (new ObjectScope(asset))
-        //         {
-        //             var target = property.objectReferenceValue;
-        //             var targetExists = target != null;
-        //             if (targetExists && !ObjectScope.Contains(target))
-        //             {
-        //                 var spacing = EditorGUIUtility.standardVerticalSpacing;
-        //                 height += spacing;
-        //                 height += GetInlinePropertyHeight(target);
-        //                 height += 1;
-        //             }
-        //         }
-        //     }
-        // return height;
+            var height = EditorGUIUtility.singleLineHeight;
+            if (property.isExpanded)
+            {
+                var serializedObject = property.serializedObject;
+                var asset = serializedObject.targetObject;
+                using (new ObjectScope(asset))
+                {
+                    var target = property.objectReferenceValue;
+                    var targetExists = target != null;
+                    if (targetExists && !ObjectScope.Contains(target))
+                    {
+                        var spacing = EditorGUIUtility.standardVerticalSpacing;
+                        height += spacing;
+                        height += GetInlinePropertyHeight(target);
+                        height += 1;
+                    }
+                }
+            }
+            return height;
         }
 
         const int buttonWidth = 20;
@@ -204,14 +204,20 @@ namespace m4k
             
             var propertyRect = Rect.zero;
             var guiContent = new GUIContent(property.displayName);
+
+            // foldout 
+
             var foldoutRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, EditorGUIUtility.singleLineHeight);
 
-            if(property.objectReferenceValue != null && AreAnySubPropertiesVisible(property)) {
+            if(property.objectReferenceValue != null 
+            && AreAnySubPropertiesVisible(property)
+            ) {
                 property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, guiContent, true);
             } else {
                 foldoutRect.x += 12;
                 EditorGUI.Foldout(foldoutRect, property.isExpanded, guiContent, true, EditorStyles.label);
             }
+
             var indentedPosition = EditorGUI.IndentedRect(position);
             var indentOffset = indentedPosition.x - position.x;
             propertyRect = new Rect(position.x + (EditorGUIUtility.labelWidth - indentOffset), position.y, position.width - (EditorGUIUtility.labelWidth - indentOffset), EditorGUIUtility.singleLineHeight);
@@ -219,43 +225,54 @@ namespace m4k
             if(propertySO != null || property.objectReferenceValue == null) {
             	propertyRect.width -= buttonWidth;
             }
+
+            // object
             
             EditorGUI.ObjectField(propertyRect, property, GUIContent.none);
             if (GUI.changed) property.serializedObject.ApplyModifiedProperties();
 
-            var buttonRect = new Rect(position.x + position.width - buttonWidth, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
             // draw property
                 
             if(property.propertyType == SerializedPropertyType.ObjectReference && property.objectReferenceValue != null) {
                 var data = (ScriptableObject)property.objectReferenceValue;
                 
                 if(property.isExpanded) {
-                    GUI.Box(new Rect(0, position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing - 1, Screen.width, position.height - EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing), "");
+                    // GUI.Box(new Rect(0, position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing - 1, Screen.width, position.height - EditorGUIUtility.singleLineHeight - EditorGUIUtility.standardVerticalSpacing), "");
 
-                    EditorGUI.indentLevel++;
-                    SerializedObject serializedObject = new SerializedObject(data);
+                    // EditorGUI.indentLevel++;
+                    // SerializedObject serializedObject = new SerializedObject(data);
                     
-                    // Iterate over all the values and draw them
-                    SerializedProperty prop = serializedObject.GetIterator();
-                    float y = position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                    if (prop.NextVisible(true)) {
-                        do {
-                            // Don't bother drawing the class file
-                            if(prop.name == "m_Script") continue;
-                            float height = EditorGUI.GetPropertyHeight(prop, new GUIContent(prop.displayName), true);
-                            EditorGUI.PropertyField(new Rect(position.x, y, position.width, height), prop, true);
-                            y += height + EditorGUIUtility.standardVerticalSpacing;
-                        }
-                        while (prop.NextVisible(false));
-                    }
-                    if (GUI.changed)
-                        serializedObject.ApplyModifiedProperties();
+                    // // Iterate over all the values and draw them
+                    // SerializedProperty prop = serializedObject.GetIterator();
+                    // float y = position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                    // if (prop.NextVisible(true)) {
+                    //     do {
+                    //         // Don't bother drawing the class file
+                    //         if(prop.name == "m_Script") continue;
+                    //         float height = EditorGUI.GetPropertyHeight(prop, new GUIContent(prop.displayName), true);
+                    //         EditorGUI.PropertyField(new Rect(position.x, y, position.width, height), prop, true);
+                    //         y += height + EditorGUIUtility.standardVerticalSpacing;
+                    //     }
+                    //     while (prop.NextVisible(false));
+                    // }
+                    // if (GUI.changed)
+                    //     serializedObject.ApplyModifiedProperties();
 
-                    EditorGUI.indentLevel--;
+                    // EditorGUI.indentLevel--;
+
+                    var inlineRect = position;
+                    inlineRect.yMin = propertyRect.yMax;
+                    var spacing = EditorGUIUtility.standardVerticalSpacing;
+                    // inlineRect.xMin += 2;
+                    // inlineRect.xMax -= 18;
+                    inlineRect.yMin += spacing;
+                    // inlineRect.yMax -= 1;
+                    DoInlinePropertyGUI(inlineRect, property.objectReferenceValue, true);
                 }
-            } else {
+            } 
 
-            }
+            var buttonRect = new Rect(position.x + position.width - buttonWidth, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+
             if(GUI.Button(buttonRect, "")) {
                 OnPropertyContextMenu(new GenericMenu(), property);
             }
@@ -294,7 +311,8 @@ namespace m4k
             //         }
             //     }
         // }
-            // DiscardObsoleteSerializedObjectsOnNextEditorUpdate();
+        
+            DiscardObsoleteSerializedObjectsOnNextEditorUpdate();
         }
 
         void OnPropertyContextMenu(GenericMenu menu, SerializedProperty property)
@@ -330,8 +348,8 @@ namespace m4k
                         property.serializedObject.ApplyModifiedProperties();
                     }, elem);
 
-                    // if(!attribute.canCreateSubasset)
-                    //     continue;
+                    if(!attribute.canCreateSubasset)
+                        continue;
                     menu.AddItem(new GUIContent($"Create subasset/{elem.Name}"), false, (elem) => {
                         AddSubasset(property, elem as Type);
                     }, elem);
@@ -363,7 +381,7 @@ namespace m4k
             return GUIUtility.GetControlID(hint, focus, position);
         }
 
-        //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 
         // private void DoContextMenuGUI(
         //     Rect position,
@@ -400,6 +418,7 @@ namespace m4k
         //             types);
         //     }
         // }
+    //----------------------------------------------------------------------
 
         private static void SetObjectReferenceValue(
             SerializedProperty property,
@@ -428,55 +447,55 @@ namespace m4k
             return asset != null && !EditorUtility.IsPersistent(asset);
         }
 
-        //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 
-        private void DoObjectFieldGUI(
-            Rect position,
-            SerializedProperty property,
-            GUIContent label)
-        {
-            label = EditorGUI.BeginProperty(position, label, property);
+        // private void DoObjectFieldGUI(
+        //     Rect position,
+        //     SerializedProperty property,
+        //     GUIContent label)
+        // {
+        //     label = EditorGUI.BeginProperty(position, label, property);
 
-            var objectType = fieldInfo.FieldType;
-            var oldTarget = property.objectReferenceValue;
-            var newTarget =
-                EditorGUI.ObjectField(
-                    position,
-                    label,
-                    oldTarget,
-                    objectType,
-                    AllowSceneObjects(property));
+        //     var objectType = fieldInfo.FieldType;
+        //     var oldTarget = property.objectReferenceValue;
+        //     var newTarget =
+        //         EditorGUI.ObjectField(
+        //             position,
+        //             label,
+        //             oldTarget,
+        //             objectType,
+        //             AllowSceneObjects(property));
 
-            EditorGUI.EndProperty();
-            if (!ReferenceEquals(newTarget, oldTarget))
-            {
-                SetObjectReferenceValue(property, newTarget);
-            }
-        }
+        //     EditorGUI.EndProperty();
+        //     if (!ReferenceEquals(newTarget, oldTarget))
+        //     {
+        //         SetObjectReferenceValue(property, newTarget);
+        //     }
+        // }
 
-        //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 
-        private void DoFoldoutGUI(
-            Rect position,
-            SerializedProperty property)
-        {
-            var foldoutRect = position;
-            foldoutRect.width = EditorGUIUtility.labelWidth;
+        // private void DoFoldoutGUI(
+        //     Rect position,
+        //     SerializedProperty property)
+        // {
+        //     var foldoutRect = position;
+        //     // foldoutRect.width = EditorGUIUtility.labelWidth;
 
-            var target = property.objectReferenceValue;
-            var targetExists = target != null;
-            var isExpanded = targetExists && property.isExpanded;
+        //     var target = property.objectReferenceValue;
+        //     var targetExists = target != null;
+        //     var isExpanded = targetExists && property.isExpanded;
 
-            var noLabel = GUIContent.none;
-            isExpanded = EditorGUI.Foldout(foldoutRect, isExpanded, noLabel);
+        //     var noLabel = GUIContent.none;
+        //     isExpanded = EditorGUI.Foldout(foldoutRect, isExpanded, noLabel);
 
-            if (targetExists)
-            {
-                property.isExpanded = isExpanded;
-            }
-        }
+        //     if (targetExists)
+        //     {
+        //         property.isExpanded = isExpanded;
+        //     }
+        // }
 
-        //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 
         // private void ShowContextMenu(
         //     Rect position,
@@ -551,7 +570,7 @@ namespace m4k
         //         allowSceneObjects);
         // }
 
-        //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
 
         private float GetInlinePropertyHeight(Object target)
         {
