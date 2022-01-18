@@ -14,6 +14,9 @@ public class AddressDatabase {
 
 [CreateAssetMenu(fileName = "DatabaseSO", menuName = "Data/Singular/DatabaseSO", order = 0)]
 public class DatabaseSO : ScriptableObject {
+    [Tooltip("Default: Assets/Data")]
+    public string dataPathOverride;
+    
     public List<Item> items;
     public List<Character> characters;
     public List<Convo> convos;

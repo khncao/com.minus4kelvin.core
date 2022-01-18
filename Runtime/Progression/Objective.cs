@@ -112,7 +112,7 @@ public class Objective : ScriptableObject
         failConds.onComplete -= OnFail;
         failConds.onComplete += OnFail;
 
-        OnConditionChange();
+        OnConditionChange(completeConds);
     }
 
     void RemoveObjectiveTracker() {
@@ -125,12 +125,13 @@ public class Objective : ScriptableObject
         failConds.onComplete -= OnFail;
     }
 
-    void OnConditionChange(Conditions conds = null) {
+    void OnConditionChange(Conditions conds) {
         if(!_uiTxt)
             return;
         string body = $" - {objectiveName}: {objectiveDescrip}.\n";
 
-        foreach(var c in completeConds.conditions) {
+        foreach(var c in conds.conditions) {
+            if(c == null) continue;
             body += $"    {c.ToString()}\n";
         }
 

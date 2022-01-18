@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace m4k.Progression {
+namespace m4k {
 // Record goal for sum of archived values and instance period value
 [Serializable]
 public class ConditionRecordTotal : Condition {
@@ -32,6 +32,15 @@ public class ConditionRecordTotal : Condition {
         string col = rec.Sum < val ? "white" : "green";
         _lastCheckStatus = $"<color={col}>- {rec.id}: {rec.Sum}/{val}</color>";
         return _lastCheckStatus;
+    }
+
+    public override void RegisterListener(Conditions conditions) {
+        RecordManager.I.onChange -= conditions.OnChange;
+        RecordManager.I.onChange += conditions.OnChange;
+    }
+
+    public override void UnregisterListener(Conditions conditions) {
+        RecordManager.I.onChange -= conditions.OnChange;
     }
 }
 }

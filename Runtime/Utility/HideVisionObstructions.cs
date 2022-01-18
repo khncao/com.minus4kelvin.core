@@ -4,33 +4,78 @@ using UnityEngine;
 
 public class HideVisionObstructions : MonoBehaviour
 {
-    public float rayLength = 20f; 
-    List<Renderer> targets = new List<Renderer>();
-    Shader transparentShader;
+    // public Material replacementMaterial;
+    public int maxHits = 32;
+    public float castDistance = 10f; 
+    public float castRadius = 1f;
+    public LayerMask hitLayers;
+    // public float alphaTransitionTime = 0.2f;
+
+    RaycastHit[] hits;
+    // Dictionary<Renderer, List<Material>> rendererCache;
+    HashSet<Renderer> currentHits, prevHits;
+    int _hitCount, _prevHitCount;
+
     private void Start() {
-        transparentShader = Shader.Find("Transparent/Diffuse");
+        hits = new RaycastHit[maxHits];
+        // rendererCache = new Dictionary<Renderer, List<Material>>();
+        currentHits = new HashSet<Renderer>(maxHits);
+        prevHits = new HashSet<Renderer>(maxHits);
     }
 
     void Update()
     {
-        RaycastHit[] hits;
-        hits = Physics.RaycastAll(transform.position, transform.forward, rayLength);
+        prevHits.Clear();
+        foreach(var hit in currentHits) {
+            prevHits.Add(hit);
+        }
+        currentHits.Clear();
 
-        for (int i = 0; i < hits.Length; i++)
-        {
-            if(!hits[i].transform.CompareTag("IgnoreRaycast"))
+        _hitCount = Physics.SphereCastNonAlloc(transform.position, castRadius, transform.forward, hits, castDistance, hitLayers, QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < _hitCount; ++i) {
+            Renderer rend = hits[i].transform.GetComponent<Renderer>();
+
+            if(!rend || currentHits.Contains(rend))
                 continue;
-            RaycastHit hit = hits[i];
-            Renderer rend = hit.transform.GetComponent<Renderer>();
 
-            if (rend)
-            {
-                rend.material.shader = transparentShader;
-                Color tempColor = rend.material.color;
-                tempColor.a = 0.3F;
-                rend.material.color = tempColor;
-                targets.Add(rend);
+            currentHits.Add(rend);
+            rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+
+            // for(int j = 0; j < rend.materials.Length; ++j) {
+            //     rend.materials[j] = Instantiate(replacementMaterial);
+            // }
+        }
+
+        foreach(var hit in prevHits) {
+            if(!currentHits.Contains(hit)) {
+                hit.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
             }
         }
+
+        // to transparent
+        // foreach(var e in rendererCache) {
+        //     for(int i = 0; i < e.Value.Count; ++i) {
+        //         var mat = e.Value[i];
+        //         float amount = Time.deltaTime / alphaTransitionTime;
+        //         var col = mat.color;
+        //         col.a -= amount;
+        //         mat.color = col;
+        //     }
+        //     if(e.Key.material.color.a >= 1f) {
+        //         rendererCache.Remove(e.Key);
+        //     }
+        // }
+        // rendererCache.TrimExcess();
+
+        // from transparent
+        // foreach(var e in rendererCache) {
+        //     foreach(var mat in e.Value) {
+        //         float amount = Time.deltaTime / alphaTransitionTime;
+        //         var col = mat.color;
+        //         col.a += amount;
+        //         mat.color = col;
+        //     }
+        // }
     }
 }

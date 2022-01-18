@@ -191,6 +191,11 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         return inv;
     }
 
+    public Inventory TryGetInventory(string key) {
+        inventoryDict.TryGetValue(key, out Inventory inventory);
+        return inventory;
+    }
+
     public void Serialize(ref InventoryData data) {
         var _inventories = new List<Inventory>();
         foreach(var inv in inventoryDict) {

@@ -13,33 +13,34 @@ using UnityEditor;
 namespace m4k {
 public class AssetRegistry : Singleton<AssetRegistry> {
     public DatabaseSO database;
-    [Tooltip("Default: Assets/Data")]
-    public string dataPathOverride;
 
     [System.NonSerialized]
     Dictionary<string, Item> itemNameDict;
-    // Dictionary<string, Item> itemGuidDict = new Dictionary<string, Item>();
-    [System.NonSerialized]
-    Dictionary<string, Character> charDict;
     [System.NonSerialized]
     Dictionary<ItemTag, List<Item>> itemTagLists;
     [System.NonSerialized]
     Dictionary<ItemType, List<Item>> itemTypeLists;
+    [System.NonSerialized]
     Dictionary<System.Type, List<Item>> itemTypeListDict;
+
+    [System.NonSerialized]
+    Dictionary<string, Character> charDict;
+
     [System.NonSerialized]
     Dictionary<string, Convo> idConvosDict;
 
     protected override void Awake() {
         base.Awake();
         if(m_ShuttingDown) return;
-        if(!database || database.items == null) {
+        if(!_database) {
             UpdateDatabase();
         }
         itemNameDict = new Dictionary<string, Item>();
-        charDict = new Dictionary<string, Character>();
         itemTagLists = new Dictionary<ItemTag, List<Item>>();
-        itemTypeLists = new Dictionary<ItemType, List<Item>>();
         itemTypeListDict = new Dictionary<System.Type, List<Item>>();
+
+        charDict = new Dictionary<string, Character>();
+
         idConvosDict = new Dictionary<string, Convo>();
 
         for(int i = 0; i < database.items.Count; ++i) {
@@ -49,7 +50,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
                 Debug.Log("Already contains: " + item.name);
             }
             itemNameDict.Add(item.name, item);
-            // itemGuidDict.Add(item.guid, item);
 
             for(int j = 0; j < item.itemTags.Count; ++j) {
                 if(itemTagLists.ContainsKey(item.itemTags[j]))
@@ -57,10 +57,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
                 else 
                     itemTagLists.Add(item.itemTags[j], new List<Item>(){ item });
             }
-            if(itemTypeLists.ContainsKey(item.itemType))
-                itemTypeLists[item.itemType].Add(item);
-            else
-                itemTypeLists.Add(item.itemType, new List<Item>(){ item });
 
             if(itemTypeListDict.ContainsKey(item.GetType()))
                 itemTypeListDict[item.GetType()].Add(item);
@@ -82,20 +78,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         }
     }
 
-    // public AsyncOperationHandle LoadAsset(string key) {
-    //     var handle = Addressables.LoadAssetAsync<Item>(name);
-    //     nameItemDict.Add(handle.Result.name, handle.Result);
-    //     return handle;
-    // }
-
-    // public Item GetItemFromGuid(string guid) {
-    //     Item item;
-    //     itemGuidDict.TryGetValue(guid, out item);
-    //     if(!item) {
-    //         Debug.LogWarning($"//{guid}// item guid not found");
-    //     }
-    //     return item;
-    // }
     public Item GetItemFromName(string name) {
         Item item;
         itemNameDict.TryGetValue(name, out item);
@@ -104,6 +86,19 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         }
         return item;
     }
+
+    public List<Item> GetItemListByTag(ItemTag tag) {
+        List<Item> get;
+        itemTagLists.TryGetValue(tag, out get);
+        return get;
+    }
+
+    public List<Item> GetItemListByType(System.Type type) {
+        List<Item> get;
+        itemTypeListDict.TryGetValue(type, out get);
+        return get;
+    }
+
 
     public Character GetCharacterFromName(string name) {
         Character chara;
@@ -114,21 +109,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         return chara;
     }
 
-    public List<Item> GetItemListByTag(ItemTag tag) {
-        List<Item> get;
-        itemTagLists.TryGetValue(tag, out get);
-        return get;
-    }
-    public List<Item> GetItemListByType(ItemType type) {
-        List<Item> get;
-        itemTypeLists.TryGetValue(type, out get);
-        return get;
-    }
-    public List<Item> GetItemListByType(System.Type type) {
-        List<Item> get;
-        itemTypeListDict.TryGetValue(type, out get);
-        return get;
-    }
 
     public Convo GetConvoById(string id) {
         Convo convo;
@@ -137,6 +117,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     }
 
 #if UNITY_EDITOR
+    public static string dataPath;
     public static DatabaseSO Database { 
         get { 
             Initialize(); 
@@ -145,6 +126,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     static DatabaseSO _database;
     static string pathToDb = "Assets/Data/DatabaseSO.asset";
     static string[] searchFolders = new string[] { "Assets/Data" };
+    static List<RuntimeScriptableObject> scriptableObjects;
 
     static void Initialize() {
         if(_database) return;
@@ -157,25 +139,45 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         if(!_database) {
             Debug.LogWarning("DatabaseSO not found. Expected location: 'Assets/Data/DatabaseSO.asset'");
         }
+
+        EditorApplication.playModeStateChanged -= OnPlayModeChange;
+        EditorApplication.playModeStateChanged += OnPlayModeChange;
     }
 
-    private void OnValidate() {
-        if(!string.IsNullOrEmpty(dataPathOverride))
-            searchFolders[0] = dataPathOverride;
+    static void OnPlayModeChange(PlayModeStateChange state) {
+        switch(state) {
+            case PlayModeStateChange.EnteredPlayMode: {
+                foreach(var i in scriptableObjects) {
+                    i.OnEnable();
+                }
+                break;
+            }
+            case PlayModeStateChange.ExitingPlayMode: {
+                foreach(var i in scriptableObjects) {
+                    i.OnDisable();
+                }
+                break;
+            }
+        }
     }
 
     [MenuItem("Tools/Update Database")]
     // [InitializeOnLoadMethod]
     static void UpdateDatabase() {
         Initialize();
-        UpdateTypeRegistry<Item>("t:Item", searchFolders, ref _database.items);
-        UpdateTypeRegistry<Character>("t:Character", searchFolders, ref _database.characters);
-        UpdateTypeRegistry<Convo>("t:Convo", searchFolders, ref _database.convos);
+        scriptableObjects = FindAll<RuntimeScriptableObject>("t:RuntimeScriptableObject", searchFolders);
+        
+        if(!string.IsNullOrEmpty(_database.dataPathOverride))
+            searchFolders[0] = _database.dataPathOverride;
+
+        _database.items = FindAll<Item>("t:Item", searchFolders);
+        _database.characters = FindAll<Character>("t:Character", searchFolders);
+        _database.convos = FindAll<Convo>("t:Convo", searchFolders);
     }
 
-    static void UpdateTypeRegistry<T>(string query, string[] searchFolders, ref List<T> l) where T : UnityEngine.Object
+    static List<T> FindAll<T>(string query, string[] searchFolders) where T : UnityEngine.Object
     {
-        l = new List<T>();
+        var l = new List<T>();
 
         string[] result = AssetDatabase.FindAssets(query, searchFolders);
 
@@ -187,6 +189,7 @@ public class AssetRegistry : Singleton<AssetRegistry> {
             l.Add(obj);
         }
         Debug.Log($"Updated query {query} asset registry, total: " + result.Length);
+        return l;
     }
 
 #endif

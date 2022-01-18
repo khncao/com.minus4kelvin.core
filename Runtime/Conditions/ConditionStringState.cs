@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
+using m4k.Progression;
 
-namespace m4k.Progression {
+namespace m4k {
 [Serializable]
 public class ConditionStringState : Condition {
     public string key;
@@ -36,6 +37,15 @@ public class ConditionStringState : Condition {
             _lastCheckStatus = $"<color={col}>- {key}</color>";
         }
         return _lastCheckStatus;
+    }
+
+    public override void RegisterListener(Conditions conditions) {
+        ProgressionManager.I.onRegisterCompletionState -= conditions.OnChange;
+        ProgressionManager.I.onRegisterCompletionState += conditions.OnChange;
+    }
+
+    public override void UnregisterListener(Conditions conditions) {
+        ProgressionManager.I.onRegisterCompletionState -= conditions.OnChange;
     }
 }
 }

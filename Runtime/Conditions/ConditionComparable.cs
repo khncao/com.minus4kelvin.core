@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace m4k.Progression {
+namespace m4k {
 [Serializable]
 public class ConditionComparable<T> : Condition where T : IComparable {
     public string description;
@@ -11,18 +11,12 @@ public class ConditionComparable<T> : Condition where T : IComparable {
     
     string _lastCheckStatus = "";
 
-    public override void InitializeCondition() {
-    }
-
     public override bool CheckConditionMet() {
         if(!obj) {
             Debug.LogError("No obj in condition");
             return false;
         }
         return Comparisons.Compare(op, obj.value, val);
-    }
-
-    public override void FinalizeCondition() {
     }
 
     public override string ToString() {
@@ -35,6 +29,15 @@ public class ConditionComparable<T> : Condition where T : IComparable {
         string col = pass ? "green" : "white";
         _lastCheckStatus = $"<color={col}>- {description}: {obj.value}/{val}</color>";
         return _lastCheckStatus;
+    }
+
+    public override void RegisterListener(Conditions conditions) {
+        obj.onChange -= conditions.OnChange;
+        obj.onChange += conditions.OnChange;
+    }
+
+    public override void UnregisterListener(Conditions conditions) {
+        obj.onChange -= conditions.OnChange;
     }
 }
 
