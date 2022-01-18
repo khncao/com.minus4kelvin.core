@@ -4,17 +4,18 @@ using UnityEngine.Events;
 
 namespace m4k {
 [CreateAssetMenu(fileName = "UnityEventSO", menuName = "Data/Events/UnityEventSO", order = 0)]
-public class UnityEventSO : ScriptableObject {
+public class UnityEventSO : RuntimeScriptableObject {
     [SerializeField]
     UnityEvent unityEvent;
-    
+
+    [System.NonSerialized]
     Dictionary<object, HashSet<UnityAction>> objectActions = new Dictionary<object, HashSet<UnityAction>>();
 
-    private void Awake() {
+    public override void OnDisable() {
         Reset();
     }
 
-    public void Reset() {
+    public override void Reset() {
         unityEvent.RemoveAllListeners();
         objectActions = new Dictionary<object, HashSet<UnityAction>>();
     }

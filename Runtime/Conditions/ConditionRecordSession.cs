@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace m4k.Progression {
+namespace m4k {
 // Record goal within one record period interval(hour/day/etc). Resets at next record period interval
 [Serializable]
 public class ConditionRecordSession : Condition {
@@ -32,6 +32,15 @@ public class ConditionRecordSession : Condition {
         string col = rec.sessionVal < val ? "white" : "green";
         _lastCheckStatus = $"<color={col}>- {rec.id}: {rec.sessionVal}/{val}</color>";
         return _lastCheckStatus;
+    }
+
+    public override void RegisterListener(Conditions conditions) {
+        RecordManager.I.onChange -= conditions.OnChange;
+        RecordManager.I.onChange += conditions.OnChange;
+    }
+
+    public override void UnregisterListener(Conditions conditions) {
+        RecordManager.I.onChange -= conditions.OnChange;
     }
 }
 }

@@ -10,11 +10,17 @@ public abstract class PrimitiveBaseSO<T> : ScriptableObject, IComparable<T> wher
         get { return _value; }
         set {
             _value = value;
-            onChange?.Invoke(value);
+            onValueChange?.Invoke(value);
+            onChange?.Invoke();
         }
     }
 
-    public System.Action<T> onChange;
+    public System.Action<T> onValueChange;
+    public System.Action onChange;
+
+    private void OnValidate() {
+        onChange?.Invoke();
+    }
 
     public int CompareTo(T obj) {
         return _value.CompareTo(obj);

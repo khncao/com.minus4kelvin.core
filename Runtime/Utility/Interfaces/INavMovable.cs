@@ -10,6 +10,7 @@ public interface INavMovable {
     bool IsMoving { get; }
     void SetTarget(Transform target);
     void SetTarget(Vector3 position);
+    void SetFaceTarget(Transform target);
     void Move();
     void Stop();
     void Pause();
