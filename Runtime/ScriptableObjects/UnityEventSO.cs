@@ -11,11 +11,19 @@ public class UnityEventSO : RuntimeScriptableObject {
     [System.NonSerialized]
     Dictionary<object, HashSet<UnityAction>> objectActions = new Dictionary<object, HashSet<UnityAction>>();
 
+    // public override void OnEnable() {
+    //     base.OnEnable();
+    //     // Debug.Log("OnEnable");
+    // }
+
     public override void OnDisable() {
+        base.OnDisable();
+        // Debug.Log("OnDisable");
         Reset();
     }
 
     public override void Reset() {
+        base.Reset();
         unityEvent.RemoveAllListeners();
         objectActions = new Dictionary<object, HashSet<UnityAction>>();
     }
