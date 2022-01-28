@@ -43,6 +43,11 @@ namespace m4k
         private GUIContent errorTooltip;
         private GUIStyle errorStyle;
         #endregion -- Private Variables ---------------------------------------
+
+        public SceneReferenceEditor() {
+            EditorBuildSettings.sceneListChanged -= UpdateSceneState;
+            EditorBuildSettings.sceneListChanged += UpdateSceneState;
+        }
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -50,7 +55,7 @@ namespace m4k
             position = EditorGUI.PrefixLabel(position, label);
 
             CacheProperties(property);
-            UpdateSceneState();
+            // UpdateSceneState();
 
             position = DisplayErrorsIfNecessary(position);
 
@@ -60,7 +65,7 @@ namespace m4k
             {
                 property.serializedObject.ApplyModifiedProperties();
                 CacheProperties(property);
-                UpdateSceneState();
+                // UpdateSceneState();
                 Validate();
             }
             

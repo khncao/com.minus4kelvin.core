@@ -3,10 +3,13 @@ using System;
 namespace m4k {
 [Serializable]
 public abstract class Condition {
-    public virtual void BeforeCheck(Conditions conditions) {}
-    public abstract bool CheckConditionMet();
+    public Conditions Conditions { get; set; }
+    // public virtual void BeforeCheck(Conditions conditions) {}
     public virtual void AfterComplete() {}
-    public virtual void RegisterListener(Conditions conditions) {}
-    public virtual void UnregisterListener(Conditions conditions) {}
+
+    public abstract bool CheckConditionMet();
+    
+    public abstract void RegisterListener(Conditions conditions);
+    public abstract void UnregisterListener(Conditions conditions);
 }
 }

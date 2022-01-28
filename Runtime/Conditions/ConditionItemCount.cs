@@ -10,19 +10,21 @@ public class ConditionItemCount : Condition {
     public Item item;
     public ComparisonType op;
     public int val;
-    public bool removeItems;
+    public bool removeItemsOnFinalize;
     
+    [System.NonSerialized]
     string _lastCheckStatus = "";
+    [System.NonSerialized]
     Inventory _inventory;
 
-    public override void BeforeCheck(Conditions conditions) {
+    public void TryGetInventory() {
         if(string.IsNullOrEmpty(inventoryId)) {
             _inventory = InventoryManager.I.mainInventory;
             return;
         }
         _inventory = InventoryManager.I.TryGetInventory(inventoryId);
         if(_inventory == null) {
-            Debug.LogWarning($"Inventory with id {inventoryId} not found");
+            Debug.LogError($"Inventory with id {inventoryId} not found");
         }
     }
 
@@ -31,11 +33,14 @@ public class ConditionItemCount : Condition {
             Debug.LogError("No item in condition");
             return false;
         }
+        if(_inventory == null) {
+            TryGetInventory();
+        }
         return Comparisons.Compare<int>(op, _inventory.GetItemTotalAmount(item), val);
     }
 
     public override void AfterComplete() {
-        if(removeItems)
+        if(removeItemsOnFinalize)
             _inventory.RemoveItemAmount(item, val, true);
     }
 
@@ -43,6 +48,9 @@ public class ConditionItemCount : Condition {
         if(!item) {
             Debug.LogError("No item in condition");
             return "";
+        }
+        if(_inventory == null) {
+            TryGetInventory();
         }
         int itemCt = _inventory.GetItemTotalAmount(item);
         bool pass = Comparisons.Compare(op, itemCt, val);
@@ -53,6 +61,9 @@ public class ConditionItemCount : Condition {
     }
 
     public override void RegisterListener(Conditions conditions) {
+        if(_inventory == null) {
+            TryGetInventory();
+        }
         _inventory.onChange -= conditions.OnChange;
         _inventory.onChange += conditions.OnChange;
     }

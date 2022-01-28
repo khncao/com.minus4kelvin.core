@@ -93,8 +93,6 @@ public class DetectRadiusAngle<T> where T : class {
     }
 
     bool IsValid(T other) {
-        Vector3 forward = self.forward;
-
         Component component = (other as Component);
         if(!component) {
             Debug.LogError("Invalid T; failed cast to Component");
@@ -105,21 +103,28 @@ public class DetectRadiusAngle<T> where T : class {
         if(!detectSelf && otherTransform == self)
             return false;
 
-        Vector3 otherDirection = otherTransform.position - self.position;
-        float otherDirectionSqrMagnitude = otherDirection.sqrMagnitude;
+        Vector3 direction = otherTransform.position - self.position;
+        float sqrMagnitude = direction.sqrMagnitude;
 
-        if(otherDirectionSqrMagnitude > _maxSquaredRange)
+        if(sqrMagnitude > _maxSquaredRange)
             return false;
 
         if(_viewAngles != 0f) {
-            otherDirection -= self.up * Vector3.Dot(self.up, otherDirection);
+            // direction -= self.up * Vector3.Dot(self.up, direction);
+            direction.y = 0f;
 
-            if(Vector3.Angle(forward, otherDirection) > _viewAngles * 0.5f) 
+            if(Vector3.Angle(self.forward, direction) > _viewAngles * 0.5f) 
                 return false;
+
+            // var dir = self.InverseTransformDirection(otherDirection);
+            // var angle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+
+            // if(Mathf.Abs(angle) > _viewAngles * 0.5f)
+            //     return false;
         }
 
-        if(otherDirectionSqrMagnitude < _closestDistance) {
-            _closestDistance = otherDirectionSqrMagnitude;
+        if(sqrMagnitude < _closestDistance) {
+            _closestDistance = sqrMagnitude;
             _closest = other;
         }
 
