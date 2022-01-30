@@ -18,7 +18,7 @@ public class ProgressionManager : Singleton<ProgressionManager>
 {
     public ProgressionUI UI;
     public List<KeyAction> globalChoiceActions;
-    public List<SceneEvents> sceneEvents;
+    public List<SceneController> sceneControllers;
 
     public System.Action onRegisterCompletionState;
     public System.Action<Interactable> onRegisterInteractable;
@@ -119,8 +119,8 @@ public class ProgressionManager : Singleton<ProgressionManager>
             invokeCount++;
         }
 
-        foreach(var i in sceneEvents) {
-            if(i.InvokeChoiceAction(key))
+        foreach(var i in sceneControllers) {
+            if(i.InvokeKeyEvent(key))
                 invokeCount++;
         }
 
@@ -134,15 +134,15 @@ public class ProgressionManager : Singleton<ProgressionManager>
         }
     }
 
-    public void RegisterSceneEvents(SceneEvents se) {
-        if(!sceneEvents.Contains(se)) {
-            sceneEvents.Add(se);
+    public void RegisterSceneController(SceneController se) {
+        if(!sceneControllers.Contains(se)) {
+            sceneControllers.Add(se);
         }
     }
 
-    public void UnregisterSceneEvent(SceneEvents se) {
-        if(sceneEvents.Contains(se)) {
-            sceneEvents.Remove(se);
+    public void UnregisterSceneController(SceneController se) {
+        if(sceneControllers.Contains(se)) {
+            sceneControllers.Remove(se);
         }
     }
 

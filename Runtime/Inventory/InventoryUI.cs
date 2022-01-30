@@ -7,29 +7,37 @@ using TMPro;
 namespace m4k.Items {
 public class InventoryUI : MonoBehaviour
 {
+    public GameObject itemSlotPrefab;
     public Canvas inventoryCanvas;
-    public GameObject bagInventorySlots, characterInventorySlots, shopInventorySlots, storageInventorySlots, craftingWindow;
+
+    [Header("Windows")]
+    public GameObject bagInventorySlots;
+    public GameObject characterInventorySlots, shopInventorySlots, storageInventorySlots, craftingWindow;
     public Button craftButton;
     public TMP_Text craftProgressTxt;
     public GameObject dailyReportPanel;
     public TMP_Text dailyReportTxt;
+
+    [Header("Currency")]
     public string currencyName = "coins";
     public TMP_Text currencyText;
     public TMP_Text currencyAnimText;
-    public TMP_Text confirmTransactionText;
     public AudioSource currencyAudio;
-    public GameObject confirmTransactionPrompt, quantityPrompt;
-    public TMP_InputField quantityPromptInput;
-    public GameObject itemContext, contextMenu;
+
+    [Header("Context")]
+    public GameObject itemContext;
     public TMP_Text hoverNameTxt, hoverInfoTxt;
-    public Button contextUseButton, contextBuyButton, contextSellButton, contextTransferButton;
+
     // public Button transferAllToBagButton, transferAllFromBagButton;
-    public GameObject objectPreviewPanel;
+    // public GameObject objectPreviewPanel;
+    [HideInInspector]
     public TMP_Text dragTxt;
+    [HideInInspector]
     public Image dragImg;
-    public GameObject itemSlotPrefab;
-    public Item quantityPromptItem;
-    public ItemSlot hoverSlot, dragSlot;
+    [HideInInspector]
+    public ItemSlot dragSlot;
+    [HideInInspector]
+    public ItemSlot hoverSlot;
 
     int timesToPlay;
     Coroutine addCurrencyAnim;
@@ -37,19 +45,7 @@ public class InventoryUI : MonoBehaviour
 
     public void Init(InventoryManager im) {
         inventoryManager = im;
-
-        quantityPromptInput.onValueChanged.AddListener(OnQuantityPromptChanged);
         craftButton.onClick.AddListener(OnClickCraft);
-
-        // if(transferAllFromBagButton)
-        //     transferAllFromBagButton.onClick.AddListener(()=>
-        //     Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllFromBag, "Transfer all from bag?")
-        // );
-
-        // if(transferAllToBagButton)
-        //     transferAllToBagButton.onClick.AddListener(()=>
-        //     Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllToBag, "Transfer all to bag?")
-        // );
     }
 
     public void ToggleBag(bool enabled) {
@@ -118,25 +114,27 @@ public class InventoryUI : MonoBehaviour
     }
 
     public void ShowDayReport() {
-        // var record = inventoryManager.dailyRecords[inventoryManager.dailyRecords.Count - 1];
-        // dailyReportTxt.text = string.Format("Day {0}\nCustomers: {1}\nExpenditure: {2}\nProfit: {3}\nNet: {4}", Game.day, record.customers, record.expenditure, record.profit, record.profit - record.expenditure);
 
-        // var record = Game.Progression.GetLatestRecord();
-        // dailyReportTxt.text = string.Format("Day {0}\nCustomers: {1}\nExpenditure: {2}\nProfit: {3}\nNet: {4}", Game.day - 1, record.TryGetValue("customers"), record.TryGetValue("expenditure"), record.TryGetValue("profit"), record.TryGetValue("profit") - record.TryGetValue("expenditure"));
-        // dailyReportPanel.SetActive(true);
     }
     public void ShowMonthReport() {
 
     }
     public void TransferAllFromBag() {
-        Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllFromBag, "Transfer all from bag?");
+        Feedback.I.RegisterConfirmRequest(AllFromBag, "Transfer all from bag?");
     }
     public void TransferAllToBag() {
-        Feedback.I.RegisterConfirmRequest(inventoryManager.TransferAllToBag, "Transfer all to bag?");
+        Feedback.I.RegisterConfirmRequest(AllToBag, "Transfer all to bag?");
+    }
+    void AllFromBag() {
+        inventoryManager.TransferAllFromBag();
+    }
+    void AllToBag() {
+        inventoryManager.TransferAllToBag();
     }
 
+
     TMP_Text craftButtonText;
-    void OnClickCraft() {
+    public void OnClickCraft() {
         bool crafting = InventoryManager.I.craftManager.CheckCraft();
         string s = crafting ? "Cancel" : "Craft";
         UpdateCraftButton(s);
@@ -155,6 +153,7 @@ public class InventoryUI : MonoBehaviour
         craftProgressTxt.text = s;
     }
 
+
     ItemSlot contextSlot;
     public void UpdateHoverWindow(ItemSlot slot) {
         hoverSlot = slot;
@@ -168,51 +167,38 @@ public class InventoryUI : MonoBehaviour
         }
         itemContext.SetActive(enabled);
     }
+    public void ToggleContextMenu(bool enabled) {
+        if(enabled) {
+            UpdateContextMenuButtons();
+        }
+    }
     void UpdateContextMenuButtons() {
         if(!hoverSlot) {
             Debug.Log("No hover slot");
             return;
         }
         contextSlot = hoverSlot;
-        contextBuyButton.gameObject.SetActive(false);
-        contextSellButton.gameObject.SetActive(false);
-        contextTransferButton.gameObject.SetActive(false);
-        contextUseButton.gameObject.SetActive(false);
+        Feedback.I.StartContextMenu(contextSlot.transform.position);
 
         if(inventoryManager.inShop) {
             if(hoverSlot.slotManager == inventoryManager.shopSlotManager)
-                contextBuyButton.gameObject.SetActive(true);
+                Feedback.I.RegisterContextMenuItem("Buy", ContextBuy);
             if(hoverSlot.slotManager == inventoryManager.bagSlotManager)
-                contextSellButton.gameObject.SetActive(true);
+                Feedback.I.RegisterContextMenuItem("Sell", ContextSell);
         }
         else if(inventoryManager.inStorage) {
-            contextTransferButton.gameObject.SetActive(true);
+            Feedback.I.RegisterContextMenuItem("Transfer", ContextTransfer);
         }
         else if(hoverSlot.item.item.itemTags.Contains(ItemTag.Consumable)) {
-            contextUseButton.gameObject.SetActive(true);
+            Feedback.I.RegisterContextMenuItem("Use", ContextUse);
         }
     }
-    public void ToggleContextMenu(bool enabled) {
-        if(enabled) {
-            UpdateContextMenuButtons();
-        }
-        contextMenu.SetActive(enabled);
-    }
-    public void ContextBuy() {
-        InitiateItemTransfer(contextSlot);
-    }
-    public void ContextSell() {
-        InitiateItemTransfer(contextSlot);
-    }
-    public void ContextTransfer() {
-        InitiateItemTransfer(contextSlot);
-    }
-    public void ContextUse() {
+    public void ContextBuy() => InitiateItemTransfer(contextSlot);
+    public void ContextSell() => InitiateItemTransfer(contextSlot);
+    public void ContextTransfer() => InitiateItemTransfer(contextSlot);
+    public void ContextUse() {}
+    public void ContextDestroy() {}
 
-    }
-    public void ContextDestroy() {
-
-    }
 
     public void InitiateItemTransfer(ItemSlot itemSlot) {
         InitiateItemTransfer(itemSlot, null);
@@ -222,36 +208,18 @@ public class InventoryUI : MonoBehaviour
         inventoryManager.toSlot = to;
 
         if(from.item.item.maxAmount == 1) {
-            quantValue = 1;
-            Feedback.I.RegisterConfirmRequest(ConfirmQuantityPromptTransaction,
-            confirmTransactionText.text = "Complete transaction?");
+            Feedback.I.RegisterConfirmRequest(ConfirmTransaction,
+            "Complete transaction?");
             //$"{Inventory.GetCostValue(inventoryManager.fromSlot.item.item, quantValue)} {currencyName}. Complete transaction?");
         }
         else {
-            quantityPromptItem = from.item.item;
-            quantValue = 1;
-            ownedValue = from.slotManager.inventory.GetItemTotalAmount(from.item.item);
-            quantityPromptInput.text = quantValue.ToString();
-            quantityPrompt.SetActive(true);
+            int ownedValue = from.slotManager.inventory.GetItemTotalAmount(from.item.item);
+            Feedback.I.RegisterQuantityRequest(inventoryManager.CompleteTransaction, "Amount?", ownedValue, 0);
         }
     }
 
-    int quantValue, ownedValue;
-    // used by input quantity prompt input field onvaluechange
-    void OnQuantityPromptChanged(string value) {
-        quantValue = int.Parse(value);
-    }
-
-    // called by input quantity prompt confirm button
-    public void ModifyQuantityPrompt(int amount) {
-        quantValue = amount == 0 ? 0 : Mathf.Clamp(quantValue + amount, 0, ownedValue);
-        quantityPromptInput.text = quantValue.ToString();
-    }
-
-    // called by confirm prompt confirm button
-    public int ConfirmQuantityPromptTransaction() {
-        inventoryManager.CompleteTransaction(quantValue);
-        return quantValue;
+    public void ConfirmTransaction() {
+        inventoryManager.CompleteTransaction(1);
     }
 }
 }

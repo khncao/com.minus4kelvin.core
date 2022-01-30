@@ -122,10 +122,10 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 	public override void OnPointerExit(PointerEventData eventData) {
 		base.OnPointerExit(eventData);
 
-        if(!slotManager.inventoryManager.UI.contextMenu.activeInHierarchy) {
-            slotManager.inventoryManager.UI.ToggleContextMenu(false);
+        // if(!slotManager.inventoryManager.UI.contextMenu.activeInHierarchy) {
+        //     slotManager.inventoryManager.UI.ToggleContextMenu(false);
             slotManager.inventoryManager.UI.ToggleHoverWindow(false);
-        }
+        // }
 	}
 
     bool isDragging = false;
