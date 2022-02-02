@@ -7,9 +7,10 @@ namespace m4k.Items {
 public class InventoryComponent : MonoBehaviour
 {
     public int inventorySlots = 16;
-    public int auxSlots = 1;
-    [Header("Will register as saved inventory if saveId not empty, GuidComponent on same gameObject, or CharacterControl on same gameObject")]
+    [Header("Will register as saved inventory if saveId not empty,\nGuidComponent on same gameObject,\nor CharacterControl on same gameObject in that order")]
     public string saveId;
+
+    public string id { get; set; }
 
     public Inventory inventory { 
         get {
@@ -30,26 +31,20 @@ public class InventoryComponent : MonoBehaviour
         if(_inventory != null) 
             return _inventory;
 
-        // string id = $"{gameObject.scene.name}/{transform.position.ToString()}";
-        string id = "";
-
-        GuidComponent guidComponent;
-        CharacterControl cc;
-
         if(!string.IsNullOrEmpty(saveId)) {
             id = saveId;
         }
-        else if(TryGetComponent<GuidComponent>(out guidComponent)) {
+        else if(TryGetComponent<GuidComponent>(out GuidComponent guidComponent)) {
             id = guidComponent.GetGuid().ToString();
         }
-        else if(TryGetComponent<CharacterControl>(out cc)) {
+        else if(TryGetComponent<CharacterControl>(out CharacterControl cc)) {
             id = cc.character.name;
         }
         
         if(!string.IsNullOrEmpty(id))
-            _inventory = InventoryManager.I.GetOrRegisterSavedInventory(id, inventorySlots, auxSlots, false, gameObject);
+            _inventory = InventoryManager.I.GetOrRegisterSavedInventory(id, inventorySlots, gameObject);
         else
-            _inventory = new Inventory(inventorySlots, auxSlots);
+            _inventory = new Inventory(inventorySlots);
         
         return _inventory;
     }

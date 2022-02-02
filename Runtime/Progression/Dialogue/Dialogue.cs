@@ -32,8 +32,11 @@ public class Dialogue : MonoBehaviour
         _exitChoice = new Choice();
         _exitChoice.text = exitChoiceLine;
 
-        foreach(var obj in objectives) {
-            obj.Init(this);
+        for(int i = 0; i < objectives.Count; ++i) {
+            var n = objectives[i].name;
+            objectives[i] = Instantiate(objectives[i]);
+            objectives[i].name = n;
+            objectives[i].Init(this);
         }
     }
 

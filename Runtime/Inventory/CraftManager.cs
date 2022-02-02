@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.Items {
+namespace m4k.Items.Crafting {
 // public enum CraftType { None, Bar, Kitchen, Brew, Foundry, Stonemason, Sawmill }
 // public class CraftType {
 //     public static readonly string Bar = "Bar";
@@ -13,22 +13,29 @@ namespace m4k.Items {
 //     public static readonly string Sawmill = "Sawmill";
 // }
 
-// [System.Serializable]
-// public class CraftBatchData {
-//     public string inventoryKey;
-//     public string recipeName;
-//     public int amount;
-//     public TickTimer timer;
+[System.Serializable]
+public class CraftProgress {
+    public string id;
+    public string recipeName;
+    public int amount;
+    public TickTimer timer;
 
-//     [System.NonSerialized]
-//     public ItemRecipe recipe;
+    [System.NonSerialized]
+    public ItemRecipe recipe;
 
-//     public CraftBatchData(ItemRecipe item, int a) {
-//         recipeName = item.name;
-//         amount = a;
-//         timer = new TickTimer(recipe.craftTime);
-//     }
-// }
+    public CraftProgress(string id, ItemRecipe item, int a) {
+        this.id = id;
+        recipe = item;
+        recipeName = item.name;
+        amount = a;
+        timer = new TickTimer(recipe.craftTime);
+    }
+}
+
+[System.Serializable]
+public class CraftData {
+    public SerializableDictionary<string, CraftProgress> inprogressCrafts;
+}
 
 [System.Serializable]
 public class RecipeList {
@@ -36,77 +43,73 @@ public class RecipeList {
     [HideInInspector]
     public Inventory inv;
 }
-public class CraftManager : MonoBehaviour
+public class CraftManager : Singleton<CraftManager>
 {
-    // public ItemSlotHandler craftSlotManager, recipeSlotManager;
-    public List<RecipeList> recipeLists;
+    public CraftUI UI;
+    public ItemSlotHandler inputSlotManager;
+    public ItemSlotHandler outputSlotManager;
+    public ItemSlotHandler recipeSlotManager;
 
-    Inventory currCraftInv, currRecipeInv;
-    ItemSlotHandler craftSlots, recipeSlots;
-    InventoryManager inventoryManager;
+    public bool inCraft { get { return UI.craftingWindow.activeInHierarchy; }}
+
+    SerializableDictionary<string, CraftProgress> _inprogressCrafts = new SerializableDictionary<string, CraftProgress>();
+
+    Inventory _currentStationRecipeInv;
+    CraftProgress _currentStationCraft;
+    string _currentStationId;
 
     void Start() {
-        inventoryManager = InventoryManager.I;
-        craftSlots = inventoryManager.craftSlotManager;
-        recipeSlots = inventoryManager.recipeSlotManager;
+        recipeSlotManager.canDrag = false;
+    }
 
-        // recipe lists should be static with locked items, and vary with station
-        // ie. base station recipes, base addon/better station adds/unhides recipes
-        for(int i = 0; i < recipeLists.Count; ++i) {
-            recipeLists[i].inv = new Inventory(16, 0, true);
-            recipeLists[i].inv.condHide = true;
-            var list = AssetRegistry.I.GetItemListByTag(recipeLists[i].tag);
-            if(list == null)
-                continue;
-            for(int j = 0; j < list.Count; ++j) {
-                recipeLists[i].inv.AddItemAmount(list[j], 1, false);
+    /// <summary>
+    /// Craft station loaded, register relevant events for inprogress crafts
+    /// </summary>
+    /// <param name="stationId"></param>
+    public void OnLoadStation(string stationId) {
+        if(_inprogressCrafts.TryGetValue(stationId, out CraftProgress craft)) {
+            if(craft.timer.Running) {
+                craft.timer.onComplete.AddListener(()=>CompleteCraft(craft));
             }
         }
     }
-    public void OnLoadStation(Inventory inventory) {
-        if(inventory.timer.Running) {
-            Inventory inv = inventory;
-            inventory.timer.onComplete.AddListener(delegate { CompleteCraft(inventory); });
-        }
-    }
-    public void CheckCraftableAmount() {
-        CheckCraftableAmount(currRecipeInv);
-    }
-    public void CheckCraftableAmount(Inventory recipeInv) {
-        for(int i = 0; i < recipeInv.items.Length; ++i) {
-            if(recipeInv.items[i] == null)
+
+    /// <summary>
+    /// Update recipe item list with craftable amounts
+    /// </summary>
+    void UpdateRecipeCraftableAmounts(Inventory recipeInv = null) {
+        if(recipeInv == null) 
+            recipeInv = _currentStationRecipeInv;
+
+        for(int i = 0; i < recipeInv.totalItemsList.Count; ++i) {
+            if(recipeInv.totalItemsList[i] == null || recipeInv.totalItemsList[i].item == null)
                 continue;
-            ItemRecipe recipe = recipeInv.items[i].item as ItemRecipe;
-            int craftableCt = 999;
+            ItemRecipe recipe = recipeInv.totalItemsList[i].item as ItemRecipe;
 
-            for(int j = 0; j < recipe.ingredients.Count; ++j) {
-                int amount = inventoryManager.mainInventory.GetItemTotalAmount(recipe.ingredients[j].item);
+            int craftableCt = RecipeCraftableAmount(InventoryManager.I.mainInventory, recipe);
 
-                if(recipe.ingredients[j].amount < 1) {
-                    Debug.LogError("Ingred req less than 1");
-                    continue;
-                }
-                int temp = amount / recipe.ingredients[j].amount;
-                if(temp < craftableCt)
-                    craftableCt = temp;
-            }
-            recipeInv.RemoveItemAmount(recipeInv.items[i].item, recipeInv.items[i].amount);
-            recipeInv.AddItemAmount(recipeInv.items[i].item, craftableCt, false);
+            recipeInv.RemoveItemAmount(recipeInv.totalItemsList[i].item, recipeInv.totalItemsList[i].amount);
+            recipeInv.AddItemAmount(recipeInv.totalItemsList[i].item, craftableCt, false);
         }
     }
 
-    int CheckRecipeCraftable(ItemRecipe recipe) {
-        int count = 999;
+    /// <summary>
+    /// Amount of times a recipe can be crafted using input from source inventory
+    /// </summary>
+    /// <param name="sourceInv"></param>
+    /// <param name="recipe"></param>
+    /// <returns></returns>
+    public int RecipeCraftableAmount(Inventory sourceInv, ItemRecipe recipe) {
+        int count = recipe.ingredients.Count < 1 || recipe.output.Count < 1 ? 0 : 999;
 
-        for(int j = 0; j < recipe.ingredients.Count; ++j) {
-            // int amount = inventoryManager.mainInventory.GetItemTotalAmount(recipe.ingredients[j].item);
-            int amount = currCraftInv.GetItemTotalAmount(recipe.ingredients[j].item);
+        foreach(var ingredient in recipe.ingredients) {
+            int amount = sourceInv.GetItemTotalAmount(ingredient.Key);
 
-            if(recipe.ingredients[j].amount < 1) {
+            if(ingredient.Value < 1) {
                 Debug.LogError("Ingred req less than 1");
                 continue;
             }
-            int temp = amount / recipe.ingredients[j].amount;
+            int temp = amount / ingredient.Value;
             if(temp < count)
                 count = temp;
         }
@@ -114,97 +117,206 @@ public class CraftManager : MonoBehaviour
         return count;
     }
 
-    public Inventory GetRecipeInventory(ItemTag craftType) {
-        var inv = recipeLists.Find(x=>x.tag == craftType).inv;
-        CheckCraftableAmount(inv);
-        currRecipeInv = inv;
+    /// <summary>
+    /// Toggle and update craft UI based on station id and craftType
+    /// </summary>
+    /// <param name="stationId"></param>
+    /// <param name="craftType"></param>
+    public void OpenCraftStation(string stationId, ItemTag craftType, Inventory recipeInv) {
+        _inprogressCrafts.TryGetValue(stationId, out CraftProgress craft);
+        Inventory inputInv = GetStationInputInventory(stationId);
+        Inventory outputInv = GetStationOutputInventory(stationId);
 
-        return inv;
-    }
+        _currentStationRecipeInv = recipeInv;
+        recipeSlotManager.AssignInventory(recipeInv);
+        inputSlotManager.AssignInventory(inputInv);
+        outputSlotManager.AssignInventory(outputInv);
+        UpdateRecipeCraftableAmounts();
 
-    public void OnToggleCraftWindow(Inventory craftInv) {
-        if(currCraftInv != null) {
-            currCraftInv.timer.onChange -= TickCraft;
+        // if previous station inprogress craft UI tracked, untrack
+        if(_currentStationCraft != null) {
+            _currentStationCraft.timer.onChange -= UpdateCraftProgress;
         }
-        currCraftInv = craftInv;
-        currCraftInv.timer.onChange += TickCraft;
+        _currentStationCraft = craft;
+        _currentStationId = stationId;
 
-        // if currently crafting
-        if(currCraftInv.timer.Running) {
-            craftSlots.ToggleInteractableOverride(true, false);
-            recipeSlots.ToggleInteractableOverride(true, false);
-            inventoryManager.UI.UpdateCraftButton("Cancel");
-            inventoryManager.UI.UpdateCraftProgess(currCraftInv.timer.time.ToString());
+        // if current station crafting, update UI
+        if(craft != null) {
+            UpdateCraftProgress(craft.timer.time);
+            craft.timer.onChange += UpdateCraftProgress;
+
+            inputSlotManager.ToggleInteractableOverride(true, false);
+            recipeSlotManager.ToggleInteractableOverride(true, false);
+            UI.UpdateCraftButton("Cancel");
+            UI.UpdateCraftProgess(_currentStationCraft.timer.time.ToString());
         }
         else {
-            inventoryManager.UI.SetCraftWindowDefault();
-            craftSlots.ToggleInteractableOverride(false, false);
-            recipeSlots.ToggleInteractableOverride(false, false);
+            UI.SetCraftWindowDefault();
+            inputSlotManager.ToggleInteractableOverride(false, false);
+            recipeSlotManager.ToggleInteractableOverride(false, false);
         }
+
+        InventoryManager.I.onExitTransactions -= OnLeaveCraftStation;
+        InventoryManager.I.onExitTransactions += OnLeaveCraftStation;
+        InventoryManager.I.ToggleTransaction(inputSlotManager);
+        InventoryManager.I.UI.ToggleBag(true);
+        UI.ToggleCraft(true);
     }
 
-    
-    public bool CheckCraft() {
-        if(!recipeSlots.selected) {
+    void OnLeaveCraftStation() {
+        InventoryManager.I.onExitTransactions -= OnLeaveCraftStation;
+        // remove items from input slots if craft not initiated
+        TransferCraftToBag();
+        UI.ToggleCraft(false);
+        _currentStationRecipeInv = null;
+        _currentStationId = null;
+        _currentStationCraft = null;
+    }
+
+    /// <summary>
+    /// Craft window is open. Behavior on clicking craft/cancel button.
+    /// </summary>
+    /// <returns></returns>
+    public bool TryCraftOrCancel() {
+        // enforce recipe selected; TODO: blind input slot craft
+        if(!recipeSlotManager.selected) {
             return false;
         }
-        Debug.Log($"recipe: {recipeSlots.selected.item.DisplayName}");
-        var recipe = recipeSlots.selected.item.item as ItemRecipe;
-        int craftable = CheckRecipeCraftable(recipe);
+        Inventory inputInv = GetStationInputInventory(_currentStationId);
+        Inventory outputInv = GetStationOutputInventory(_currentStationId);
+        
+        // Debug.Log($"recipe: {recipeSlotManager.selected.item.DisplayName}");
+        var recipe = recipeSlotManager.selected.item.item as ItemRecipe;
+        // amount craftable based on items in inputSlots
+        int craftableAmount = RecipeCraftableAmount(inputInv, recipe);
 
-        bool canCraft = craftable > 0 && !currCraftInv.timer.Running;
+        bool canCraft = craftableAmount > 0 && _currentStationCraft == null;
 
         if(!canCraft) { // CancelCraft
-            Debug.Log("cancel craft");
-            if(!currCraftInv.timer.Running)
-                return canCraft;
-            currCraftInv.timer.EndTimer();
-            Inventory.Transfer(currCraftInv, inventoryManager.mainInventory, currCraftInv.totalItemsList);
-            CheckCraftableAmount();
-            currCraftInv.UnassignReserved(0, 0);
+            // Debug.Log("cancel craft");
+            if(_currentStationCraft == null)
+                return false;
+            _currentStationCraft.timer.CancelTimer();
+            Inventory.Transfer(inputInv, InventoryManager.I.mainInventory, inputInv.totalItemsList);
+            UpdateRecipeCraftableAmounts();
+            // completely unassign recipe and amount
+            _inprogressCrafts.Remove(_currentStationId);
+            _currentStationCraft = null;
 
-            craftSlots.ToggleInteractableOverride(false, false);
-            recipeSlots.ToggleInteractableOverride(false, false);
+            inputSlotManager.ToggleInteractableOverride(false, false);
+            recipeSlotManager.ToggleInteractableOverride(false, false);
         }
         else { // StartCraft
-            Debug.Log("start craft");
-            currCraftInv.timer.SetTimer(10);
-            Inventory inv = currCraftInv;
-            currCraftInv.timer.onComplete.AddListener(delegate { CompleteCraft(inv); });
-            currCraftInv.AssignReserved(0, recipe, craftable);
-            craftSlots.ToggleInteractableOverride(true, false);
-            recipeSlots.ToggleInteractableOverride(true, false);
+            // Debug.Log("start craft");
+            CraftProgress craft = new CraftProgress(_currentStationId, recipe, craftableAmount);
+            _currentStationCraft = craft;
 
+            craft.timer.SetTimer(recipe.craftTime);
+            craft.timer.onChange += UpdateCraftProgress;
+            Inventory inv = inputInv;
+            craft.timer.onComplete.AddListener(()=>CompleteCraft(craft));
+            _inprogressCrafts.Add(craft.id, craft);
+
+            inputSlotManager.ToggleInteractableOverride(true, false);
+            recipeSlotManager.ToggleInteractableOverride(true, false);
         }
         return canCraft;
     }
 
-    void TickCraft(int time) {
-        inventoryManager.UI.UpdateCraftProgess(time.ToString());
+    void UpdateCraftProgress(int time) {
+        UI.UpdateCraftProgess(time.ToString());
     }
 
-    public void CompleteCraft(Inventory inv) {
-        Debug.Log("craft complete");
-        var recipeItemInst = inv.GetReserved(0);
-        var recipe = recipeItemInst.item as ItemRecipe;
-        if(!recipe) Debug.LogError("No item");
-        // remove ingreds
-        foreach(var ingred in recipe.ingredients) {
-            inv.RemoveItemAmount(ingred.item, ingred.amount * recipeItemInst.amount, true);
+    public void TransferCraftToBag() {
+        if(_currentStationCraft != null)
+            return;
+        Inventory.Transfer(inputSlotManager.inventory, InventoryManager.I.mainInventory, inputSlotManager.inventory.totalItemsList);
+        // Inventory.Transfer(outputSlotManager.inventory, InventoryManager.I.mainInventory, outputSlotManager.inventory.totalItemsList);
+    }
+
+    public void CompleteCraft(CraftProgress craft) {
+        // Debug.Log("craft complete");
+        Inventory inputInv = GetStationInputInventory(craft.id);
+        Inventory outputInv = GetStationOutputInventory(craft.id);
+
+        // remove ingreds from input 
+        foreach(var ingredient in craft.recipe.ingredients) {
+            inputInv.RemoveItemAmount(ingredient.Key, ingredient.Value * craft.amount);
         }
-        // add output
-        inv.AddItemAmount(recipe.output.item, recipeItemInst.amount);
-        // inv.AssignReserved(0, recipe.output.item, recipeItemInst.amount);
+        // add to output
+        foreach(var result in craft.recipe.output) {
+            outputInv.AddItemAmount(result.Key, result.Value * craft.amount);
+        }
+        
+        // cleanup; remove amount of recipe
+        craft.timer.onComplete.RemoveAllListeners();
+        _inprogressCrafts.Remove(craft.id);
 
-        // cleanup
-        inv.UnassignReserved(0, recipeItemInst.amount);
-        inv.timer.onComplete.RemoveAllListeners();
+        // handle if completed craft currently active UI
+        if(craft == _currentStationCraft) {
+            UpdateRecipeCraftableAmounts();
+            UI.SetCraftWindowDefault();
+            inputSlotManager.ToggleInteractableOverride(false, false);
+            recipeSlotManager.ToggleInteractableOverride(false, false);
+        }
+    }
 
-        if(inv == currCraftInv) {
-            CheckCraftableAmount();
-            inventoryManager.UI.SetCraftWindowDefault();
-            craftSlots.ToggleInteractableOverride(false, false);
-            recipeSlots.ToggleInteractableOverride(false, false);
+    /// <summary>
+    /// Contextual transfers between player inventory, input inventory, output inventory; if recipeItem, transfers ingredient ratios to from bag to inputs
+    /// </summary>
+    /// <param name="fromSlot"></param>
+    /// <param name="toSlot"></param>
+    /// <param name="amount"></param>
+    public void CompleteTranfer(int amount, ItemSlot fromSlot, ItemSlot toSlot) {
+        if(!inCraft) return;
+
+        if(inputSlotManager.inventory.totalItemsList.Count > 0) 
+        {
+            Inventory.Transfer(inputSlotManager.inventory, InventoryManager.I.mainInventory, inputSlotManager.inventory.totalItemsList);
+        }
+
+        ItemRecipe recipe = fromSlot.item.item as ItemRecipe;
+        foreach(var ingredient in recipe.ingredients)
+        {
+            Inventory.Transfer(InventoryManager.I.bagSlotManager.inventory, inputSlotManager.inventory, ingredient.Value * amount, ingredient.Key);
+        }
+        recipeSlotManager.inventory.RemoveItemAmount(fromSlot.item.item, amount, true);
+        UpdateRecipeCraftableAmounts();
+    }
+
+    public InventoryCollection GetOrRegisterCraftStationInventories(string id) {
+        var invs = InventoryManager.I.GetOrRegisterSavedInventoryCollection(id);
+        // initialize if newly created collection
+        if(invs.inventories.Count < 1) {
+            invs.TryAddInventory("input", new Inventory(16));
+            invs.TryAddInventory("output", new Inventory(16));
+        }
+        return invs;
+    }
+
+    public Inventory GetStationInputInventory(string stationId) {
+        var invs = GetOrRegisterCraftStationInventories(stationId);
+        invs.TryGetInventory("input", out Inventory inv);
+        return inv;
+    }
+    public Inventory GetStationOutputInventory(string stationId) {
+        var invs = GetOrRegisterCraftStationInventories(stationId);
+        invs.TryGetInventory("output", out Inventory inv);
+        return inv;
+    }
+    
+    public void Serialize(ref CraftData craftData) {
+        craftData.inprogressCrafts = _inprogressCrafts;
+    }
+
+    /// <summary>
+    /// Should be called after InventoryManager deserialize
+    /// </summary>
+    /// <param name="craftData"></param>
+    public void Deserialize(ref CraftData craftData) {
+        _inprogressCrafts = craftData.inprogressCrafts;
+        foreach(var craft in _inprogressCrafts) {
+            craft.Value.recipe = AssetRegistry.I.GetItemFromName(craft.Value.recipeName) as ItemRecipe;
         }
     }
 }

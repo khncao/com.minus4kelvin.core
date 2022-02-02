@@ -11,15 +11,16 @@ public abstract class RuntimeScriptableObject : ScriptableObject {
     }
 
     public virtual void OnEnable() {
-
+        if(!AssetRegistry.scriptableObjects.Contains(this))
+            AssetRegistry.scriptableObjects.Add(this);
     }
 
     public virtual void OnDisable() {
-
+        
     }
 
     public virtual void OnDestroy() {
-
+        AssetRegistry.scriptableObjects.Remove(this);
     }
 
     public virtual void OnValidate() {

@@ -13,49 +13,83 @@ public class Feedback : Singleton<Feedback>
     public AudioSource sfxAs;
     public AudioClip highlightAudio, selectAudio;
     public TMPro.TMP_Text notifyText;
-    public GameObject genConfirmPrompt;
-    public GameObject genInputPrompt;
-    // public GameObject genQuantityPrompt;
-    // public Button[] genQuantityButtons;
 
-    // int[] quantityButtonVals = { 0, -10, -1, 1, 10, 1000 };
-    TMP_Text genConfirmLabel, genInputLabel;
-    // TMP_Text genQuantityLabel;
-    TMP_InputField genInputField;
-    // TMP_InputField genQuantityField;
-    Button genInputConfirm;
-    // Button genQuantityConfirm;
+    [Header("Context Menu")]
+    public GameObject contextMenu;
+    public GameObject contextMenuItemParent;
+    public GameObject contextMenuItemPrefab;
+
+    [Header("Confirmation Prompt")]
+    public GameObject genConfirmPrompt;
+    public TMP_Text genConfirmLabel;
+    public Button genConfirmButton;
+
+    [Header("String Prompt")]
+    public GameObject genInputPrompt;
+    public TMP_Text genInputLabel;
+    public TMP_InputField genInputField;
+    public Button genInputConfirm;
+
+    [Header("Quantity Prompt")]
+    public GameObject genQuantityPrompt;
+    public TMP_Text genQuantityLabel;
+    public TMP_InputField genQuantityField;
+    public Button genQuantityConfirm;
+
+    List<GameObject> contextMenuItems = new List<GameObject>();
 
     private void Start() {
-        genConfirmLabel = genConfirmPrompt.GetComponentInChildren<TMP_Text>();
-        
-        genInputLabel = genInputPrompt.GetComponentInChildren<TMP_Text>();
-        genInputField = genInputPrompt.GetComponentInChildren<TMP_InputField>();
-        genInputConfirm = genInputPrompt.GetComponentInChildren<Button>();
-        genInputConfirm.onClick.AddListener(ConfirmInput);
-
-        // genQuantityLabel = genQuantityPrompt.GetComponentInChildren<TMP_Text>();
-        // genQuantityField = genQuantityPrompt.GetComponentInChildren<TMP_InputField>();
-        // genQuantityConfirm = genQuantityPrompt.GetComponentInChildren<Button>();
-        // genQuantityField.onValueChanged.AddListener(OnQuantityChange);
-        // genQuantityConfirm.onClick.AddListener(ConfirmQuantity);
-        // for(int i = 0; i < genQuantityButtons.Length; ++i) {
-        //     genQuantityButtons[i].onClick
-        // }
+        genConfirmButton.onClick.AddListener(ConfirmRequest);
+        genInputConfirm.onClick.AddListener(ConfirmStringInput);
+        genQuantityField.onValueChanged.AddListener(OnQuantityChange);
+        genQuantityConfirm.onClick.AddListener(ConfirmQuantity);
     }
     
     public void PlayAudio(AudioClip clip) {
         sfxAs.PlayOneShot(clip);
     }
+
     public void SendLineQueue(string line, bool popup = false) {
         msgQ.QueueLineWithCooldown(line, popup);
     }
+
     public void SendLine(string line, bool popup = false) {
         msgQ.SendLineInstant(line, popup);
     }
 
-    System.Func<int> confirmFunc;
-    public void RegisterConfirmRequest(System.Func<int> func, string promptText) {
+    int contextMenuItemIndex;
+    public void StartContextMenu(Vector3 position) {
+        contextMenu.SetActive(true);
+        contextMenu.transform.position = position;
+        contextMenuItemIndex = 0;
+    }
+    public void RegisterContextMenuItem(string label, System.Action func) {
+        GameObject item = null;
+        if(contextMenuItemIndex < contextMenuItems.Count) {
+            item = contextMenuItems[contextMenuItemIndex];
+        }
+        else {
+            item = Instantiate(contextMenuItemPrefab, contextMenuItemParent.transform, false);
+            contextMenuItems.Add(item);
+        }
+        Button button = item.GetComponentInChildren<Button>();
+        button.gameObject.SetActive(true);
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(()=>func?.Invoke());
+        button.onClick.AddListener(DisableContextMenu);
+
+        TMP_Text labelTxt = item.GetComponentInChildren<TMP_Text>();
+        labelTxt.text = label;
+    }
+    public void DisableContextMenu() {
+        foreach(var b in contextMenuItems) {
+            b.gameObject.SetActive(false);
+        }
+        contextMenu.SetActive(false);
+    }
+
+    System.Action confirmFunc;
+    public void RegisterConfirmRequest(System.Action func, string promptText) {
         if(confirmFunc != null) {
             Debug.LogWarning("Confirm request prompt not null");
         }
@@ -67,8 +101,9 @@ public class Feedback : Singleton<Feedback>
         confirmFunc?.Invoke();
         confirmFunc = null;
     }
-    System.Func<string, int> inputFunc;
-    public void RegisterInputRequest(System.Func<string, int> func, string promptText) {
+
+    System.Action<string> inputFunc;
+    public void RegisterStringInputRequest(System.Action<string> func, string promptText) {
         if(inputFunc != null) {
             Debug.LogWarning("Input prompt func not null");
         }
@@ -77,38 +112,54 @@ public class Feedback : Singleton<Feedback>
         genInputField.text = "";
         genInputLabel.text = promptText;
     }
-    public void ConfirmInput() {
+    public void ConfirmStringInput() {
         inputFunc?.Invoke(genInputField.text);
         inputFunc = null;
     }
-    // System.Func<int, int> quantityFunc;
-    // int quantityVal;
-    // public void RegisterQuantityRequest(System.Func<int, int> func, string promptText) {
-    //     if(quantityFunc != null) {
-    //         Debug.LogWarning("Quantity prompt func not null");
-    //     }
-    //     quantityFunc = func;
-    //     genQuantityPrompt.SetActive(true);
-    //     genInputField.text = "1";
-    //     genQuantityLabel.text = promptText;
-    //     quantityVal = 1;
-    // }
-    // public void ConfirmQuantity() {
-    //     quantityFunc?.Invoke(quantityVal);
-    // }
-    // void OnQuantityChange(string s) {
-    //     int.TryParse(s, out quantityVal);
-    // }
-    // void ChangeQuantity(int i) {
-    //     quantityVal += i;
-    // }
+
+    System.Action<int> quantityFunc;
+    int _quantityVal, _maxQuantity, _minQuantity;
+    public void RegisterQuantityRequest(System.Action<int> func, string promptText, int maxValue, int minValue = 0) {
+        if(quantityFunc != null) {
+            Debug.LogWarning("Quantity prompt func not null");
+        }
+        quantityFunc = func;
+        genQuantityPrompt.SetActive(true);
+        genQuantityLabel.text = promptText;
+        _quantityVal = 1;
+        genQuantityField.text = _quantityVal.ToString();
+        _maxQuantity = maxValue;
+        _minQuantity = minValue;
+    }
+    public void ConfirmQuantity() {
+        quantityFunc?.Invoke(_quantityVal);
+        quantityFunc = null;
+    }
+    public void OnQuantityChange(string s) {
+        if(string.IsNullOrEmpty(s))
+            return;
+        int.TryParse(s, out _quantityVal);
+    }
+    // Can be invoked by UI triggers for concrete button inputField changes
+    public void ChangeQuantityPromptValue(int i) {
+        _quantityVal = i == 0 ? 0 : Mathf.Clamp(_quantityVal + i, _minQuantity, _maxQuantity);
+        genQuantityField.text = _quantityVal.ToString();
+    }
 
     Coroutine disableNotifyCr;
-    public void DisplayNotification(string line) {
+    public void DisplayNotification(string line, float duration = -1f) {
         if(disableNotifyCr != null)
             StopCoroutine(disableNotifyCr);
-        disableNotifyCr = StartCoroutine(TimedDisableNotifier(3));
+        if(duration == -1f)
+            notifyText.gameObject.SetActive(true);
+        else
+            disableNotifyCr = StartCoroutine(TimedDisableNotifier(duration));
         notifyText.text = line;
+    }
+    public void DisableNotification() {
+        if(disableNotifyCr != null)
+            StopCoroutine(disableNotifyCr);
+        notifyText.gameObject.SetActive(false);
     }
     IEnumerator TimedDisableNotifier(float timer) {
         notifyText.gameObject.SetActive(true);

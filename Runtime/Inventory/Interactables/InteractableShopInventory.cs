@@ -18,8 +18,9 @@ public class InteractableShopInventory : MonoBehaviour
     }
 
     public void Interact() {
-        if(itemSpawnTable && inventory == null)
-            inventory = itemSpawnTable.GetItemsUpToTier(shopItemsTier);
+        if(itemSpawnTable && inventory == null) {
+            inventory = itemSpawnTable.GetItemsUpToTier(new Inventory(16), shopItemsTier);
+        }
 
         if(inventory == null || inventory.items == null) {
             Debug.LogError("Inventory get error");

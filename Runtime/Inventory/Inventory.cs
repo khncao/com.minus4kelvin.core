@@ -4,47 +4,43 @@ using UnityEngine;
 using System;
 
 namespace m4k.Items {
-public enum InventoryType { Bag, Storage, Characters, Craft }
-
-// [Serializable]
-// public class TransactionRecord {
-//     public string fromInvId, toInvId;
-//     public List<ItemInstance> items;
-//     public int currency;
-// }
 [Serializable]
-public class InventoryData {
-    public List<Inventory> inventories;
+public class InventoryCollection {
+    public string id;
+    public SerializableDictionary<string, Inventory> inventories;
+
+    public InventoryCollection(string id) {
+        this.id = id;
+        inventories = new SerializableDictionary<string, Inventory>();
+    }
+
+    public bool TryAddInventory(string id, Inventory inv) {
+        if(inventories.ContainsKey(id)) return false;
+        else
+            inventories.Add(id, inv);
+        return true;
+    }
+
+    public bool TryGetInventory(string id, out Inventory inv) {
+        return inventories.TryGetValue(id, out inv);
+    }
 }
 
 [Serializable]
-public class Inventory
+public class Inventory: UnityEngine.ISerializationCallbackReceiver
 {
     public string id;
-    public TickTimer timer;
-    // array vs list
-    // slot position retention, serialization compactness, expandability framework
     [NonSerialized]
     public ItemInstance[] items; 
-    [NonSerialized]
-    public ItemInstance[] aux;
 
     [SerializeField]
     List<ItemData> _items;
-    [SerializeField]
-    List<ItemData> _aux;
     
     [SerializeField]
     long currency;
     [SerializeField]
     int maxSize;
-    [SerializeField]
-    int auxSize;
 
-    [NonSerialized]
-    public bool isStatic = false;
-    [NonSerialized]
-    public bool condHide;
     [NonSerialized]
     public List<ItemInstance> totalItemsList = new List<ItemInstance>();
     [NonSerialized]
@@ -55,16 +51,12 @@ public class Inventory
     public GameObject owner;
 
     public long Currency { get { return currency; }}
+    public bool keepZeroItems { get; set; }
 
 
-    public Inventory(int maxSize, int auxSize = 0, bool setStatic = false) {
+    public Inventory(int maxSize) {
         this.maxSize = maxSize;
-        this.auxSize = auxSize;
         items = new ItemInstance[maxSize];
-        if(auxSize > 0)
-            aux =  new ItemInstance[auxSize];
-        isStatic = setStatic;
-        timer = new TickTimer();
     }
 
 
@@ -72,36 +64,6 @@ public class Inventory
         return Array.IndexOf(items, null) == -1;
         // return items.IndexOf(null) == -1;
     }
-
-    public void AssignReserved(int slotInd, Item item, int amount) {
-        if(aux == null) return;
-        if(aux[slotInd] != null && aux[slotInd].item == item) {
-            aux[slotInd].amount += amount;
-        }
-        else {
-            aux[slotInd] = new ItemInstance(item, amount);
-        }
-        onChange?.Invoke();
-    }
-    public void UnassignReserved(int slotInd, int amount) {
-        if(aux == null) return;
-        if(amount == 0) amount = aux[slotInd].amount;
-        aux[slotInd].amount -= amount;
-        if(aux[slotInd].amount <= 0) {
-            aux[slotInd] = null;
-        }
-        onChange?.Invoke();
-    }
-    public ItemInstance GetReserved(int slotInd) {
-        if(aux == null) return null;
-        if(aux[slotInd] == null)
-            Debug.LogWarning("null aux slot");
-        return aux[slotInd];
-    }
-    public bool IsReservedIndexEmpty(int ind) {
-        return aux[ind] == null;
-    }
-
 
 
     public int AddItemAmount(Item item, int amount, bool playNotify = false) {
@@ -178,7 +140,7 @@ public class Inventory
             }
             existing[i].onChange?.Invoke();
 
-            if(existing[i].amount < 1 && !isStatic) {
+            if(existing[i].amount < 1 && !keepZeroItems) {
                 existing[i] = null;
             }
         }
@@ -232,8 +194,12 @@ public class Inventory
         onChange?.Invoke();
     }
 
-    public List<ItemInstance> GetFiltered(Predicate<ItemInstance> predicate) {
+    public List<ItemInstance> GetFilteredTotal(Predicate<ItemInstance> predicate) {
         return totalItemsList.FindAll(predicate);
+    }
+
+    public ItemInstance[] GetFiltered(Predicate<ItemInstance> predicate) {
+        return Array.FindAll(items, predicate);
     }
 
     public void ModifyCurrency(long val) {
@@ -310,6 +276,7 @@ public class Inventory
             return -1;
         return 0;
     }
+    
     void AddToTotalItems(Item item, int amount) {
         var itemTotalInd = totalItemsList.FindIndex(x=>x.item == item);
 
@@ -328,7 +295,7 @@ public class Inventory
         }
         else {
             totalItemsList[itemTotalInd].amount -= amount;
-            if(totalItemsList[itemTotalInd].amount < 1 && !isStatic)
+            if(totalItemsList[itemTotalInd].amount < 1 && !keepZeroItems)
                 totalItemsList.RemoveAt(itemTotalInd);
         }
     }
@@ -338,6 +305,14 @@ public class Inventory
         // return items.FindAll(x=>x != null && x.item == item);
     }
 
+    /// <summary>
+    /// Remove all items and reset currency to 0
+    /// </summary>
+    public void Clear() {
+        RemoveItemAmounts(totalItemsList);
+        currency = 0;
+    }
+
     public bool HasItem(Item item) {
         return totalItemsList.Exists(x=>x.item == item);
     }
@@ -345,16 +320,11 @@ public class Inventory
     public void OnBeforeSerialize() {
         _items = new List<ItemData>();
         
+        if(totalItemsList == null) // workaround for editor errors
+            return;
         foreach(var i in totalItemsList) 
             if(i != null)
                 _items.Add(new ItemData(i.item.name, i.amount));
-        //         i.OnBeforeSerialize();
-        
-        if(aux == null) return;
-        _aux = new List<ItemData>();
-        foreach(var i in aux)
-            if(i != null)
-                _aux.Add(new ItemData(i.item.name, i.amount));
         //         i.OnBeforeSerialize();
     }
     public void OnAfterDeserialize() {
@@ -365,13 +335,6 @@ public class Inventory
             var item = AssetRegistry.I.GetItemFromName(_items[i].name);
             AddItemAmount(item, _items[i].amount);
         }
-        
-        if(auxSize > 0) aux = new ItemInstance[auxSize];
-        for(int i = 0; i < _aux.Count; ++i) {
-            var item = AssetRegistry.I.GetItemFromName(_aux[i].name);
-            AssignReserved(i, item, _aux[i].amount);
-        }
-        timer.OnLoad();
     }
 }
 }

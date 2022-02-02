@@ -15,7 +15,8 @@ public class Objective : ScriptableObject
     public string choiceLine;
     [Tooltip("Leave empty to use choiceLine")]
     public string midChoiceLine;
-    public List<Line> begLines, midLines, endLines;
+    [InspectInline]
+    public Convo begConvo, midConvo, endConvo;
     
     public ItemInstance[] rewardItems;
     
@@ -44,7 +45,6 @@ public class Objective : ScriptableObject
 
     public string ObjectiveId { get { return name; }}
     
-    Convo begConvo, midConvo, endConvo;
     TMPro.TMP_Text _uiTxt;
     ProgressionManager _progression;
     Dialogue _dialogue;
@@ -78,24 +78,6 @@ public class Objective : ScriptableObject
             Debug.Log($"Loaded inprogress objective: {ObjectiveId}");
             StartObjective(true);
         }
-
-        begConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
-        midConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
-        endConvo = Instantiate<Convo>(ScriptableObject.CreateInstance<Convo>());
-        begConvo.name = $"{ObjectiveId}_beg";
-        midConvo.name = $"{ObjectiveId}_mid";
-        endConvo.name = $"{ObjectiveId}_end";
-        foreach(var l in begLines) 
-            begConvo.lines.Add(l);
-        foreach(var l in midLines) 
-            midConvo.lines.Add(l);
-        foreach(var l in endLines) 
-            endConvo.lines.Add(l);
-
-        // Reset private fields in ScriptableObjects
-        startConds.Init();
-        completeConds.Init();
-        failConds.Init();
     }
 
     // GUI hud objective tracker entry

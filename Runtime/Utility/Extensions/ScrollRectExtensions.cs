@@ -12,9 +12,12 @@ public static class ScrollRectExtensions
     {
         Canvas.ForceUpdateCanvases();
 
-        scrollRect.content.anchoredPosition =
-            (Vector2)scrollRect.transform.InverseTransformPoint(scrollRect.content.position)
-            - (Vector2)scrollRect.transform.InverseTransformPoint(target.position);
+        // scrollRect.content.anchoredPosition =
+        //     (Vector2)scrollRect.transform.InverseTransformPoint(scrollRect.content.position)
+        //     - (Vector2)scrollRect.transform.InverseTransformPoint(target.position);
+        scrollRect.content.position =
+            (scrollRect.content.position
+            - target.position) * 2f;
     }
 }
 }

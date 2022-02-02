@@ -23,7 +23,7 @@ public class CharacterIK : MonoBehaviour
     bool facing, looking, rHandIkBool;
     Transform prevLookTarget, prevRHandTarget;
 
-    private void Start() {
+    private void Awake() {
         anim = GetComponentInChildren<Animator>();
     }
 

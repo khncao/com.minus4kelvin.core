@@ -4,45 +4,46 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+// TODO: handle different display modes
 namespace m4k.Items {
 // [ExecuteInEditMode]
 public class ItemSlotHandler : MonoBehaviour, IDropHandler
 {
     public Inventory inventory;
-    public GameObject slotsParent, auxSlotsParent;
+    public GameObject slotsParent;
+    [Header("Will auto expand slot if slotPrefab nonnull")]
+    public GameObject slotPrefab;
     public Toggle toggleHideLocked;
-    public bool listView, gridView;
-    public bool ignoreMaxStack = true;
+    [Header("If true, list total items as one entry each")]
+    public bool ignoreMaxStack = true; // list style total items
+    [Header("If true, will skip populating item if not interactable")]
     public bool hideLockedSlots = false;
+    public bool canDrag = true;
 	public ItemSlot[] slots;
-    public ItemSlot[] auxSlots;
-    public ItemSlot selected;
-    public bool interactableOverride = false, isInteractableOverride;
+    
     public InventoryManager inventoryManager;
-    
+
+    public bool interactableOverride { get; set; } = false;
+    public bool isInteractableOverride { get; set; }
+    public ItemSlot selected { get; set; }
+
+    const int ExpandSlotsBuffer = 4;
     bool initialized;
-    [System.NonSerialized]
-    System.Predicate<ItemInstance> filter;
-    
+    ItemInstance[] _items;
+    List<ItemInstance> _totalItems;
 
     public void InitSlots() {
         if(initialized)
             return;
 
-		slots = slotsParent.GetComponentsInChildren<ItemSlot>(false);
+        if(slots.Length < 1)
+		    slots = slotsParent.GetComponentsInChildren<ItemSlot>(false);
 		for(int i = 0; i < slots.Length; i++) {
 			slots[i].slotManager = this;
             slots[i].slotIndex = i;
             slots[i].UnassignItem();
 		}
-        if(!auxSlotsParent)
-            return;
-        auxSlots = auxSlotsParent.GetComponentsInChildren<ItemSlot>(false);
-        for(int i = 0; i < auxSlots.Length; ++i) {
-            auxSlots[i].slotManager = this;
-            auxSlots[i].slotIndex = i;
-            auxSlots[i].UnassignItem();
-        }
+
         initialized = true;
     }
     
@@ -78,7 +79,24 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
         }
         inventory = newInventory;
         newInventory.onChange += OnInventoryChange;
-        this.filter = filter;
+
+        if(!ignoreMaxStack) {
+            _items = filter != null ? inventory.GetFiltered(filter) : inventory.items;
+            int slotDeficit = _items.Length - slots.Length;
+            if(slotDeficit > 0 && slotPrefab)
+                ExpandSlots(slotDeficit);
+        }
+        else {
+            _totalItems = filter != null ? inventory.GetFilteredTotal(filter) : inventory.totalItemsList;
+            int slotDeficit = _totalItems.Count - slots.Length;
+            if(slotDeficit > 0 && slotPrefab)
+                ExpandSlots(slotDeficit);
+        }
+
+        if(_totalItems == null) {
+            Debug.LogError("Null items");
+            return;
+        }
         UpdateAllSlots();
     }
 
@@ -89,39 +107,38 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
     public void UpdateAllSlots() {
         InitSlots();
         if(inventory == null || inventory.items == null) {
-            // Debug.LogError(gameObject.name + " no inventory");
             return;
         }
-        
-        if(inventory.items.Length > slots.Length) {
-            Debug.Log("Differ inventory and slots size " + inventory.items.Length + " " + slots.Length);
-        }
-        List<ItemInstance> items;
-        items = filter != null ? inventory.GetFiltered(filter) : inventory.totalItemsList;
 
-        if(!ignoreMaxStack) {
+        if(!ignoreMaxStack) { // should not hide items to maintain slot positions
             for(int i = 0; i < slots.Length; ++i) {
-                if(inventory.items.Length > i && inventory.items[i] != null) {
-                    slots[i].AssignItem(inventory.items[i]);
+                if(_items.Length > i && _items[i] != null) {
+                    slots[i].AssignItem(_items[i]);
                 }
                 else {
                     slots[i].UnassignItem();
                 }
             }
         }
-        else if(items != null) {
+        else {
             int slotInd = 0;
-            for(int i = 0; i < items.Count; ++i) {
-                if(items.Count > i && items[i] != null) 
+            for(int i = 0; i < _totalItems.Count; ++i) {
+                if(_totalItems.Count > i && _totalItems[i] != null) 
                 {
-                    if((inventory.condHide && items[i].item is ItemConditional && items[i].item.Primary(null)) 
-                    || (hideLockedSlots && !slots[slotInd].isActiveAndEnabled)) 
+                    // assign first to update interactability
+                    slots[slotInd].AssignItem(_totalItems[i]);
+
+                    // unassign item to hide if conds not met
+                    if((_totalItems[i].item is ItemConditional itemCond
+                    && itemCond.hideIfUnmet
+                    && !itemCond.CheckConditions())
+                    || // or hide locked/nonInteractable slots toggled
+                    (hideLockedSlots 
+                    && !slots[slotInd].interactable)) 
                     {
                         slots[slotInd].UnassignItem();
-                        continue;
+                        continue; // do not increment slotInd
                     }
-                    else
-                        slots[slotInd].AssignItem(items[i]);
                 }
                 else {
                     slots[slotInd].UnassignItem();
@@ -134,32 +151,41 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
                 slotInd++;
             }
         }
-        if(!auxSlotsParent || inventory.aux == null)
-            return;
-        for(int i = 0; i < inventory.aux.Length; ++i) {
-            if(i >= auxSlots.Length)
-                continue;
-            if(inventory.aux[i] != null) {
-                auxSlots[i].AssignItem(inventory.aux[i]);
-            }
-            else {
-                auxSlots[i].UnassignItem();
-            }
-        }
     }
 
-    public void ToggleInteractableOverride(bool or, bool b) {
-        interactableOverride = or;
-        isInteractableOverride = b;
+    void ExpandSlots(int amount) {
+        if(!slotPrefab) return;
+
+        int newSize = slots.Length + amount + ExpandSlotsBuffer;
+        var newSlots = new ItemSlot[newSize];
+        for(int i = 0; i < slots.Length; ++i) {
+            newSlots[i] = slots[i];
+        }
+        for(int i = slots.Length; i < newSize; ++i) {
+            var obj = Instantiate(slotPrefab, slotsParent.transform, false);
+            var slot = obj.GetComponent<ItemSlot>();
+			slot.slotManager = this;
+            slot.slotIndex = i;
+            slot.UnassignItem();
+            newSlots[i] = slot;
+        }
+        slots = newSlots;
+    }
+
+    /// <summary>
+    /// Overrides interactability of all slots; ie block recipes when crafting
+    /// </summary>
+    /// <param name="overrideEnabled"></param>
+    /// <param name="overrideValue"></param>
+    public void ToggleInteractableOverride(bool overrideEnabled, bool overrideValue) {
+        interactableOverride = overrideEnabled;
+        isInteractableOverride = overrideValue;
         RefreshAllSlots();
     }
 
     public void RefreshAllSlots() {
         foreach(var slot in slots) {
             slot.RefreshUI();
-        }
-        foreach(var aux in auxSlots) {
-            aux.RefreshUI();
         }
     }
 

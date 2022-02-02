@@ -7,14 +7,14 @@ namespace m4k {
 /// </summary>
 public interface INavMovable {
     Transform Target { get; }
+    float Speed { get; set; }
     bool IsMoving { get; }
     void SetTarget(Transform target);
     void SetTarget(Vector3 position);
     void SetFaceTarget(Transform target);
-    void Move();
     void Stop();
-    void Pause();
     void Resume();
+    void Pause();
     event Action OnArrive;
     event Action OnNewTarget;
 }

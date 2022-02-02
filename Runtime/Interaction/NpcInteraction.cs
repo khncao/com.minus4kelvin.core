@@ -37,7 +37,7 @@ public class NpcInteraction : MonoBehaviour
 
     public void StartDialogue() {
         if(dialogue) {
-            movable.Pause();
+            movable?.Pause();
             dialogue.AssignDialogue();
             DialogueManager.I.onEndDialogue += OnEndDialogue;
         }
@@ -45,7 +45,7 @@ public class NpcInteraction : MonoBehaviour
 
     void OnEndDialogue() {
         DialogueManager.I.onEndDialogue -= OnEndDialogue;
-        movable.Resume();
+        movable?.Resume();
     }
 }
 }

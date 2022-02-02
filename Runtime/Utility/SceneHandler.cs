@@ -52,7 +52,7 @@ public class SceneHandler : Singleton<SceneHandler>
     }
 
     void OnSceneChanged(Scene a, Scene newScene) {
-        Debug.Log($"OnChangeScene({newScene.buildIndex}: {newScene.name})");
+        // Debug.Log($"OnChangeScene({newScene.buildIndex}: {newScene.name})");
         prevSceneIndex = activeScene.buildIndex;
         currScene = newScene;
         currSceneIndex = newScene.buildIndex;
@@ -64,17 +64,16 @@ public class SceneHandler : Singleton<SceneHandler>
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-        loadedScenes.Add(scene.name);
+        if(!loadedScenes.Contains(scene.name))
+            loadedScenes.Add(scene.name);
+
         onSceneLoaded?.Invoke();
-        if(loadedScenes.Count > 1 && isMainMenu) {
-            SetActiveScene(scene);
-        }
-        Debug.Log($"OnSceneLoaded: {scene.name}; Loaded: {loadedScenes.Count}");
+        // Debug.Log($"OnSceneLoaded: {scene.name}; Loaded: {loadedScenes.Count}");
     }
     void OnSceneUnloaded(Scene scene) {
         onSceneUnloaded?.Invoke();
         loadedScenes.Remove(scene.name);
-        Debug.Log($"OnSceneUnloaded: {scene.name}; Loaded: {loadedScenes.Count}");
+        // Debug.Log($"OnSceneUnloaded: {scene.name}; Loaded: {loadedScenes.Count}");
     }
 
     public void ReturnToMainMenu() {
@@ -89,7 +88,7 @@ public class SceneHandler : Singleton<SceneHandler>
     //     unload.completed += callback;
     // }
     public void UnloadScene(string sceneName, Action<AsyncOperation> callback = null) {
-        Debug.Log($"Unload {sceneName}");
+        // Debug.Log($"Unload {sceneName}");
         if(!SceneManager.GetSceneByName(sceneName).IsValid())
             return;
         var unload = SceneManager.UnloadSceneAsync(sceneName);
@@ -115,7 +114,7 @@ public class SceneHandler : Singleton<SceneHandler>
             return;
         }
         
-        Debug.Log(string.Format("LoadScene: {0}", sceneName));
+        // Debug.Log(string.Format("LoadScene: {0}", sceneName));
         loadSceneRoutine = StartCoroutine(LoadSceneAsync(sceneName, additive));
     }
 

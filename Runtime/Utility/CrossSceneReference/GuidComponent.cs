@@ -171,6 +171,14 @@ public class GuidComponent : MonoBehaviour, ISerializationCallbackReceiver
         return guid;
     }
 
+    public bool SetGuid(string guidString) {
+        if(System.Guid.TryParse(guidString, out System.Guid guid)){
+            serializedGuid = guid.ToByteArray();
+            return true;
+        }
+        return false;
+    }
+
     // let the manager know we are gone, so other objects no longer find this
     public void OnDestroy()
     {

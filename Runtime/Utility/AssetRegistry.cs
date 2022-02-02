@@ -12,6 +12,8 @@ using UnityEditor;
 
 namespace m4k {
 public class AssetRegistry : Singleton<AssetRegistry> {
+    public static HashSet<RuntimeScriptableObject> scriptableObjects = new HashSet<RuntimeScriptableObject>();
+
     public DatabaseSO database;
 
     [System.NonSerialized]
@@ -32,9 +34,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     protected override void Awake() {
         base.Awake();
         if(m_ShuttingDown) return;
+#if UNITY_EDITOR
         if(!_database) {
             UpdateDatabase();
         }
+#endif
         itemNameDict = new Dictionary<string, Item>();
         itemTagLists = new Dictionary<ItemTag, List<Item>>();
         itemTypeListDict = new Dictionary<System.Type, List<Item>>();
@@ -78,6 +82,18 @@ public class AssetRegistry : Singleton<AssetRegistry> {
         }
     }
 
+    private void OnEnable() {
+        foreach(var s in scriptableObjects) {
+            s.OnEnable();
+        }
+    }
+
+    private void OnDisable() {
+        foreach(var s in scriptableObjects) {
+            s.OnDisable();
+        }
+    }
+
     public Item GetItemFromName(string name) {
         Item item;
         itemNameDict.TryGetValue(name, out item);
@@ -117,7 +133,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     }
 
 #if UNITY_EDITOR
-    public static string dataPath;
     public static DatabaseSO Database { 
         get { 
             Initialize(); 
@@ -126,7 +141,6 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     static DatabaseSO _database;
     static string pathToDb = "Assets/Data/DatabaseSO.asset";
     static string[] searchFolders = new string[] { "Assets/Data" };
-    static List<RuntimeScriptableObject> scriptableObjects;
 
     static void Initialize() {
         if(_database) return;
@@ -165,10 +179,11 @@ public class AssetRegistry : Singleton<AssetRegistry> {
     // [InitializeOnLoadMethod]
     static void UpdateDatabase() {
         Initialize();
-        scriptableObjects = FindAll<RuntimeScriptableObject>("t:RuntimeScriptableObject", searchFolders);
         
         if(!string.IsNullOrEmpty(_database.dataPathOverride))
             searchFolders[0] = _database.dataPathOverride;
+
+        // scriptableObjects = FindAll<RuntimeScriptableObject>("t:RuntimeScriptableObject", searchFolders);
 
         _database.items = FindAll<Item>("t:Item", searchFolders);
         _database.characters = FindAll<Character>("t:Character", searchFolders);

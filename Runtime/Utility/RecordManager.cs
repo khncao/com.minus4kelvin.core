@@ -15,6 +15,7 @@ public class RecordManager : Singleton<RecordManager> {
     public List<Record> records;
 
     [System.NonSerialized]
+    public System.Action<Record> onAddRecord, onChangeRecord;
     public System.Action onChange;
     
     Dictionary<string, Record> recordsDict = new Dictionary<string, Record>();
@@ -24,23 +25,22 @@ public class RecordManager : Singleton<RecordManager> {
         if(m_ShuttingDown) return;
     }
 
-    public Record GetRecord(string id) {
-        Record rec;
+    public bool TryGetRecord(string id, out Record rec) {
         recordsDict.TryGetValue(id, out rec);
         if(rec == null) {
-            Debug.LogWarning($"Record with id {id} not found");
+            return false;
         }
-        return rec;
+        return true;
     }
 
     public Record GetOrCreateRecord(string id, bool display = true) {
-        Record rec;
-        recordsDict.TryGetValue(id, out rec);
+        recordsDict.TryGetValue(id, out var rec);
         if(rec == null) {
             rec = new Record(id);
             rec.display = display;
             recordsDict.Add(id, rec);
             records.Add(rec);
+            onAddRecord?.Invoke(rec);
         }
         return rec;
     }
@@ -49,8 +49,12 @@ public class RecordManager : Singleton<RecordManager> {
         Record rec = GetOrCreateRecord(id);
 
         rec.UpdateSessionValue(change);
+        OnChange(rec);
+    }
+
+    public void OnChange(Record rec) {
         onChange?.Invoke();
-        
+        onChangeRecord?.Invoke(rec);
         UpdateRecordsTxt();
     }
 
