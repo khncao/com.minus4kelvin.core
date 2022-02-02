@@ -2,31 +2,29 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace m4k.Items {
+namespace m4k.Items.Crafting {
 [CreateAssetMenu(menuName="Data/Items/Item Recipe")]
 public class ItemRecipe : Item
 {
     [Header("Recipe")]
-    // public CraftType craftType;
-    public List<ItemInstance> ingredients;
-    public ItemInstance output;
+    public SerializableDictionary<Item, int> ingredients;
+    public SerializableDictionary<Item, int> output;
     public int craftTime;
-    // public bool enforceOrder;
 
-    public override bool Secondary(ItemSlot slot)
-    {
-        // Debug.Log("ItemRecipe double click");
-        if(InventoryManager.I.craftSlotManager.inventory.totalItemsList.Count > 0) {
+    public override void ContextTransfer(ItemSlot slot) {
+        if(CraftManager.I.inputSlotManager.inventory.totalItemsList.Count > 0) {
             Feedback.I.SendLine("Items still in craft window");
-            return false;
+            return;
         }
-        InventoryManager.I.UI.InitiateItemTransfer(slot);
-        return true;
+        CraftManager.I.UI.InitiateItemTransfer(slot);
+    }
+
+    public bool CheckHasAtLeastOneIngredient(Inventory sourceInv) {
+        foreach(var i in ingredients) {
+            if(sourceInv.GetItemTotalAmount(i.Key) > 0)
+                return true;
+        }
+        return false;
     }
 }
-// [System.Serializable]
-// public class RecipeInstance {
-//     public ItemRecipe recipe;
-//     public int craftableAmount;
-// }
 }

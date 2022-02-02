@@ -1,8 +1,9 @@
-// using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 
+namespace m4k {
 [System.Serializable]
-public class TickTimer {
+public class TickTimer: ISerializationCallbackReceiver {
     public int time;
     public System.Action onStart, onCancel;
     [System.NonSerialized]
@@ -29,14 +30,16 @@ public class TickTimer {
         if(time <= 0)
             CompleteTimer();
     }
-    public void EndTimer() {
+    public void CancelTimer() {
         UnregisterTick();
         time = 0;
         onCancel?.Invoke();
+        onChange = null;
     }
     public void CompleteTimer() {
         onComplete?.Invoke();
-        EndTimer();
+        UnregisterTick();
+        time = 0;
     }
 
     public void OnLoad() {
@@ -46,9 +49,18 @@ public class TickTimer {
     }
 
     void RegisterTick() {
-        // Game.I.tick += Tick;
+        GameTime.I.onTickTime -= Tick;
+        GameTime.I.onTickTime += Tick;
     }
     void UnregisterTick() {
-        // Game.I.tick -= Tick;
+        GameTime.I.onTickTime -= Tick;
     }
-}
+
+    public void OnBeforeSerialize() {
+
+    }
+
+    public void OnAfterDeserialize() {
+        OnLoad();
+    }
+}}

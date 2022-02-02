@@ -12,9 +12,9 @@ public class InventoryUI : MonoBehaviour
 
     [Header("Windows")]
     public GameObject bagInventorySlots;
-    public GameObject characterInventorySlots, shopInventorySlots, storageInventorySlots, craftingWindow;
-    public Button craftButton;
-    public TMP_Text craftProgressTxt;
+    public GameObject characterInventorySlots, shopInventorySlots, storageInventorySlots;
+    public List<GameObject> otherWindows;
+
     public GameObject dailyReportPanel;
     public TMP_Text dailyReportTxt;
 
@@ -45,7 +45,6 @@ public class InventoryUI : MonoBehaviour
 
     public void Init(InventoryManager im) {
         inventoryManager = im;
-        craftButton.onClick.AddListener(OnClickCraft);
     }
 
     public void ToggleBag(bool enabled) {
@@ -60,8 +59,9 @@ public class InventoryUI : MonoBehaviour
     public void ToggleStorage(bool enabled) {
         storageInventorySlots.SetActive(enabled);
     }
-    public void ToggleCraft(bool enabled) {
-        craftingWindow.SetActive(enabled);
+    public void ToggleOtherWindows(bool enabled) {
+        foreach(var w in otherWindows)
+            w.SetActive(enabled);
     }
     public void ExitTransaction() {
         inventoryManager.ExitTransactions();
@@ -133,27 +133,6 @@ public class InventoryUI : MonoBehaviour
     }
 
 
-    TMP_Text craftButtonText;
-    public void OnClickCraft() {
-        bool crafting = InventoryManager.I.craftManager.CheckCraft();
-        string s = crafting ? "Cancel" : "Craft";
-        UpdateCraftButton(s);
-        UpdateCraftProgess("");
-    }
-    public void SetCraftWindowDefault() {
-        UpdateCraftProgess("");
-        UpdateCraftButton("Craft");
-    }
-    public void UpdateCraftButton(string s) {
-        if(!craftButtonText)
-            craftButtonText = craftButton.GetComponentInChildren<TMP_Text>();
-        craftButtonText.text = s;
-    }
-    public void UpdateCraftProgess(string s) {
-        craftProgressTxt.text = s;
-    }
-
-
     ItemSlot contextSlot;
     public void UpdateHoverWindow(ItemSlot slot) {
         hoverSlot = slot;
@@ -200,26 +179,30 @@ public class InventoryUI : MonoBehaviour
     public void ContextDestroy() {}
 
 
+    ItemSlot fromSlot, toSlot;
     public void InitiateItemTransfer(ItemSlot itemSlot) {
         InitiateItemTransfer(itemSlot, null);
     }
     public void InitiateItemTransfer(ItemSlot from, ItemSlot to) {
-        inventoryManager.fromSlot = from;
-        inventoryManager.toSlot = to;
+        fromSlot = from;
+        toSlot = to;
 
         if(from.item.item.maxAmount == 1) {
             Feedback.I.RegisterConfirmRequest(ConfirmTransaction,
             "Complete transaction?");
-            //$"{Inventory.GetCostValue(inventoryManager.fromSlot.item.item, quantValue)} {currencyName}. Complete transaction?");
         }
         else {
             int ownedValue = from.slotManager.inventory.GetItemTotalAmount(from.item.item);
-            Feedback.I.RegisterQuantityRequest(inventoryManager.CompleteTransaction, "Amount?", ownedValue, 0);
+            Feedback.I.RegisterQuantityRequest(QuantityTransaction, "Amount?", ownedValue, 0);
         }
+    }
+    
+    public void QuantityTransaction(int value) {
+        inventoryManager.CompleteTransaction(value, fromSlot, toSlot);
     }
 
     public void ConfirmTransaction() {
-        inventoryManager.CompleteTransaction(1);
+        inventoryManager.CompleteTransaction(1, fromSlot, toSlot);
     }
 }
 }

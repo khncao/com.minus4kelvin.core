@@ -8,11 +8,9 @@ namespace m4k.Items {
 public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public ItemInstance item;
-    public Image bgImg, itemImgUI, disableItemImg;
+    public Image bgImg, itemImgUI;
     public TMPro.TMP_Text itemNameUI, itemTxtUI;
     public ItemSlotHandler slotManager;
-    public bool isInteractable = true;
-    public bool canDrag = true;
     [HideInInspector]
     public int slotIndex;
     public System.Action onAssign;
@@ -40,8 +38,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
         if(itemNameUI)
             itemNameUI.text = "";
         itemTxtUI.text = "";
-        if(disableItemImg)
-            disableItemImg.enabled = false;
+        interactable = true;
     }
 
     public void ToggleHidden(bool show) {
@@ -57,7 +54,7 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
             Debug.LogError("less than 0 items");
             return;
         }
-        else if(item.amount >= 0) {
+        else {
             if(itemImgUI) {
                 itemImgUI.sprite = item.item.itemIcon;
                 itemImgUI.color = Color.white;
@@ -67,36 +64,33 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
             
             itemTxtUI.text = item.item.maxAmount > 1 && item.amount > 0 ? item.amount.ToString() : "";
 
-            if(disableItemImg) {
-                if(slotManager.interactableOverride) {
-                    disableItemImg.enabled = !slotManager.isInteractableOverride;
-                }
-                else if(item.item is ItemConditional) {
-                    disableItemImg.enabled = item.item.Primary(null);
-                }
-                else {
-                    disableItemImg.enabled = item.amount == 0;
-                }
-                // disableItemImg.enabled = slotManager.interactableOverride ? 
-                // !slotManager.isInteractableOverride : 
-                // (item.item is ItemConditional && !item.item.conditions.CheckCompleteReqs()) || 
-                // item.amount == 0;
-                isInteractable = !disableItemImg.enabled;
+            if(slotManager.interactableOverride) {
+                interactable = slotManager.isInteractableOverride;
+            }
+            else if(item.item is ItemConditional condItem) {
+                interactable = condItem.CheckConditions() && item.amount > 0;
+            }
+            else {
+                interactable = item.amount > 0;
             }
         }
     }
 
+    float lastClickTime;
+    int clickCount;
 	public override void OnPointerUp(PointerEventData eventData) {
         base.OnPointerUp(eventData);
 
-        if(item == null || item.item == null || !isInteractable) 
+        if(item == null || item.item == null || !interactable) 
             return;
         if(isDragging) return;
+        string buttonName = eventData.button.ToString();
+        clickCount = (Time.time - lastClickTime < 0.2f) ? clickCount + 1 : 1;
 
-		if(eventData.button.ToString() == "Left")
+		if(buttonName == "Left")
 		{
-			if(eventData.clickCount == 2) {			
-                item.item.Secondary(this);
+			if(clickCount == 2) {			
+                item.item.ContextTransfer(this);
 			}
             else {
                 item.item.Primary(this);
@@ -104,10 +98,11 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
                 // Debug.Log($"selected: {item.itemName}");
             }
 		}
-		else if(eventData.button.ToString() == "Right")
+		else if(buttonName == "Right")
 		{
             slotManager.inventoryManager.UI.ToggleContextMenu(true);
 		}
+        lastClickTime = Time.time;
 	}
 
 	public override void OnPointerEnter(PointerEventData eventData) {
@@ -128,11 +123,19 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
         // }
 	}
 
+    public override void OnSelect(BaseEventData eventData) {
+        base.OnSelect(eventData);
+        slotManager.selected = this;
+    }
+    public override void OnDeselect(BaseEventData eventData) {
+        base.OnDeselect(eventData);
+    }
+
     bool isDragging = false;
 	public void OnBeginDrag(PointerEventData eventData) {
-        if(!isInteractable) return;
+        if(!interactable) return;
         isDragging = true;
-        if(!canDrag) return;
+        if(!slotManager.canDrag) return;
 		if(item != null && item.item != null) {
 			slotManager.inventoryManager.UI.dragSlot = this;
             var dragTxt = slotManager.inventoryManager.UI.dragTxt;
@@ -152,8 +155,8 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 	}
 
 	public void OnDrag(PointerEventData eventData) {
-        if(!isInteractable) return;
-        if(!canDrag) return;
+        if(!interactable) return;
+        if(!slotManager.canDrag) return;
         if (slotManager.inventoryManager.UI.dragSlot && item != null && item.item != null)
             SetDraggedPosition(eventData);
 	}
@@ -169,9 +172,9 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
     }
 
 	public void OnEndDrag(PointerEventData eventData) {
-        if(!isInteractable) return;
+        if(!interactable) return;
         isDragging = false;
-        if(!canDrag) return;
+        if(!slotManager.canDrag) return;
 		if(slotManager.inventoryManager.UI.dragImg)
             slotManager.inventoryManager.UI.dragImg.color = Color.clear;
 			// slotManager.inventoryManager.UI.dragImg.gameObject.SetActive(false);
@@ -183,8 +186,8 @@ public class ItemSlot : Selectable, IDropHandler, IBeginDragHandler, IDragHandle
 	}
 
 	public void OnDrop(PointerEventData eventData) {
-        if(!isInteractable) return;
-        if(!canDrag) return;
+        if(!interactable) return;
+        if(!slotManager.canDrag) return;
 
         var dragSlot = slotManager.inventoryManager.UI.dragSlot;
         if(!dragSlot)

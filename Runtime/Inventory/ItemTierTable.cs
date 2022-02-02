@@ -17,45 +17,67 @@ public class ItemTierTable : ScriptableObject
     [System.Serializable]
     public class ItemTierCollection {
         public string id;
-        public bool carriesOver;
+        public Conditions conditions;
+        public bool doesNotCarryOver;
         public List<ItemRateAmount> items;
     }
 
-
     public List<ItemTierCollection> collections;
 
-    public Inventory GetItemsFromRandomTier() {
-        return GetItemsUpToTier(Random.Range(0, collections.Count));
+    public Inventory GetItemsFromRandomTier(Inventory inv, System.Predicate<Item> predicate = null) {
+        return GetItemsUpToTier(inv, Random.Range(0, collections.Count), predicate);
     }
-    public Inventory GetItemsUpToTier(int tierIndex) {
+
+    public Inventory GetInventoryByIds(Inventory inv, List<string> ids, System.Predicate<Item> predicate = null) {
+        foreach(var id in ids) {
+            var collection = FindCollection(id);
+            if(collection != null) {
+                PopulateInventory(ref inv, collection, predicate);
+            }
+            else 
+                Debug.LogWarning($"Collection id: {id} not found");
+        }
+        return inv;
+    }
+
+    public Inventory GetItemsUpToTier(Inventory inv, int tierIndex, System.Predicate<Item> predicate = null) {
         if(tierIndex >= collections.Count) {
             Debug.LogWarning("requested tier exceeding max");
             tierIndex = collections.Count - 1;
         }
-        Inventory items = new Inventory(16);
 
         for(int i = 0; i <= tierIndex; ++i) {
-            if(i != tierIndex && !collections[i].carriesOver)
+            if(i != tierIndex && collections[i].doesNotCarryOver)
+                continue;
+            if(!collections[i].conditions.CheckCompleteReqs())
                 continue;
 
-            for(int j = 0; j < collections[i].items.Count; ++j) {
-                int count = 0;
-                for(int k = 0; k < collections[i].items[j].amount; ++k) {
-                    if(SpawnItem(collections[i].items[j].rate))
-                        count++;
-                }
-                // if(Game.Progression.CheckUnlocked(collectionsTable[i].items[j].unlockable)) {
-                    items.AddItemAmount(collections[i].items[j].item, count, false);
-                // }
-            }
+            PopulateInventory(ref inv, collections[i], predicate);
         }
-        // Debug.Log($"{items.items.Length} items length generated");
 
-        return items;
+        return inv;
     }
-    bool SpawnItem(float rate) {
-        float rand = Random.Range(0, 1f);
-        return rand < rate;
+
+    void PopulateInventory(ref Inventory inv, ItemTierCollection collection, System.Predicate<Item> predicate = null) {
+        for(int j = 0; j < collection.items.Count; ++j) {
+            if(collection.items[j].item is ItemConditional condItem
+            && !condItem.CheckConditions())
+                continue;
+            if(predicate != null && !predicate.Invoke(collection.items[j].item))
+                continue;
+
+            int count = 0;
+            for(int k = 0; k < collection.items[j].amount; ++k) {
+                if(Random.value < collection.items[j].rate)
+                    count++;
+            }
+
+            inv.AddItemAmount(collection.items[j].item, count, false);
+        }
+    }
+
+    ItemTierCollection FindCollection(string id) {
+        return collections.Find(x=>x.id == id);
     }
 }
 }

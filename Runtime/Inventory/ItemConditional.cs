@@ -7,8 +7,9 @@ namespace m4k.Items {
 public class ItemConditional : Item
 {
     public Conditions conditions;
+    public bool hideIfUnmet;
     
-    public override bool Primary(ItemSlot slot) {
+    public bool CheckConditions() {
         return conditions.CheckCompleteReqs();
     }
 }

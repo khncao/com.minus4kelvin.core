@@ -134,6 +134,10 @@ public class Item : ScriptableObject
         InventoryManager.I.mainInventory.AddItemAmount(this, amount, notify);
     }
 
+    public virtual void ContextTransfer(ItemSlot slot) {
+        InventoryManager.I.UI.InitiateItemTransfer(slot);
+    }
+
     public virtual void Copy(Item item) {
         name = item.name;
         _displayName = item._displayName;

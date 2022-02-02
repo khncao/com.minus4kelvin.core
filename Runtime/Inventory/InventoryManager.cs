@@ -4,27 +4,31 @@ using UnityEngine;
 
 namespace m4k.Items {
 [System.Serializable]
+public class InventoryData {
+    public SerializableDictionary<string, Inventory> inventories;
+    public SerializableDictionary<string, InventoryCollection> inventoryCollections;
+}
+
+[System.Serializable]
 public class InventoryManager : Singleton<InventoryManager>//, IStateSerializable
 {
     public InventoryUI UI;
-    public CraftManager craftManager;
     public Inventory mainInventory;
-    public Inventory characterInventory;
-    public ItemSlotHandler bagSlotManager, characterSlotManager, shopSlotManager, storageSlotManager, craftSlotManager, recipeSlotManager;
+    public Inventory characterInventory; // character roster
+    public ItemSlotHandler bagSlotManager, characterSlotManager, shopSlotManager, storageSlotManager;
     public GameObject itemDropPrefab, inventoryDropPrefab;
-    
 
-    [System.NonSerialized]
-    public ItemSlot fromSlot, toSlot;
+    public System.Action onExitTransactions;
 
+    public bool inTransaction { get { return currTransferSlots != null; }}
     public bool inShop { get { return UI.shopInventorySlots.activeInHierarchy; }}
     public bool inStorage { get { return UI.storageInventorySlots.activeInHierarchy; }}
-    public bool inCraft { get { return UI.craftingWindow.activeInHierarchy; }}
     public bool inCharacter { get { return UI.characterInventorySlots.activeInHierarchy; }}
-    public bool InTransaction { get { return inShop || inStorage || inCraft; } }
+    
 
     ItemSlotHandler currTransferSlots;
-    Dictionary<string, Inventory> inventoryDict = new Dictionary<string, Inventory>();
+    SerializableDictionary<string, Inventory> inventoryDict = new SerializableDictionary<string, Inventory>();
+    SerializableDictionary<string, InventoryCollection> inventoryCollections = new SerializableDictionary<string, InventoryCollection>();
 
 
     protected override void Awake() {
@@ -36,7 +40,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     }
 
     void ResetInventories() {
-        inventoryDict = new Dictionary<string, Inventory>();
+        inventoryDict = new SerializableDictionary<string, Inventory>();
 
         mainInventory = GetOrRegisterSavedInventory("main", 16);
         characterInventory = GetOrRegisterSavedInventory("character", 16);
@@ -69,22 +73,19 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
     }
 
     public void ToggleBag() {
-        if(InTransaction) return;
+        if(inTransaction) return;
         UI.ToggleBag(!UI.bagInventorySlots.activeInHierarchy);
     }
     public void ToggleCharInventory() {
-        if(InTransaction) return;
+        if(inTransaction) return;
         UI.ToggleCharacters(!UI.characterInventorySlots.activeInHierarchy);
     }
-    public void ToggleCraft(Inventory inventory, ItemTag craftType) {
-        craftSlotManager.AssignInventory(inventory);
-        recipeSlotManager.AssignInventory(craftManager.GetRecipeInventory(craftType));
-        craftManager.OnToggleCraftWindow(inventory);
 
-        UI.ToggleBag(true);
-        UI.ToggleCraft(true);
-        currTransferSlots = craftSlotManager;
+    // context transfers for externally handled toggles(craft)
+    public void ToggleTransaction(ItemSlotHandler transferSlots) {
+        currTransferSlots = transferSlots;
     }
+
     public void ToggleCharShop(Inventory inventory) {
         shopSlotManager.AssignInventory(inventory);
 
@@ -106,23 +107,28 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         UI.ToggleStorage(true);
         currTransferSlots = storageSlotManager;
     }
+    
     public void ExitTransactions() {
         UI.ToggleStorage(false);
         UI.ToggleShop(false);
         UI.ToggleBag(false);
         UI.ToggleCharacters(false);
-        UI.ToggleCraft(false);
+        UI.ToggleOtherWindows(false);
+        currTransferSlots = null;
+        onExitTransactions?.Invoke();
     }
 
-    public void CompleteTransaction(int amount) {
+    public void CompleteTransaction(int amount, ItemSlot fromSlot, ItemSlot toSlot, bool monetary = false) {
         ItemSlotHandler from = fromSlot.slotManager;
         ItemSlotHandler to;
-        bool monetary = false;
 
+        // slot to slot
         if(toSlot)
             to = toSlot.slotManager;
+        // transfer from player inventory to context
         else if(from == bagSlotManager || from == characterSlotManager)
             to = currTransferSlots;
+        // character shop
         else if(from == shopSlotManager && inCharacter)
             to = characterSlotManager;
         else
@@ -130,25 +136,8 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
 
         if(inShop) monetary = true;
 
-        if(inCraft && fromSlot.item.item is ItemRecipe) 
-        {
-            if(craftSlotManager.inventory.totalItemsList.Count > 0) 
-            {
-                Inventory.Transfer(craftSlotManager.inventory, mainInventory, craftSlotManager.inventory.totalItemsList);
-            }
-
-            ItemRecipe recipe = fromSlot.item.item as ItemRecipe;
-            for(int i = 0; i < recipe.ingredients.Count; ++i) 
-            {
-                Inventory.Transfer(bagSlotManager.inventory, craftSlotManager.inventory, recipe.ingredients[i].amount * amount, recipe.ingredients[i].item);
-            }
-            recipeSlotManager.inventory.RemoveItemAmount(fromSlot.item.item, amount, true);
-        }
-        else {
-            Inventory.Transfer(from.inventory, to.inventory, amount, fromSlot.item.item, monetary);
-        }
-        fromSlot = null;
-        toSlot = null;
+        Inventory.Transfer(from.inventory, to.inventory, amount, fromSlot.item.item, monetary);
+        currTransferSlots = null;
     }
 
     public int TransferAllFromBag() {
@@ -168,7 +157,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         inventory.ModifyCurrency(amount);
     }
 
-    public Inventory GetOrRegisterSavedInventory(string key, int maxSize, int auxSize = 0, bool isStatic = false, GameObject owner = null) {
+    public Inventory GetOrRegisterSavedInventory(string key, int maxSize, GameObject owner = null) {
         Inventory inv;
         inventoryDict.TryGetValue(key, out inv);
         if(inv != null) {
@@ -182,7 +171,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
             Debug.LogError("Already contains key");
             return null;
         }
-        inv = new Inventory(maxSize, auxSize, isStatic);
+        inv = new Inventory(maxSize);
         inv.id = key;
         inv.owner = owner;
         inventoryDict.Add(key, inv);
@@ -196,57 +185,32 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         return inventory;
     }
 
-    public void Serialize(ref InventoryData data) {
-        var _inventories = new List<Inventory>();
-        foreach(var inv in inventoryDict) {
-            inv.Value.id = inv.Key;
-            inv.Value.OnBeforeSerialize();
-            _inventories.Add(inv.Value);
+    public InventoryCollection GetOrRegisterSavedInventoryCollection(string key) {
+        if(!inventoryCollections.TryGetValue(key, out var inventoryCollection)) {
+            inventoryCollection = new InventoryCollection(key);
+            inventoryCollections.Add(key, inventoryCollection);
         }
-        data.inventories = _inventories;
+        return inventoryCollection;
+    }
+
+    public InventoryCollection TryGetInventoryCollection(string key) {
+        inventoryCollections.TryGetValue(key, out var inventoryCollection);
+        return inventoryCollection;
+    }
+
+    public void Serialize(ref InventoryData data) {
+        data.inventories = inventoryDict;
+        data.inventoryCollections = inventoryCollections;
     }
 
     public void Deserialize(InventoryData data) {
-        inventoryDict = new Dictionary<string, Inventory>();
-        var _inventories = data.inventories;
-        for(int i = 0; i < _inventories.Count; ++i) {
-            _inventories[i].OnAfterDeserialize();
-            inventoryDict.Add(_inventories[i].id, _inventories[i]);
-        }
+        inventoryDict = data.inventories;
+        inventoryCollections = data.inventoryCollections;
+
         mainInventory = inventoryDict["main"];
         characterInventory = inventoryDict["character"];
         bagSlotManager.AssignInventory(mainInventory);
         characterSlotManager.AssignInventory(characterInventory);
     }
-
-    // public void Serialize(ref GameDataWriter writer) {
-    //     writer.Write(mainInventory.currency);
-    //     writer.Write(amountGenericStaff);
-
-    //     writer.Write(mainInventory.items.Length);
-    //     for(int i = 0; i < mainInventory.items.Length; ++i) {
-    //         writer.Write(mainInventory.items[i].guid);
-    //         writer.Write(mainInventory.items[i].data.slotIndex);
-    //         writer.Write(mainInventory.items[i].data.amount);
-    //     }
-    // }
-    // public void Deserialize(ref GameDataReader reader) {
-    //     mainInventory.currency = reader.ReadInt();
-    //     amountGenericStaff = reader.ReadInt();
-    //     UI.UpdateCurrency(0, false);
-
-    //     int len = reader.ReadInt();
-    //     for(int i = 0; i < len; ++i) {
-    //         string guid = reader.ReadString();
-
-    //         Item item = AssetRegistry.I.GetItemFromGuid(guid);
-    //         Item instance = Instantiate(item);
-
-    //         instance.data.slotIndex = reader.ReadInt();
-    //         instance.data.amount = reader.ReadInt();
-
-    //         mainInventory.items[i] = instance;
-    //     }
-    // }
 }
 }
