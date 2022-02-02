@@ -12,6 +12,7 @@ public class DialogueUI : MonoBehaviour
     public GameObject dialogueUIObj;//, choicesObj;
     public TMP_Text speakerNameTxt, dialogueTxt;
     public Image speakerImgUI, choiceDivider;
+    public GameObject choicesParent;
     public List<TMP_Text> choicesTxt;
     public AudioClip nextLineSfx;
 
@@ -51,29 +52,28 @@ public class DialogueUI : MonoBehaviour
     public void ToggleDialogueUI(bool enabled) {
         dialogueUIObj?.SetActive(enabled);
     }
-    public void EnableChoices() {
-        choiceDivider.enabled = true;
 
-        for(int i = 0; i < choicesTxt.Count; ++i) {
-            choicesTxt[i].enabled = true;
-        }
-        EventSystem.current.SetSelectedGameObject(choiceDivider.gameObject);
-    }
     public void DisableChoices() {
         choiceDivider.enabled = false;
 
         for(int i = 0; i < choicesTxt.Count; ++i) {
             if(choicesTxt[i])
-                choicesTxt[i].enabled = false;
+                choicesTxt[i].gameObject.SetActive(false);
         }
+        choicesParent?.SetActive(false);
     }
 
     public void ProcessChoices(List<Choice> choices) {
-        EnableChoices();
-        
+        choiceDivider.enabled = true;
+
         for(int i = 0; i < choicesTxt.Count; ++i) {
-            choicesTxt[i].text = i < choices.Count && choices[i] != null ? choices[i].text : "";
+            if(i < choices.Count && choices[i] != null) {
+                choicesTxt[i].gameObject.SetActive(true);
+                choicesTxt[i].text = choices[i].text;
+            }
         }
+        EventSystem.current.SetSelectedGameObject(choiceDivider.gameObject);
+        choicesParent?.SetActive(true);
     }
 
     public void SelectChoice() {

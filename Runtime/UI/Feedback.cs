@@ -147,11 +147,19 @@ public class Feedback : Singleton<Feedback>
     }
 
     Coroutine disableNotifyCr;
-    public void DisplayNotification(string line) {
+    public void DisplayNotification(string line, float duration = -1f) {
         if(disableNotifyCr != null)
             StopCoroutine(disableNotifyCr);
-        disableNotifyCr = StartCoroutine(TimedDisableNotifier(3));
+        if(duration == -1f)
+            notifyText.gameObject.SetActive(true);
+        else
+            disableNotifyCr = StartCoroutine(TimedDisableNotifier(duration));
         notifyText.text = line;
+    }
+    public void DisableNotification() {
+        if(disableNotifyCr != null)
+            StopCoroutine(disableNotifyCr);
+        notifyText.gameObject.SetActive(false);
     }
     IEnumerator TimedDisableNotifier(float timer) {
         notifyText.gameObject.SetActive(true);

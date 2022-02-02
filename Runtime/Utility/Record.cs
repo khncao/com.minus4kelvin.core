@@ -21,6 +21,8 @@ public class Record {
         return accum + sessionVal;
     }}
 
+    public long LastChange { get; private set; }
+
     long accum = 0; // hold running sum excluding sessionVal
 
     public Record(string n) {
@@ -28,6 +30,7 @@ public class Record {
     }
 
     public void UpdateSessionValue(long change) {
+        LastChange = change;
         sessionVal += change;
         onChange?.Invoke(this);
     }

@@ -88,10 +88,10 @@ public class SerializableDictionary<TKey, TValue> : SerializableDictionary, ISer
             var kp = KeyPositions;
             kp.Remove(key);
  
-            var numEntries = list.Count;
+            // var numEntries = list.Count;
  
             list.RemoveAt( (int) index );
-            for (uint i = index; i < numEntries; i++)
+            for (uint i = index; i < list.Count; i++)
                 kp[list[(int) i].Key] = i;
  
             return true;
