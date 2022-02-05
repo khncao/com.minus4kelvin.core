@@ -9,7 +9,7 @@ using m4k.Items;
 namespace m4k.Progression {
 [System.Serializable]
 public class ProgressionData {
-    public string[] completedStates;
+    public string[] keyStates;
     public string[] objectivesInProgress;
     public SerializableDictionary<string, int> interactableStates;
 }
@@ -23,7 +23,7 @@ public class ProgressionManager : Singleton<ProgressionManager>
     public System.Action onRegisterCompletionState;
     public System.Action<Interactable> onRegisterInteractable;
 
-    HashSet<string> completedStates = new HashSet<string>();
+    HashSet<string> keyStates = new HashSet<string>();
     HashSet<string> objectivesInProgress = new HashSet<string>();
 
     Dictionary<string, Interactable> interactablesDict = new Dictionary<string, Interactable>();
@@ -70,24 +70,24 @@ public class ProgressionManager : Singleton<ProgressionManager>
     }
 
     public void RegisterInteractable(Interactable interactable) {
-        if(interactablesDict.ContainsKey(interactable.id)) {
-            Debug.LogError($"Duplicate interactableid: {interactable.gameObject} - {interactable.id}");
+        if(interactablesDict.ContainsKey(interactable.Key)) {
+            Debug.LogError($"Duplicate interactableid: {interactable.gameObject} - {interactable.Key}");
         }
         else {
             // if previously serialized, load state
-            if(_interactableStates.ContainsKey(interactable.id)) {
+            if(_interactableStates.ContainsKey(interactable.Key)) {
                 int val;
-                _interactableStates.TryGetValue(interactable.id, out val);
+                _interactableStates.TryGetValue(interactable.Key, out val);
                 interactable.interactCount = val;
             }
 
-            interactablesDict.Add(interactable.id, interactable);
+            interactablesDict.Add(interactable.Key, interactable);
             onRegisterInteractable?.Invoke(interactable);
         }
     }
 
     public void StartObjective(Objective objective) {
-        if(CheckCompletionState(objective.ObjectiveId)) 
+        if(CheckKeyState(objective.ObjectiveId)) 
             return;
         objectivesInProgress.Add(objective.ObjectiveId);
     }
@@ -98,17 +98,17 @@ public class ProgressionManager : Singleton<ProgressionManager>
         return objectivesInProgress.Contains(objectiveId);
     }
 
-    public void RegisterCompletedState(string stateName) {
-        if(completedStates.Contains(stateName)) {
-            Debug.LogWarning($"Tried to register existing completed state: {stateName}");
+    public void RegisterKeyState(string stateName) {
+        if(keyStates.Contains(stateName)) {
+            Debug.LogWarning($"Tried to register existing key state: {stateName}");
             return;
         }
         Debug.Log("Completed state: " + stateName);
-        completedStates.Add(stateName);
+        keyStates.Add(stateName);
         onRegisterCompletionState?.Invoke();
     }
-    public bool CheckCompletionState(string stateName) {
-        return completedStates.Contains(stateName);
+    public bool CheckKeyState(string stateName) {
+        return keyStates.Contains(stateName);
     }
 
     public void InvokeKeyActions(List<string> keys) {
@@ -162,16 +162,16 @@ public class ProgressionManager : Singleton<ProgressionManager>
         }
 
         data.interactableStates = _interactableStates;
-        data.completedStates = completedStates.ToArray();
+        data.keyStates = keyStates.ToArray();
         data.objectivesInProgress = objectivesInProgress.ToArray();
     }
     
     public void Deserialize(ProgressionData data) {
         _interactableStates = data.interactableStates;
 
-        completedStates = new HashSet<string>();
-        foreach(var i in data.completedStates) 
-            completedStates.Add(i);
+        keyStates = new HashSet<string>();
+        foreach(var i in data.keyStates) 
+            keyStates.Add(i);
         
         objectivesInProgress = new HashSet<string>();
         foreach(var i in data.objectivesInProgress)

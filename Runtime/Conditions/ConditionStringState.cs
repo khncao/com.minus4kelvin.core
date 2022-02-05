@@ -16,9 +16,9 @@ public class ConditionStringState : Condition {
             return false;
         }
         if(isNot)
-            return !ProgressionManager.I.CheckCompletionState(key);
+            return !ProgressionManager.I.CheckKeyState(key);
         else 
-            return ProgressionManager.I.CheckCompletionState(key);
+            return ProgressionManager.I.CheckKeyState(key);
     }
 
     public override string ToString() {
@@ -29,11 +29,11 @@ public class ConditionStringState : Condition {
             
         string col;
         if(isNot) {
-            col = !ProgressionManager.I.CheckCompletionState(key) ? "green" : "white";
+            col = !ProgressionManager.I.CheckKeyState(key) ? "green" : "white";
             _lastCheckStatus = $"<color={col}>- !{key}</color>";
         }
         else {
-            col = ProgressionManager.I.CheckCompletionState(key) ? "green" : "white";
+            col = ProgressionManager.I.CheckKeyState(key) ? "green" : "white";
             _lastCheckStatus = $"<color={col}>- {key}</color>";
         }
         return _lastCheckStatus;

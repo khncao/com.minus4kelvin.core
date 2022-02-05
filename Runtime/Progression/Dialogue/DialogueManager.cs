@@ -88,7 +88,7 @@ public class DialogueManager : Singleton<DialogueManager>
         inDialogue = true;
         onStartDialogue?.Invoke();
 
-        if(convo.autoSkipIfSeen && ProgressionManager.I.CheckCompletionState(convo.id)) {
+        if(convo.autoSkipIfSeen && ProgressionManager.I.CheckKeyState(convo.id)) {
             StartChoicePrompt();
         }
         else
@@ -182,7 +182,7 @@ public class DialogueManager : Singleton<DialogueManager>
         _currChoices = choices;
         // skip seen subconvos if flagged autoSkipIfSeen
         for(int i = 0; i < choices.Count; ++i) {
-            if(choices[i].nextConvo && choices[i].nextConvo.autoSkipIfSeen && ProgressionManager.I.CheckCompletionState(choices[i].nextConvo.id)) {
+            if(choices[i].nextConvo && choices[i].nextConvo.autoSkipIfSeen && ProgressionManager.I.CheckKeyState(choices[i].nextConvo.id)) {
                 choices.RemoveAt(i);
             }
         }

@@ -68,7 +68,7 @@ public class Objective : ScriptableObject
         // load state
         state = ObjectiveState.NotStarted;
 
-        if(_progression.CheckCompletionState(ObjectiveId)) {
+        if(_progression.CheckKeyState(ObjectiveId)) {
             Debug.Log($"Loaded complete objective: {ObjectiveId}");
             CompleteObjective(true);
         }
@@ -178,7 +178,7 @@ public class Objective : ScriptableObject
         true);
             RemoveObjectiveTracker();
             _progression.FinishObjective(this);
-            _progression.RegisterCompletedState(ObjectiveId);
+            _progression.RegisterKeyState(ObjectiveId);
             completeConds.FinalizeConditions();
             RewardItems(InventoryManager.I.mainInventory);
             nextObjective?.StartObjective();

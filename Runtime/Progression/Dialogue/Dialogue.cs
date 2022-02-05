@@ -45,7 +45,7 @@ public class Dialogue : MonoBehaviour
 
     void OnConvoComplete(Convo convo) {
         if((convo.isKeyState || convo.autoSkipIfSeen) && !string.IsNullOrEmpty(convo.id))
-            ProgressionManager.I.RegisterCompletedState(convo.id);
+            ProgressionManager.I.RegisterKeyState(convo.id);
     }
 
     public void AssignDialogue(Convo c) {

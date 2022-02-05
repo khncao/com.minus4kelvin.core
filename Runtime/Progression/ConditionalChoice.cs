@@ -12,7 +12,7 @@ public class ConditionalChoice {
     public bool MetConditions {
         get {
             // if autoSkipIfSeen and seen, return false
-            if(nextConvo.autoSkipIfSeen && ProgressionManager.I.CheckCompletionState(nextConvo.id)) {
+            if(nextConvo.autoSkipIfSeen && ProgressionManager.I.CheckKeyState(nextConvo.id)) {
                 return false;
             }
             // else return true if convo conds met

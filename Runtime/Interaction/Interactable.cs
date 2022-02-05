@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using m4k.Progression;
-// using m4k.Characters;
 
 namespace m4k.Interaction {
 [System.Serializable]
@@ -11,9 +10,9 @@ public class ToggleUnityEvent : UnityEvent<bool> { }
 
 public enum InteractableType {
     Dialogue = 0, Menu = 2,
-    Use = 10, // UseDestroy = 11,
-    PickUp = 15, // PickUpDestroy = 16,
-    ConditionsOnSpawn = 100,
+    Use = 10,
+    PickUp = 15,
+    InteractOnSpawn = 100,
     ActiveConditionListener = 101,
 }
 
@@ -24,43 +23,41 @@ public class Interactable : MonoBehaviour, IInteractable
         public UnityEvent onInteractable, onInteract, onNonInteractable;
         public ToggleUnityEvent onInteractToggle;
     }
-    [Tooltip("If id is not empty, will register with ProgressionManager for serializing interactCount. On first interact, will register id as key state")]
-    public string id;
+    [Header("If id is not empty, will save state and register as key state\nElse, if GuidComponent on this gameObject, will save state")]
+    [SerializeField]
+    string id;
+
     public string description;
     public InteractableType interactableType;
+
+    [Header("Will destroy gameObject if root, else will destroy parent")]
     public bool destroyOnInteract;
     public InteractableUnityEvents events;
+
+    [Header("OnInteractToggle is always called on load.\nEnable triggerInteractOnLoadto also call\nOnInteract events on load(interactCount>0)")]
+    public bool triggerInteractOnLoad;
     public Conditions conditions;
-    public float interactCd;
-    public Material highlightMat;
-    public string playerAnim; // anim name to play on interacting actor
+    public float interactCooldown;
+
+    [Header("Trigger parameter or state name")]
+    public string interactorAnimation;
     public bool enforcePlayerNeutral; 
 
     [HideInInspector]
     public int interactCount;
 
+    public bool IsInteractable { get { return _isInteractable; }}
     public bool HasInteracted { get { return interactCount > 0; } }
     public bool IsToggled { get { return interactCount % 2 != 0; }}
+    public string Key { get; private set; }
 
-    Material[] origMats, tempMats;
-    Renderer rend;
-    Collider col;
-    bool isInteractable, isOnCd, _isRoot;
-    float cd;
+    bool _isInteractable, _isRoot;
+    float _lastInteractTime;
 
     private void Start() {
-        col = GetComponent<Collider>();
-        rend = GetComponentInChildren<Renderer>();
-        if(rend && highlightMat) {
-            origMats = rend.materials;
-            tempMats = new Material[origMats.Length];
-            for(int i = 0; i < tempMats.Length; ++i) {
-                tempMats[i] = highlightMat;
-            }
-        }
         if(interactableType != InteractableType.ActiveConditionListener 
-        && interactableType != InteractableType.ConditionsOnSpawn
-        && !col) {
+        && interactableType != InteractableType.InteractOnSpawn
+        && !TryGetComponent<Collider>(out var col)) {
             Debug.LogWarning("Non-self-triggering interactable does not have collider");
         }
         if(transform.root == transform) {
@@ -70,13 +67,24 @@ public class Interactable : MonoBehaviour, IInteractable
             description = _isRoot ? name : transform.parent.name;
         }
         if(!string.IsNullOrEmpty(id))
+            Key = id;
+        else if(TryGetComponent<GuidComponent>(out var guidComponent))
+            Key = guidComponent.GetGuid().ToString();
+
+        if(!string.IsNullOrEmpty(Key))
             ProgressionManager.I.RegisterInteractable(this);
 
         if(HasInteracted) {
             events.onInteractToggle?.Invoke(!IsToggled);
+            if(triggerInteractOnLoad)
+                events.onInteract?.Invoke();
+            if(destroyOnInteract)
+                Destroy();
         }
         else {
-            if(interactableType == InteractableType.ConditionsOnSpawn)
+            _lastInteractTime = -interactCooldown;
+
+            if(interactableType == InteractableType.InteractOnSpawn)
                 Interact();
             else if(interactableType == InteractableType.ActiveConditionListener) {
                 conditions.RegisterChangeListener();
@@ -84,10 +92,13 @@ public class Interactable : MonoBehaviour, IInteractable
             }
         }
     }
+
     private void OnDisable() {
         if(InteractionManager.I)
             InteractionManager.I.UnregisterInteractable(this);
         OnNonInteractable();
+        conditions.UnregisterChangeListener();
+        conditions.onComplete -= OnConditionsMet;
     }
 
     private void OnTriggerEnter(Collider other) {
@@ -106,66 +117,44 @@ public class Interactable : MonoBehaviour, IInteractable
 
     public void OnInteractable() {
         events.onInteractable?.Invoke();
-        isInteractable = true;
-        if(rend && highlightMat) {
-            rend.materials = tempMats;
-        }
+        _isInteractable = true;
     }
     public void OnNonInteractable() {
         events.onNonInteractable?.Invoke();
-        isInteractable = false;
-        if(rend && highlightMat) {
-            rend.materials = origMats;
-        }
+        _isInteractable = false;
     }
 
     public bool Interact(GameObject go = null) {
-        // if(enforcePlayerNeutral && (!CharacterManager.I.Player.charAnim.IsMobile || !CharacterManager.I.Player.charAnim.IsNeutral)) {
-        //     return false;
-        // }
         if(!conditions.CheckCompleteReqs()) {
             Feedback.I.SendLine("Requirements not met");
             return false;
         }
-        if(isOnCd) {
-            Feedback.I.SendLine(string.Format("{0} still in cooldown: {1} seconds", name, cd.ToString("F1")));
+        float timeSinceLastInteract = Time.time - _lastInteractTime;
+        if(timeSinceLastInteract < interactCooldown) {
+            Feedback.I.SendLine($"{description} cooldown: {(interactCooldown - timeSinceLastInteract).ToString("F1")} seconds remaining");
             return false;
         }
 
         interactCount++;
         events.onInteract?.Invoke();
         events.onInteractToggle?.Invoke(!IsToggled);
+        _lastInteractTime = Time.time;
         
         if(interactCount == 1 && !string.IsNullOrEmpty(id)) {
-            ProgressionManager.I.RegisterCompletedState(id);
+            ProgressionManager.I.RegisterKeyState(id);
         }
-
-        if(interactCd > 0) {
-            isOnCd = true;
-            StartCoroutine(InteractCooldown());
-        }
-
-        // if(!string.IsNullOrEmpty(playerAnim))
-        //     CharacterManager.I.Player.charAnim.PlayAnimation(playerAnim);
         
         if(destroyOnInteract) {
-            InteractionManager.I.UnregisterInteractable(this);
-            OnNonInteractable();
-            if(_isRoot)
-                Destroy(gameObject);
-            else
-                Destroy(transform.parent.gameObject);
+            Destroy();
         }
         return true;
     }
 
-    IEnumerator InteractCooldown() {
-        cd = interactCd;
-        while(cd > 0) {
-            cd -= Time.deltaTime;
-            yield return null;
-        }
-        isOnCd = false;
+    void Destroy() {
+        if(_isRoot)
+            Destroy(gameObject);
+        else
+            Destroy(transform.parent.gameObject);
     }
 }
 }

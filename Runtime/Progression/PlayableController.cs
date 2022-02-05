@@ -41,7 +41,7 @@ public class PlayableController : MonoBehaviour
 
     void OnStop(PlayableDirector director) {
         if(isKeyState && director.playableAsset)
-            ProgressionManager.I?.RegisterCompletedState(director.playableAsset.name);
+            ProgressionManager.I?.RegisterKeyState(director.playableAsset.name);
         if(isCinematic)
             PlayableManager.I?.ToggleCinematic(false);
         // Debug.Log("OnStop Playable");
