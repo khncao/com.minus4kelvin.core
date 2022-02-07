@@ -13,7 +13,7 @@ public class SceneDependency {
 public class SceneHandler : Singleton<SceneHandler>
 {
     public SceneReference mainMenuScene, newGameScene;
-    public Action onSceneChanged, onSceneLoaded, onSceneUnloaded, onStartSceneChange, onReturnToTitle;
+    public Action onSceneChanged, onSceneLoaded, onSceneUnloaded, onStartSceneChange, onFinishLoadAsync, onReturnToTitle;
     public Action<float> onSceneLoadProgress;
     public Scene currScene;
     public int prevSceneIndex = -1;
@@ -77,10 +77,10 @@ public class SceneHandler : Singleton<SceneHandler>
     }
 
     public void ReturnToMainMenu() {
-        LoadScene(mainMenuScene.SceneName, false);
+        LoadScene(mainMenuScene.SceneName, false, false);
     }
     public void NewGameStart() {
-        LoadScene(newGameScene.SceneName, false);
+        LoadScene(newGameScene.SceneName, false, true);
     }
     
     // public void UnloadScene(int index, Action<AsyncOperation> callback) {
@@ -97,10 +97,10 @@ public class SceneHandler : Singleton<SceneHandler>
 
     Coroutine loadSceneRoutine = null;
 
-    public void LoadSceneByName(string sceneName, bool additive) {
-        LoadScene(sceneName, additive);
+    public void LoadSceneByName(string sceneName, bool additive, bool setActiveScene) {
+        LoadScene(sceneName, additive, setActiveScene);
     }
-    public void LoadScene(string sceneName, bool additive) {
+    public void LoadScene(string sceneName, bool additive, bool setActiveScene) {
         if(sceneName == mainMenuScene.SceneName) {
             SceneManager.LoadScene(sceneName);
             return;
@@ -115,10 +115,10 @@ public class SceneHandler : Singleton<SceneHandler>
         }
         
         // Debug.Log(string.Format("LoadScene: {0}", sceneName));
-        loadSceneRoutine = StartCoroutine(LoadSceneAsync(sceneName, additive));
+        loadSceneRoutine = StartCoroutine(LoadSceneAsync(sceneName, additive, setActiveScene));
     }
 
-    IEnumerator LoadSceneAsync(string sceneName, bool additive) 
+    IEnumerator LoadSceneAsync(string sceneName, bool additive, bool setActiveScene) 
     {
         onStartSceneChange?.Invoke();
 
@@ -137,7 +137,10 @@ public class SceneHandler : Singleton<SceneHandler>
             yield return null;
         }
 
-        SetActiveScene(sceneName);
+        if(setActiveScene)
+            SetActiveScene(sceneName);
+        loadSceneRoutine = null;
+        onFinishLoadAsync?.Invoke();
     }
     public void TriggerAllowSceneActivation() {
         if(loadSceneAsync == null) return;

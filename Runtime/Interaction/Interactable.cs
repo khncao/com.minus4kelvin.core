@@ -23,7 +23,7 @@ public class Interactable : MonoBehaviour, IInteractable
         public UnityEvent onInteractable, onInteract, onNonInteractable;
         public ToggleUnityEvent onInteractToggle;
     }
-    [Header("If id is not empty, will save state and register as key state\nElse, if GuidComponent on this gameObject, will save state")]
+    [Header("If id not empty, save state and register as key state")]
     [SerializeField]
     string id;
 
@@ -68,8 +68,8 @@ public class Interactable : MonoBehaviour, IInteractable
         }
         if(!string.IsNullOrEmpty(id))
             Key = id;
-        else if(TryGetComponent<GuidComponent>(out var guidComponent))
-            Key = guidComponent.GetGuid().ToString();
+        // else if(TryGetComponent<GuidComponent>(out var guidComponent))
+        //     Key = guidComponent.GetGuid().ToString();
 
         if(!string.IsNullOrEmpty(Key))
             ProgressionManager.I.RegisterInteractable(this);

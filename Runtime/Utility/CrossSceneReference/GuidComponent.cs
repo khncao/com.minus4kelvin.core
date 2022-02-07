@@ -173,6 +173,7 @@ public class GuidComponent : MonoBehaviour, ISerializationCallbackReceiver
 
     public bool SetGuid(string guidString) {
         if(System.Guid.TryParse(guidString, out System.Guid guid)){
+            this.guid = guid;
             serializedGuid = guid.ToByteArray();
             return true;
         }
