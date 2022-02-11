@@ -22,7 +22,7 @@ public class InteractableShopInventory : MonoBehaviour
             inventory = itemSpawnTable.GetItemsUpToTier(new Inventory(16), shopItemsTier);
         }
 
-        if(inventory == null || inventory.items == null) {
+        if(inventory == null) {
             Debug.LogError("Inventory get error");
             return;
         }

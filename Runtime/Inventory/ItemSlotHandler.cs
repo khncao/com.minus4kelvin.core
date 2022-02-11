@@ -106,7 +106,7 @@ public class ItemSlotHandler : MonoBehaviour, IDropHandler
 
     public void UpdateAllSlots() {
         InitSlots();
-        if(inventory == null || inventory.items == null) {
+        if(inventory == null) {
             return;
         }
 

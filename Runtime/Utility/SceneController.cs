@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using m4k.Progression;
 
 namespace m4k {
 [System.Serializable]
@@ -26,9 +25,18 @@ public class KeyAction {
     }
 }
 
+[System.Serializable]
+public class KeyPoints {
+    public string key;
+    public List<Transform> points;
+}
+
 public class SceneController : MonoBehaviour
 {
+    [Header("Keyed unity events with scene references")]
     public List<KeyAction> sceneKeyEvents;
+    [Header("Keyed scene point sets(spawn, patrol, etc)")]
+    public List<KeyPoints> sceneKeyPoints;
     public SerializableDictionary<string, GameObject> sceneKeyObjects;
 
     public UnityEngine.SceneManagement.Scene scene {
@@ -37,11 +45,20 @@ public class SceneController : MonoBehaviour
         }
     }
 
+    public static Dictionary<string, SceneController> SceneControllers { get; private set; } = new Dictionary<string, SceneController>();
+
+
+    public static bool TryGetSceneController(string sceneName, out SceneController result) {
+        return SceneControllers.TryGetValue(sceneName, out result);
+    }
+
     private void OnEnable() {
-        ProgressionManager.I?.RegisterSceneController(this);
+        if(!SceneControllers.ContainsKey(gameObject.scene.name)) {
+            SceneControllers.Add(gameObject.scene.name, this);
+        }
     }
     private void OnDisable() {
-        ProgressionManager.I?.UnregisterSceneController(this);
+        SceneControllers.Remove(gameObject.scene.name);
     }
 
     public bool InvokeKeyEvent(string key) {
@@ -51,6 +68,10 @@ public class SceneController : MonoBehaviour
             return sceneKeyEvents[ind].Invoke();
         }
         return false;
+    }
+
+    public List<Transform> GetKeyPoints(string key) {
+        return sceneKeyPoints.Find(x=>x.key == key)?.points;
     }
 
     public GameObject GetKeyObject(string key) {

@@ -29,7 +29,6 @@ public class InventoryCollection {
 [Serializable]
 public class Inventory: UnityEngine.ISerializationCallbackReceiver
 {
-    public string id;
     [NonSerialized]
     public ItemInstance[] items; 
 
@@ -39,7 +38,7 @@ public class Inventory: UnityEngine.ISerializationCallbackReceiver
     [SerializeField]
     long currency;
     [SerializeField]
-    int maxSize;
+    public readonly int maxSize;
 
     [NonSerialized]
     public List<ItemInstance> totalItemsList = new List<ItemInstance>();
@@ -50,6 +49,7 @@ public class Inventory: UnityEngine.ISerializationCallbackReceiver
     [NonSerialized]
     public GameObject owner;
 
+    public string id { get; set; }
     public long Currency { get { return currency; }}
     public bool keepZeroItems { get; set; }
 

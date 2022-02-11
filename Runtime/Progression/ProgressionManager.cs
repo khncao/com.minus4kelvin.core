@@ -18,7 +18,6 @@ public class ProgressionManager : Singleton<ProgressionManager>
 {
     public ProgressionUI UI;
     public List<KeyAction> globalChoiceActions;
-    public List<SceneController> sceneControllers;
 
     public System.Action onRegisterCompletionState;
     public System.Action<Interactable> onRegisterInteractable;
@@ -124,8 +123,8 @@ public class ProgressionManager : Singleton<ProgressionManager>
             invokeCount++;
         }
 
-        foreach(var i in sceneControllers) {
-            if(i.InvokeKeyEvent(key))
+        foreach(var i in SceneController.SceneControllers) {
+            if(i.Value.InvokeKeyEvent(key))
                 invokeCount++;
         }
 
@@ -136,18 +135,6 @@ public class ProgressionManager : Singleton<ProgressionManager>
 
         if(invokeCount > 1) {
             Debug.LogWarning($"KeyAction {key} invoked more than once");
-        }
-    }
-
-    public void RegisterSceneController(SceneController se) {
-        if(!sceneControllers.Contains(se)) {
-            sceneControllers.Add(se);
-        }
-    }
-
-    public void UnregisterSceneController(SceneController se) {
-        if(sceneControllers.Contains(se)) {
-            sceneControllers.Remove(se);
         }
     }
 
