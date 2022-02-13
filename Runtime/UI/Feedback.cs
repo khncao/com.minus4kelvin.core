@@ -14,6 +14,9 @@ public class Feedback : Singleton<Feedback>
     public AudioClip highlightAudio, selectAudio;
     public TMPro.TMP_Text notifyText;
 
+    public Slider holdProgressSlider;
+    public TMP_Text holdProgressText;
+
     [Header("Context Menu")]
     public GameObject contextMenu;
     public GameObject contextMenuItemParent;
@@ -165,6 +168,29 @@ public class Feedback : Singleton<Feedback>
         notifyText.gameObject.SetActive(true);
         yield return new WaitForSeconds(timer);
         notifyText.gameObject.SetActive(false);
+    }
+
+    bool _enableHoldProgressText;
+    public void EnableHoldProgress(float maxValue, bool enableText = true, float startValue = 0f) {
+        if(holdProgressSlider.gameObject.activeInHierarchy)
+            Debug.LogWarning("Unexpected hold progress still active");
+        holdProgressSlider.gameObject.SetActive(true);
+        holdProgressSlider.maxValue = maxValue;
+        holdProgressSlider.value = startValue;
+        _enableHoldProgressText = enableText;
+        holdProgressText.text = "";
+    }
+    public void DisableHoldProgress() {
+        holdProgressSlider.gameObject.SetActive(false);
+    }
+    public void UpdateHoldProgressSliderValue(float value) {
+        holdProgressSlider.value = holdProgressSlider.maxValue - value;
+        if(_enableHoldProgressText) {
+            UpdateHoldProgressText();
+        }
+    }
+    void UpdateHoldProgressText() {
+        holdProgressText.text = $"{holdProgressSlider.value.ToString("N2")} / {holdProgressSlider.maxValue}";
     }
 }
 }

@@ -20,8 +20,10 @@ public class Interactable : MonoBehaviour, IInteractable
 {
     [System.Serializable]
     public class InteractableUnityEvents {
-        public UnityEvent onInteractable, onInteract, onNonInteractable;
+        [Header("OnInteractToggle is always called on load.\nEnable onInteractOnLoad to also call\nOnInteract events on load(interactCount>0)")]
         public ToggleUnityEvent onInteractToggle;
+        public UnityEvent onInteractable, onInteract, onNonInteractable;
+        public bool onInteractOnLoad;
     }
     [Header("If id not empty, save state and register as key state")]
     [SerializeField]
@@ -33,11 +35,11 @@ public class Interactable : MonoBehaviour, IInteractable
     [Header("Will destroy gameObject if root, else will destroy parent")]
     public bool destroyOnInteract;
     public InteractableUnityEvents events;
-
-    [Header("OnInteractToggle is always called on load.\nEnable triggerInteractOnLoadto also call\nOnInteract events on load(interactCount>0)")]
-    public bool triggerInteractOnLoad;
+    
     public Conditions conditions;
+
     public float interactCooldown;
+    public float holdTimeToInteract;
 
     [Header("Trigger parameter or state name")]
     public string interactorAnimation;
@@ -76,7 +78,7 @@ public class Interactable : MonoBehaviour, IInteractable
 
         if(HasInteracted) {
             events.onInteractToggle?.Invoke(!IsToggled);
-            if(triggerInteractOnLoad)
+            if(events.onInteractOnLoad)
                 events.onInteract?.Invoke();
             if(destroyOnInteract)
                 Destroy();
@@ -122,19 +124,46 @@ public class Interactable : MonoBehaviour, IInteractable
     public void OnNonInteractable() {
         events.onNonInteractable?.Invoke();
         _isInteractable = false;
+        InteractInput(false); // force hold input release on noninteractable
     }
 
     public bool Interact(GameObject go = null) {
-        if(!conditions.CheckCompleteReqs()) {
-            Feedback.I.SendLine("Requirements not met");
-            return false;
-        }
         float timeSinceLastInteract = Time.time - _lastInteractTime;
         if(timeSinceLastInteract < interactCooldown) {
             Feedback.I.SendLine($"{description} cooldown: {(interactCooldown - timeSinceLastInteract).ToString("F1")} seconds remaining");
             return false;
         }
+        if(!conditions.CheckCompleteReqs()) {
+            Feedback.I.SendLine("Requirements not met");
+            return false;
+        }
+        if(holdTimeToInteract > 0f) {
+            if(holdInteractCR != null) {
+                StopCoroutine(holdInteractCR);
+                Debug.LogWarning("Unexpected nonnull coroutine");
+            }
+            holdInteractCR = StartCoroutine(HoldInteract(holdTimeToInteract, go));
+            return false;
+        }
 
+        ProcessInteract(go);
+        return true;
+    }
+
+    public void InteractInput(bool buttonDown) {
+        if(buttonDown) {
+            Interact();
+        }
+        else {
+            if(holdInteractCR != null) {
+                StopCoroutine(holdInteractCR);
+                holdInteractCR = null;
+                Feedback.I?.DisableHoldProgress();
+            }
+        }
+    }
+
+    void ProcessInteract(GameObject go) {
         interactCount++;
         events.onInteract?.Invoke();
         events.onInteractToggle?.Invoke(!IsToggled);
@@ -147,7 +176,21 @@ public class Interactable : MonoBehaviour, IInteractable
         if(destroyOnInteract) {
             Destroy();
         }
-        return true;
+    }
+
+    Coroutine holdInteractCR;
+    IEnumerator HoldInteract(float timer, GameObject go) {
+        Feedback.I.EnableHoldProgress(timer);
+
+        while(timer > 0f) {
+            timer -= Time.deltaTime;
+            // Debug.Log($"Hold left: {timer}");
+            Feedback.I.UpdateHoldProgressSliderValue(timer);
+            yield return null;
+        }
+        ProcessInteract(go);
+        Feedback.I.DisableHoldProgress();
+        holdInteractCR = null;
     }
 
     void Destroy() {

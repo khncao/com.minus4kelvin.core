@@ -69,10 +69,11 @@ public class InteractionManager : Singleton<InteractionManager>
         // Debug.Log(currIndex);
         UpdateCurrInteractable();
     }
-    public bool Interact() {
+
+    public bool Interact(bool buttonDown = true) {
         if(!currInteractable || interactBlocked)
             return false;
-        currInteractable.Interact();
+        currInteractable.InteractInput(buttonDown);
         return true;
     }
 }

@@ -19,8 +19,8 @@ public class HideVisionObstructions : MonoBehaviour
     private void Start() {
         hits = new RaycastHit[maxHits];
         // rendererCache = new Dictionary<Renderer, List<Material>>();
-        currentHits = new HashSet<Renderer>(maxHits);
-        prevHits = new HashSet<Renderer>(maxHits);
+        currentHits = new HashSet<Renderer>();
+        prevHits = new HashSet<Renderer>();
     }
 
     void Update()

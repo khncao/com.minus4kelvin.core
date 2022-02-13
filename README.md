@@ -1,12 +1,12 @@
 # Core
-Core gameplay systems and utilities that can be widely used across 3D projects.  Includes inventory system, characters, interaction, progression, UI, and utilities. Runtime building system, AI, serialization, damage system, and other systems are in standalone packages.
+Still prone to breaking changes. Core gameplay systems and utilities that can be widely used across 3D projects. Includes inventory system, characters, interaction, progression, UI, and utilities. Runtime building system, AI, serialization, damage system, and other systems are in standalone packages.
 
 ### Dependencies & Unity Version
 - TextMeshPro
 - Cinemachine
 - Timeline
 - (Required tentative)(SerializeReferenceExtensions)[https://github.com/mackysoft/Unity-SerializeReferenceExtensions] for automatic SerializableReference editability. May phase out if implement own custom editor for conditions.
-- Tested working on Unity 2020.3.6f1+
+- Tested working on Unity 2021.2+
 
 ### Installation
 - Add Git URL package through Package Manager
@@ -16,9 +16,9 @@ Core gameplay systems and utilities that can be widely used across 3D projects. 
 - Character system improvements
   - traits; integration with dialogue and AI
   - improved customization and random generation
-- Further isolation of gameplay elements with defines
+  - character stat system
+- Further isolation of key functionality to distinct groups
 - More inventory types: weight, grid
-- General game functions such as time and ticks
 
 ### Inventory
 Item scriptableobject class serves as basis for many item-like uses such as consumables, equipment, buildables, etc.  
