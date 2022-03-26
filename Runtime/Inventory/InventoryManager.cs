@@ -66,7 +66,7 @@ public class InventoryManager : Singleton<InventoryManager>//, IStateSerializabl
         GameObject go = Instantiate(inventoryDropPrefab, pos, Quaternion.identity);
         go.name = "Storage";
         var invComponent = go.GetComponent<InventoryComponent>();
-        Inventory invClone = new Inventory(inventory.maxSize);
+        Inventory invClone = new Inventory(inventory.MaxSize);
         invClone.AddItemAmounts(inventory.totalItemsList);
         invComponent.inventory = invClone;
         return go;

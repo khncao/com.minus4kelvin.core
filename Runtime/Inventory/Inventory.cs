@@ -38,7 +38,7 @@ public class Inventory: UnityEngine.ISerializationCallbackReceiver
     [SerializeField]
     long currency;
     [SerializeField]
-    public readonly int maxSize;
+    int maxSize;
 
     [NonSerialized]
     public List<ItemInstance> totalItemsList = new List<ItemInstance>();
@@ -52,6 +52,7 @@ public class Inventory: UnityEngine.ISerializationCallbackReceiver
     public string id { get; set; }
     public long Currency { get { return currency; }}
     public bool keepZeroItems { get; set; }
+    public int MaxSize { get { return maxSize; }}
 
 
     public Inventory(int maxSize) {
@@ -68,7 +69,11 @@ public class Inventory: UnityEngine.ISerializationCallbackReceiver
 
     public int AddItemAmount(Item item, int amount, bool playNotify = false) {
         if(!item) {
-            Debug.LogWarning("no item");
+            Debug.LogWarning($"Tried to add null item to inventory {id}");
+            return -1;
+        }
+        if(maxSize < 1) {
+            Debug.LogWarning($"{id} inventory maxSize < 1");
             return -1;
         }
         int initAmount = amount;
