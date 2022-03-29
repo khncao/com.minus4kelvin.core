@@ -113,15 +113,13 @@ public class SceneHandler : Singleton<SceneHandler>
             Debug.LogWarning("already loading a scene: " + sceneName);
             return;
         }
-        
+        onStartSceneChange?.Invoke();
         // Debug.Log(string.Format("LoadScene: {0}", sceneName));
         loadSceneRoutine = StartCoroutine(LoadSceneAsync(sceneName, additive, setActiveScene));
     }
 
     IEnumerator LoadSceneAsync(string sceneName, bool additive, bool setActiveScene) 
     {
-        onStartSceneChange?.Invoke();
-
         List<SceneReference> dependencies = GetSceneDependencies(sceneName);
         for(int i = 0; i < dependencies.Count; ++i) {
             if(loadedScenes.Contains(dependencies[i].SceneName))

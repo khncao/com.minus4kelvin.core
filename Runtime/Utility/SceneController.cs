@@ -52,12 +52,12 @@ public class SceneController : MonoBehaviour
         return SceneControllers.TryGetValue(sceneName, out result);
     }
 
-    private void OnEnable() {
+    private void Awake() {
         if(!SceneControllers.ContainsKey(gameObject.scene.name)) {
             SceneControllers.Add(gameObject.scene.name, this);
         }
     }
-    private void OnDisable() {
+    private void OnDestroy() {
         SceneControllers.Remove(gameObject.scene.name);
     }
 
