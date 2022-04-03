@@ -5,6 +5,7 @@ namespace m4k {
 public abstract class Condition {
     public Conditions Conditions { get; set; }
     // public virtual void BeforeCheck(Conditions conditions) {}
+    public virtual void Init() {}
     public virtual void AfterComplete() {}
 
     public abstract bool CheckConditionMet();

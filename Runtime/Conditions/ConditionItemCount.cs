@@ -13,11 +13,9 @@ public class ConditionItemCount : Condition {
     public bool removeItemsOnFinalize;
     
     [System.NonSerialized]
-    string _lastCheckStatus = "";
-    [System.NonSerialized]
     Inventory _inventory;
 
-    public void TryGetInventory() {
+    public void UpdateInventory() {
         if(string.IsNullOrEmpty(inventoryId)) {
             _inventory = InventoryManager.I.mainInventory;
             return;
@@ -28,14 +26,16 @@ public class ConditionItemCount : Condition {
         }
     }
 
+    public override void Init() {
+        UpdateInventory();
+    }
+
     public override bool CheckConditionMet() {
         if(!item) {
             Debug.LogError("No item in condition");
             return false;
         }
-        if(_inventory == null) {
-            TryGetInventory();
-        }
+        UpdateInventory();
         return Comparisons.Compare<int>(op, _inventory.GetItemTotalAmount(item), val);
     }
 
@@ -49,21 +49,17 @@ public class ConditionItemCount : Condition {
             Debug.LogError("No item in condition");
             return "";
         }
-        if(_inventory == null) {
-            TryGetInventory();
-        }
+        UpdateInventory();
         int itemCt = _inventory.GetItemTotalAmount(item);
         bool pass = Comparisons.Compare(op, itemCt, val);
 
         string col = pass ? "green" : "white";
-        _lastCheckStatus = $"<color={col}>- {item.displayName}: {itemCt}/{val}</color>";
-        return _lastCheckStatus;
+
+        return $"<color={col}>- {item.displayName}: {itemCt}/{val}</color>";
     }
 
     public override void RegisterListener(Conditions conditions) {
-        if(_inventory == null) {
-            TryGetInventory();
-        }
+        UpdateInventory();
         _inventory.onChange -= conditions.OnChange;
         _inventory.onChange += conditions.OnChange;
     }

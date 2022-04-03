@@ -5,8 +5,10 @@ using System.Collections.Generic;
 namespace m4k {
 // TODO: bool operators for conditions
 // TODO: parameters in for condition check(self/target GO, etc)
+// TODO: require all instances to call Init before use for reliable state
+
 /// <summary>
-/// Container for conditions. 
+/// Container for conditions. Should not rely on field state of this class and Condition classes as they are used in ScriptableObjects
 /// </summary>
 [System.Serializable]
 public class Conditions  
@@ -16,8 +18,6 @@ public class Conditions
     [SubclassSelector]
 #endif
     public List<Condition> conditions;
-    [Tooltip("Upon all conditions met for the first time. Finalization such as removing condition items")]
-    public bool autoFinalize;
     
     [System.NonSerialized]
     public System.Action<Conditions> onChange;
@@ -26,16 +26,10 @@ public class Conditions
 
     public UnityEngine.Object self { get; set; }
 
-    [System.NonSerialized]
-    bool _alreadyFinalized;
-
-    public Conditions() {
-        _alreadyFinalized = false;
-    }
-
     public void Init(UnityEngine.Object self) {
-        _alreadyFinalized = false;
         this.self = self;
+        foreach(var condition in conditions)
+            condition.Init();
     }
 
     // Listens to relevant onChange events to update condition completion status
@@ -66,18 +60,12 @@ public class Conditions
                 return false;
             }
         }
-        if(autoFinalize)
-            FinalizeConditions();
 
         onComplete?.Invoke();
         return true;
     }
 
     public void FinalizeConditions() {
-        if(_alreadyFinalized) 
-            return;
-
-        _alreadyFinalized = true;
         foreach(var c in conditions) {
             c?.AfterComplete();
         }

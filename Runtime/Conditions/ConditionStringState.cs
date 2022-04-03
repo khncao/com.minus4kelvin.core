@@ -8,8 +8,6 @@ public class ConditionStringState : Condition {
     public string key;
     public bool isNot;
 
-    string _lastCheckStatus = "";
-
     public override bool CheckConditionMet() {
         if(string.IsNullOrEmpty(key)) {
             Debug.LogError("Key empty");
@@ -30,13 +28,12 @@ public class ConditionStringState : Condition {
         string col;
         if(isNot) {
             col = !ProgressionManager.I.CheckKeyState(key) ? "green" : "white";
-            _lastCheckStatus = $"<color={col}>- !{key}</color>";
+            return $"<color={col}>- !{key}</color>";
         }
         else {
             col = ProgressionManager.I.CheckKeyState(key) ? "green" : "white";
-            _lastCheckStatus = $"<color={col}>- {key}</color>";
+            return $"<color={col}>- {key}</color>";
         }
-        return _lastCheckStatus;
     }
 
     public override void RegisterListener(Conditions conditions) {

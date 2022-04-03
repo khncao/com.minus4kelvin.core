@@ -8,8 +8,6 @@ public class ConditionObjectNameState : Condition {
     public UnityEngine.Object keyObject;
     public bool isNot;
 
-    string _lastCheckStatus = "";
-
     public override bool CheckConditionMet() {
         if(!keyObject) {
             Debug.LogError("No keyObject");
@@ -30,13 +28,12 @@ public class ConditionObjectNameState : Condition {
         string col;
         if(isNot) {
             col = !ProgressionManager.I.CheckKeyState(keyObject.name) ? "green" : "white";
-            _lastCheckStatus = $"<color={col}>- !{keyObject.name}</color>";
+            return $"<color={col}>- !{keyObject.name}</color>";
         }
         else {
             col = ProgressionManager.I.CheckKeyState(keyObject.name) ? "green" : "white";
-            _lastCheckStatus = $"<color={col}>- {keyObject.name}</color>";
+            return $"<color={col}>- {keyObject.name}</color>";
         }
-        return _lastCheckStatus;
     }
 
     public override void RegisterListener(Conditions conditions) {

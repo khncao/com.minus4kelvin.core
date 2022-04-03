@@ -9,8 +9,6 @@ public class ConditionRecordTotal : Condition {
     public ComparisonType op;
     public long val;
 
-    string _lastCheckStatus = "";
-
     public override bool CheckConditionMet() {
         if(string.IsNullOrEmpty(key)) {
             Debug.LogError("Key empty");
@@ -30,8 +28,7 @@ public class ConditionRecordTotal : Condition {
         Record rec = RecordManager.I.GetOrCreateRecord(key);
         
         string col = rec.Sum < val ? "white" : "green";
-        _lastCheckStatus = $"<color={col}>- {rec.id}: {rec.Sum}/{val}</color>";
-        return _lastCheckStatus;
+        return $"<color={col}>- {rec.id}: {rec.Sum}/{val}</color>";
     }
 
     public override void RegisterListener(Conditions conditions) {

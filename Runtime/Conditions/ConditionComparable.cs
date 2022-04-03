@@ -8,8 +8,6 @@ public class ConditionComparable<T> : Condition where T : IComparable {
     public PrimitiveBaseSO<T> obj;
     public ComparisonType op;
     public T val;
-    
-    string _lastCheckStatus = "";
 
     public override bool CheckConditionMet() {
         if(!obj) {
@@ -27,8 +25,7 @@ public class ConditionComparable<T> : Condition where T : IComparable {
         bool pass = Comparisons.Compare(op, obj.value, val);
 
         string col = pass ? "green" : "white";
-        _lastCheckStatus = $"<color={col}>- {description}: {obj.value}/{val}</color>";
-        return _lastCheckStatus;
+        return $"<color={col}>- {description}: {obj.value}/{val}</color>";
     }
 
     public override void RegisterListener(Conditions conditions) {
